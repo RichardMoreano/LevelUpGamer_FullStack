@@ -346,16 +346,18 @@ function inicializarLogin() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     
-    const formData = new FormData(form);
-    const credentials = {
-      email: formData.get("email"),
-      password: formData.get("password")
-    };
+    const correo = document.getElementById("correoLogin").value.trim();
+    const password = document.getElementById("passwordLogin").value;
 
-    if (!credentials.email || !credentials.password) {
+    if (!correo || !password) {
       alert("Por favor ingresa email y contraseña");
       return;
     }
+
+    const credentials = {
+      correo,
+      password
+    };
 
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
