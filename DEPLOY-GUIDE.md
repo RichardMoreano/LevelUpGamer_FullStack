@@ -59,7 +59,7 @@ server:
 
 app:
   cors:
-    allowed-origins: ${CORS_ORIGINS:https://v1ct0r-ops.github.io}
+    allowed-origins: ${CORS_ORIGINS:https://RichardMoreano.github.io}
 ```
 
 ### **2️⃣ CONFIGURAR FRONTEND PARA GITHUB PAGES**
@@ -69,10 +69,10 @@ app:
 ```json
 {
   "name": "levelup-gamer-frontend",
-  "homepage": "https://v1ct0r-ops.github.io/proyecto_Semestral_full_stack_2",
+  "homepage": "https://RichardMoreano.github.io/LevelUpGamer_FullStack",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --base=/proyecto_Semestral_full_stack_2/",
+    "build": "vite build --base=/LevelUpGamer_FullStack/",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
@@ -91,7 +91,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: process.env.NODE_ENV === 'production' ? '/proyecto_Semestral_full_stack_2/' : '/',
+  base: process.env.NODE_ENV === 'production' ? '/LevelUpGamer_FullStack/' : '/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets'
@@ -137,7 +137,7 @@ git add .
 git commit -m "Initial commit - Level Up Gamer Full Stack"
 
 # 2. Crear repositorio en GitHub y conectar
-git remote add origin https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2.git
+git remote add origin https://github.com/RichardMoreano/LevelUpGamer_FullStack.git
 git push -u origin main
 ```
 
@@ -145,12 +145,12 @@ git push -u origin main
 1. **Ir a Railway.app** → Crear cuenta gratuita
 2. **Conectar GitHub** → Autorizar acceso
 3. **New Project** → Deploy from GitHub repo
-4. **Seleccionar** tu repositorio `proyecto_Semestral_full_stack_2`
+4. **Seleccionar** tu repositorio `LevelUpGamer_FullStack`
 5. **Configurar variables de entorno**:
    ```
    SPRING_PROFILES_ACTIVE=prod
    JWT_SECRET=tuSecretoJWTMuySeguro2024
-   CORS_ORIGINS=https://v1ct0r-ops.github.io
+   CORS_ORIGINS=https://RichardMoreano.github.io
    ```
 6. **Railway detectará automáticamente** Spring Boot y PostgreSQL
 7. **Deploy automático** - ¡Listo en 2-3 minutos!
@@ -208,7 +208,7 @@ git push heroku main
 DATABASE_URL=postgresql://...  (automático)
 JWT_SECRET=tuSecretoMuySeguro
 SPRING_PROFILES_ACTIVE=prod
-CORS_ORIGINS=https://v1ct0r-ops.github.io
+CORS_ORIGINS=https://RichardMoreano.github.io
 
 # Frontend (Vite)
 VITE_API_URL=https://tu-backend.up.railway.app/api/v1
@@ -248,7 +248,7 @@ curl -X POST https://tu-proyecto.up.railway.app/api/v1/auth/login \
 ```
 
 ### **2. Verificar Frontend:**
-- Abrir: `https://v1ct0r-ops.github.io/proyecto_Semestral_full_stack_2`
+- Abrir: `https://RichardMoreano.github.io/LevelUpGamer_FullStack`
 - Probar login con usuarios de prueba
 - Verificar llamadas API en Developer Tools
 

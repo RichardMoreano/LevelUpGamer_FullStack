@@ -8,7 +8,7 @@ const isDev = import.meta.env.DEV;
 export const API_CONFIG = {
   // Backend Spring Boot
   BASE_URL: isProd 
-    ? 'https://levelup-gamer-backend-production.up.railway.app/api/v1'  // Cambiar por tu URL de Railway
+    ? 'https://levelup-gamer-backend.up.railway.app/api/v1'  // URL de Railway actualizada
     : 'http://localhost:8080/api/v1',
   
   // Timeout para requests

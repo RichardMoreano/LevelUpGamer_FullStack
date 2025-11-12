@@ -65,12 +65,12 @@ npm run deploy
 
 #### **2. Backend a Railway**
 1. Ve a **Railway.app** → Conecta GitHub
-2. Importa repositorio `proyecto_Semestral_full_stack_2`
+2. Importa repositorio `LevelUpGamer_FullStack`
 3. Configura variables de entorno:
    ```
    JWT_SECRET=tuSecretoJWTMuySeguro2024
    SPRING_PROFILES_ACTIVE=prod
-   CORS_ORIGINS=https://v1ct0r-ops.github.io
+   CORS_ORIGINS=https://RichardMoreano.github.io
    ```
 4. Deploy automático activado ✅
 
@@ -196,7 +196,7 @@ spring.security.jwt.secret-key: mySecretKeyForDev
 DATABASE_URL: postgresql://...  # Automático
 JWT_SECRET: tuSecretoSeguroProduccion
 SPRING_PROFILES_ACTIVE: prod
-CORS_ORIGINS: https://v1ct0r-ops.github.io
+CORS_ORIGINS: https://RichardMoreano.github.io
 ```
 
 ### **Variables de Entorno - Frontend**
@@ -279,9 +279,9 @@ test: pruebas
 
 ## 📞 **Soporte**
 
-- **Repositorio**: https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2
-- **Issues**: https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2/issues
-- **Wiki**: https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2/wiki
+- **Repositorio**: https://github.com/RichardMoreano/LevelUpGamer_FullStack
+- **Issues**: https://github.com/RichardMoreano/LevelUpGamer_FullStack/issues
+- **Wiki**: https://github.com/RichardMoreano/LevelUpGamer_FullStack/wiki
 
 ---
 

@@ -98,8 +98,8 @@ echo 🎉 DEPLOY COMPLETADO
 echo ==================
 echo.
 echo 📋 INFORMACIÓN DEL DEPLOY:
-echo 🌐 Frontend URL: https://v1ct0r-ops.github.io/proyecto_Semestral_full_stack_2
-echo 📱 Repositorio: https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2
+echo 🌐 Frontend URL: https://RichardMoreano.github.io/LevelUpGamer_FullStack
+echo 📱 Repositorio: https://github.com/RichardMoreano/LevelUpGamer_FullStack
 echo.
 echo ⚠️  PRÓXIMOS PASOS MANUALES:
 echo 1. Ve a Railway.app y conecta tu repositorio GitHub
@@ -108,7 +108,7 @@ echo 3. Actualiza la URL del backend en src/config/api.js
 echo.
 echo 🔗 ENLACES ÚTILES:
 echo • Railway: https://railway.app
-echo • GitHub Pages: https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2/settings/pages
+echo • GitHub Pages: https://github.com/RichardMoreano/LevelUpGamer_FullStack/settings/pages
 echo.
 
 echo ✅ Deploy script completado exitosamente!
