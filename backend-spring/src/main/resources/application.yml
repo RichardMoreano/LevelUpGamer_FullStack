@@ -24,7 +24,7 @@ spring:
 server:
   port: ${PORT:8080}
   servlet:
-    context-path: /api/v1
+    context-path: /api
 
 # Swagger/OpenAPI Configuration
 springdoc:
