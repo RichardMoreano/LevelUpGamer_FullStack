@@ -23,8 +23,6 @@ spring:
 
 server:
   port: ${PORT:8080}
-  servlet:
-    context-path: /api/v1
 
 # Swagger/OpenAPI Configuration
 springdoc:
@@ -40,6 +38,7 @@ cors:
   allowed-origins: 
     - http://localhost:5173
     - http://localhost:3000
+    - https://richardmoreano.github.io
   allowed-methods: 
     - GET
     - POST
