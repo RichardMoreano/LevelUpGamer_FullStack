@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,8 +32,13 @@ public class PedidoService {
         Pedido pedido = new Pedido();
         pedido.setUsuario(usuario);
         pedido.setFecha(LocalDateTime.now());
-        pedido.setDireccionEnvio(request.getDireccionEnvio());
+        pedido.setDireccion(request.getDireccion());
+        pedido.setRegion(request.getRegion());
+        pedido.setComuna(request.getComuna());
         pedido.setEstado(Pedido.EstadoPedido.PENDIENTE);
+        
+        // Inicializar lista de items
+        pedido.setItems(new ArrayList<>());
         
         // Procesar items del pedido
         BigDecimal subtotal = BigDecimal.ZERO;
@@ -119,14 +125,20 @@ public class PedidoService {
     // DTOs
     public static class CrearPedidoRequest {
         private List<ItemPedidoRequest> items;
-        private String direccionEnvio;
+        private String direccion;
+        private String region;
+        private String comuna;
         private Integer puntosAUsar;
 
         // Getters y setters
         public List<ItemPedidoRequest> getItems() { return items; }
         public void setItems(List<ItemPedidoRequest> items) { this.items = items; }
-        public String getDireccionEnvio() { return direccionEnvio; }
-        public void setDireccionEnvio(String direccionEnvio) { this.direccionEnvio = direccionEnvio; }
+        public String getDireccion() { return direccion; }
+        public void setDireccion(String direccion) { this.direccion = direccion; }
+        public String getRegion() { return region; }
+        public void setRegion(String region) { this.region = region; }
+        public String getComuna() { return comuna; }
+        public void setComuna(String comuna) { this.comuna = comuna; }
         public Integer getPuntosAUsar() { return puntosAUsar; }
         public void setPuntosAUsar(Integer puntosAUsar) { this.puntosAUsar = puntosAUsar; }
     }
