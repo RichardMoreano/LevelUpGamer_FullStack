@@ -6,24 +6,26 @@ import org.springframework.web.bind.annotation.*;
 public class SimpleController {
 
     @GetMapping("/")
+    @CrossOrigin(origins = "*")
     public String root() {
         return "LevelUp Gamer API is running!";
     }
 
     @GetMapping("/health") 
+    @CrossOrigin(origins = "*")
     public String health() {
         return "OK";
     }
 
-    @PostMapping("/api/v1/auth/register")
+    @PostMapping("/test/register")
     @CrossOrigin(origins = "*")
-    public String register(@RequestBody String data) {
-        return "{\"message\": \"Registration endpoint working\", \"received\": \"" + data + "\"}";
+    public String testRegister(@RequestBody String data) {
+        return "{\"message\": \"Test registration endpoint working\", \"received\": \"" + data + "\"}";
     }
 
-    @PostMapping("/api/v1/auth/login")
+    @PostMapping("/test/login")
     @CrossOrigin(origins = "*") 
-    public String login(@RequestBody String data) {
-        return "{\"message\": \"Login endpoint working\", \"received\": \"" + data + "\"}";
+    public String testLogin(@RequestBody String data) {
+        return "{\"message\": \"Test login endpoint working\", \"received\": \"" + data + "\"}";
     }
 }
