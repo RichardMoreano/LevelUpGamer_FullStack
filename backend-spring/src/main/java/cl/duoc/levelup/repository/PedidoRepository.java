@@ -24,8 +24,10 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Pedido> findByFechaBetween(@Param("fechaInicio") LocalDateTime fechaInicio, 
                                    @Param("fechaFin") LocalDateTime fechaFin);
     
-    @Query("SELECT SUM(p.total) FROM Pedido p WHERE p.estado = 'DESPACHADO' AND DATE(p.fecha) = CURRENT_DATE")
-    BigDecimal calcularVentasDelDia();
+    @Query("SELECT COALESCE(SUM(p.total), 0) FROM Pedido p WHERE p.estado = :estado AND p.fecha >= :inicioDelDia AND p.fecha < :finDelDia")
+    BigDecimal calcularVentasDelDia(@Param("estado") Pedido.EstadoPedido estado, 
+                                   @Param("inicioDelDia") LocalDateTime inicioDelDia,
+                                   @Param("finDelDia") LocalDateTime finDelDia);
     
     @Query("SELECT COUNT(p) FROM Pedido p WHERE p.estado = :estado")
     Long contarPorEstado(@Param("estado") Pedido.EstadoPedido estado);
