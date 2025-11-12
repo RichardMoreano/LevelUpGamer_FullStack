@@ -1,12 +1,8 @@
-# Nixpacks configuration for Railway
 [phases.setup]
-aptPkgs = ['maven']
+nixPkgs = ['maven', 'openjdk17']
 
 [phases.build]
-cmds = [
-  'cd backend-spring',
-  'mvn clean package -DskipTests'
-]
+cmds = ['cd backend-spring && mvn clean package -DskipTests']
 
 [start]
-cmd = 'cd backend-spring && java -jar target/levelup-gamer-backend-1.0.0.jar'
+cmd = 'cd backend-spring && java -Dserver.port=$PORT -jar target/levelup-gamer-backend-1.0.0.jar'
