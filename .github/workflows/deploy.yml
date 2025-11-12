@@ -1,0 +1,122 @@
+name: Deploy Level-Up Gamer
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Job 1: Build y Test Backend
+  backend:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: levelup_gamer_test
+          MYSQL_USER: levelup_user
+          MYSQL_PASSWORD: levelup_password
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+    
+    - name: Build Backend
+      working-directory: ./backend-spring
+      run: |
+        mvn clean compile
+        mvn test
+        mvn package -DskipTests
+    
+    - name: Upload Backend Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-jar
+        path: backend-spring/target/*.jar
+
+  # Job 2: Build Frontend
+  frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: admin-react/package-lock.json
+    
+    - name: Install Frontend Dependencies
+      working-directory: ./admin-react
+      run: npm ci
+    
+    - name: Build Frontend
+      working-directory: ./admin-react
+      run: |
+        npm run build
+    
+    - name: Upload Frontend Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-dist
+        path: admin-react/dist/
+
+  # Job 3: Deploy to GitHub Pages
+  deploy-frontend:
+    needs: [frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download Frontend Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: frontend-dist
+        path: ./dist
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+
+  # Job 4: Deploy Backend to Railway (opcional)
+  deploy-backend:
+    needs: [backend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download Backend Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: backend-jar
+        path: ./backend-spring/target/
+    
+    - name: Deploy to Railway
+      run: |
+        echo "Deploy to Railway requires Railway CLI setup"
+        echo "Visit: https://railway.app for deployment"

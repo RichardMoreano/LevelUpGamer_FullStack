@@ -4,15 +4,22 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: process.env.NODE_ENV === 'production' ? '/proyecto_Semestral_full_stack_2/' : '/',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false
+  },
   server: {
     port: 5173,
-    host: 'localhost',
+    host: true,
+    open: true,
     proxy: {
-      // Proxy para acceder al localStorage del servidor HTML
+      // Proxy para desarrollo local con backend Spring Boot
       '/api': {
-        target: 'http://localhost:5500',
+        target: 'http://localhost:8080',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        secure: false
       }
     }
   },
