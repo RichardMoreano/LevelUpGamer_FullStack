@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/levelup_gamer_db}
+    url: ${DATABASE_URL}
     driver-class-name: org.postgresql.Driver
   
   jpa:
