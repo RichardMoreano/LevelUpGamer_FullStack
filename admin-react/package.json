@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://v1ct0r-ops.github.io/proyecto_Semestral_full_stack_2",
+  "homepage": "https://RichardMoreano.github.io/LevelUpGamer_FullStack",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

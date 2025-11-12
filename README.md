@@ -5,9 +5,9 @@ Plataforma completa de e-commerce para productos gaming desarrollada con **React
 ## 🌐 **PROYECTO EN LÍNEA**
 
 ### 🚀 **URLs de Producción**
-- **Frontend (GitHub Pages)**: https://v1ct0r-ops.github.io/proyecto_Semestral_full_stack_2
-- **Backend API (Railway)**: https://levelup-gamer-backend-production.up.railway.app/api/v1
-- **Swagger Docs**: https://levelup-gamer-backend-production.up.railway.app/swagger-ui.html
+- **Frontend (GitHub Pages)**: https://RichardMoreano.github.io/LevelUpGamer_FullStack
+- **Backend API (Railway)**: https://levelup-gamer-backend.up.railway.app/api/v1
+- **Swagger Docs**: https://levelup-gamer-backend.up.railway.app/swagger-ui.html
 
 ### 👥 **Usuarios de Prueba**
 | Tipo | Correo | Password | Características |

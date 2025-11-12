@@ -5,8 +5,8 @@
 Esta es la configuración más fácil y económica para hospedar tu proyecto completo online:
 
 ### **🎯 Resultado Final:**
-- **Frontend**: `https://tu-usuario.github.io/proyecto_Semestral_full_stack_2`
-- **Backend API**: `https://tu-proyecto.up.railway.app/api/v1`
+- **Frontend**: `https://RichardMoreano.github.io/LevelUpGamer_FullStack`
+- **Backend API**: `https://levelup-gamer-backend.up.railway.app/api/v1`
 - **Base de datos**: PostgreSQL automática en Railway
 - **Costo**: ¡GRATIS! (Railway $5 gratis/mes, GitHub Pages gratis)
 
