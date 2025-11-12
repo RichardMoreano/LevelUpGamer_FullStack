@@ -1,7 +1,4 @@
 spring:
-  profiles:
-    active: prod
-  
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/levelup_gamer_db}
     driver-class-name: org.postgresql.Driver
@@ -14,3 +11,8 @@ spring:
 
 server:
   port: ${PORT:8080}
+
+logging:
+  level:
+    org.springframework.web: INFO
+    cl.duoc.levelup: INFO
