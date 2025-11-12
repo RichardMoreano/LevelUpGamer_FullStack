@@ -51,7 +51,7 @@ async function cargarProductosDesdeAPI() {
 
 async function registrarUsuario(userData) {
   try {
-    const response = await fetch(`${API_BASE_URL}/usuarios/registro`, {
+    const response = await fetch(`${API_BASE_URL}/v1/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ async function registrarUsuario(userData) {
 
 async function loginUsuario(credentials) {
   try {
-    const response = await fetch(`${API_BASE_URL}/usuarios/login`, {
+    const response = await fetch(`${API_BASE_URL}/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
