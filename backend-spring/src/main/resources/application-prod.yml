@@ -4,49 +4,13 @@ spring:
   
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/levelup_gamer_db}
-    username: ${DATABASE_USERNAME:}
-    password: ${DATABASE_PASSWORD:}
     driver-class-name: org.postgresql.Driver
   
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: false
-        use_sql_comments: false
-  
-  security:
-    jwt:
-      secret-key: ${JWT_SECRET:myVerySecureJWTSecretKeyForProduction2024LevelUpGamerRailway}
-      expiration: ${JWT_EXPIRATION:86400000}
-      refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+    show-sql: true
 
 server:
   port: ${PORT:8080}
-  servlet:
-    context-path: /
-  error:
-    include-message: always
-    include-binding-errors: always
-
-app:
-  cors:
-    allowed-origins: ${CORS_ORIGINS:https://RichardMoreano.github.io,http://localhost:5173}
-
-logging:
-  level:
-    cl.duoc.levelup: INFO
-    org.springframework.security: WARN
-    org.hibernate.SQL: WARN
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: when_authorized
