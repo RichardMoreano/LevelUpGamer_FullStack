@@ -107,9 +107,11 @@ function guardarCarrito(carrito) {
 }
 
 function agregarAlCarrito(codigo) {
+  console.log("Agregando producto al carrito:", codigo);
   const productos = obtener("productos", []);
   const producto = productos.find(p => p.codigo === codigo);
   if (!producto) {
+    console.error("Producto no encontrado:", codigo);
     alert("Producto no encontrado");
     return;
   }
@@ -267,13 +269,19 @@ function inicializarRegiones() {
 
 // =============== REGISTRO ===============
 function inicializarRegistro() {
+  console.log("Inicializando formulario de registro...");
   const form = document.getElementById("formRegistro");
-  if (!form) return;
+  if (!form) {
+    console.warn("Formulario de registro no encontrado");
+    return;
+  }
 
+  console.log("Formulario de registro encontrado, configurando eventos...");
   inicializarRegiones();
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    console.log("Formulario de registro enviado");
     
     // Obtener valores directamente por ID
     const run = document.getElementById("run").value.trim();
@@ -340,11 +348,17 @@ function inicializarRegistro() {
 
 // =============== LOGIN ===============
 function inicializarLogin() {
+  console.log("Inicializando formulario de login...");
   const form = document.getElementById("formLogin");
-  if (!form) return;
+  if (!form) {
+    console.warn("Formulario de login no encontrado");
+    return;
+  }
 
+  console.log("Formulario de login encontrado, configurando eventos...");
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    console.log("Formulario de login enviado");
     
     const correo = document.getElementById("correoLogin").value.trim();
     const password = document.getElementById("passwordLogin").value;
