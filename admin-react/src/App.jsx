@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import HomePage from "./components/HomePage.jsx";
 import AdminPanel from "./components/Dashboard/AdminPanel.jsx";
 import ProductosPanel from "./components/Productos/ProductosPanel.jsx";
 import NuevoProductoPanel from "./components/Productos/NuevoProductoPanel.jsx";
@@ -31,8 +32,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* redirección inicial */}
-        <Route path="/" element={<Navigate to="/admin" replace />} />
+        {/* Página de inicio con opciones */}
+        <Route path="/" element={<HomePage />} />
 
         {/* Dashboard principal */}
         <Route
