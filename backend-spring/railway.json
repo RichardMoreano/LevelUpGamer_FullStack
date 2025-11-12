@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "java -jar target/levelup-gamer-backend-1.0.0.jar",
+    "startCommand": "java -jar target/levelup-gamer-0.0.1-SNAPSHOT.jar",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

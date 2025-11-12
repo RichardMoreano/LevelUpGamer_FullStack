@@ -5,4 +5,4 @@ nixPkgs = ['maven', 'openjdk17']
 cmds = ['cd backend-spring && mvn clean package -DskipTests']
 
 [start]
-cmd = 'cd backend-spring && java -Dserver.port=$PORT -jar target/levelup-gamer-backend-1.0.0.jar'
+cmd = 'cd backend-spring && java -Dserver.port=$PORT -jar target/levelup-gamer-0.0.1-SNAPSHOT.jar'
