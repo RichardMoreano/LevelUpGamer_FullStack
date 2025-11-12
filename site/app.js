@@ -269,14 +269,19 @@ function inicializarRegiones() {
 
 // =============== REGISTRO ===============
 function inicializarRegistro() {
-  console.log("Inicializando formulario de registro...");
+  console.log("=== INICIANDO REGISTRO ===");
+  console.log("DOM actual:", document.readyState);
+  
   const form = document.getElementById("formRegistro");
+  console.log("Formulario encontrado:", form);
+  
   if (!form) {
-    console.warn("Formulario de registro no encontrado");
+    console.error("❌ FORMULARIO DE REGISTRO NO ENCONTRADO");
+    console.log("Elementos disponibles:", document.querySelectorAll("form"));
     return;
   }
 
-  console.log("Formulario de registro encontrado, configurando eventos...");
+  console.log("✅ Formulario de registro encontrado, configurando eventos...");
   inicializarRegiones();
 
   form.addEventListener("submit", async (e) => {
@@ -348,14 +353,19 @@ function inicializarRegistro() {
 
 // =============== LOGIN ===============
 function inicializarLogin() {
-  console.log("Inicializando formulario de login...");
+  console.log("=== INICIANDO LOGIN ===");
+  console.log("DOM actual:", document.readyState);
+  
   const form = document.getElementById("formLogin");
+  console.log("Formulario encontrado:", form);
+  
   if (!form) {
-    console.warn("Formulario de login no encontrado");
+    console.error("❌ FORMULARIO DE LOGIN NO ENCONTRADO");
+    console.log("Elementos disponibles:", document.querySelectorAll("form"));
     return;
   }
 
-  console.log("Formulario de login encontrado, configurando eventos...");
+  console.log("✅ Formulario de login encontrado, configurando eventos...");
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     console.log("Formulario de login enviado");
@@ -515,13 +525,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     await renderProductos();
   }
   
+  // Inicialización específica por página
+  console.log("Ruta actual:", path);
+  
   if (path.includes("registro.html")) {
-    // Página de registro
+    console.log("Detectada página de registro");
     inicializarRegistro();
   }
   
   if (path.includes("login.html")) {
-    // Página de login
+    console.log("Detectada página de login");
     inicializarLogin();
   }
 
