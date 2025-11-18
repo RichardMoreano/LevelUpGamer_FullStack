@@ -100,7 +100,7 @@
                 📊 Panel de Administración<br>
                 <small style="opacity: 0.8;">React + JWT</small>
             </a>
-            <a href="cliente/" class="btn btn-client" id="clientLink">
+            <a href="cliente/index.html" class="btn btn-client" id="clientLink">
                 🛒 Sitio Cliente<br>
                 <small style="opacity: 0.8;">HTML + JavaScript</small>
             </a>
@@ -117,18 +117,15 @@
     </div>
 
     <script>
-        // Verificar si existe el directorio cliente, si no, usar admin-panel
-        const clientLink = document.getElementById('clientLink');
-        
-        // Por ahora redirigir al admin panel como fallback
-        if (!clientLink.href.includes('cliente/')) {
-            clientLink.href = 'admin-panel/cliente/';
-            clientLink.innerHTML = '🛒 Sitio Cliente<br><small style="opacity: 0.8;">Redirigiendo...</small>';
-        }
+        // Auto-redirigir al sitio cliente después de 3 segundos
+        setTimeout(() => {
+            window.location.href = 'cliente/index.html';
+        }, 3000);
         
         console.log('🚀 Level-Up Gamer Full Stack Project');
         console.log('📡 Backend API:', 'https://levelup-gamer-backend.up.railway.app/api/v1');
         console.log('🌐 Frontend:', window.location.origin);
+        console.log('🔄 Redirigiendo al sitio cliente en 3 segundos...');
     </script>
 </body>
 </html>

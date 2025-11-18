@@ -18,7 +18,7 @@ const API_CONFIG = {
   BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8080/api/v1'
     : 'https://levelup-gamer-backend.up.railway.app/api/v1',
-  TIMEOUT: 10000
+  TIMEOUT: 30000 // Aumentar timeout para Railway
 };
 
 // =============== CONFIGURACIÓN GLOBAL ===============
@@ -149,58 +149,48 @@ async function inicializarApp() {
     
   } catch (error) {
     console.error('❌ Error inicializando aplicación:', error);
-    // Usar fallback con localStorage
-    inicializarFallbackLocal();
+    mostrarErrorConexion();
   }
 }
 
 async function cargarUsuarioActual() {
-  // Verificar sesión local primero
-  const sesion = getLocalStorage('sesion', null);
-  if (!sesion) return null;
+  // Solo verificar token JWT
+  const token = localStorage.getItem('authToken');
+  if (!token) return null;
 
   try {
-    // Intentar obtener usuario de la API
+    // Obtener usuario de la API únicamente
     const usuario = await apiGetCurrentUser();
     if (usuario) {
       window.levelUpGamer.usuario = usuario;
       return usuario;
     }
   } catch (error) {
-    console.warn('Error obteniendo usuario de API, usando localStorage');
+    console.error('Error obteniendo usuario de API:', error);
+    // Si falla la API, limpiar token inválido
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('sesion');
   }
 
-  // Fallback a localStorage
-  const usuarios = getLocalStorage('usuarios', []);
-  const usuario = usuarios.find(u => 
-    u.correo?.toLowerCase() === sesion.correo?.toLowerCase()
-  );
-  
-  window.levelUpGamer.usuario = usuario || null;
-  return usuario;
+  window.levelUpGamer.usuario = null;
+  return null;
 }
 
 async function cargarProductos() {
   try {
-    // Intentar obtener productos de la API
+    // Obtener productos solo de la API
     const productos = await apiGetProducts();
-    if (productos && productos.length > 0) {
+    if (productos && Array.isArray(productos)) {
       window.levelUpGamer.productos = productos;
       return productos;
     }
+    throw new Error('API no retornó productos válidos');
   } catch (error) {
-    console.warn('Error cargando productos de API, usando localStorage/datos base');
+    console.error('Error cargando productos de API:', error);
+    // Sin productos de API, mostrar error
+    window.levelUpGamer.productos = [];
+    return [];
   }
-
-  // Fallback a localStorage o datos base
-  let productos = getLocalStorage('productos', []);
-  if (productos.length === 0 && window.productosBase) {
-    productos = window.productosBase;
-    setLocalStorage('productos', productos);
-  }
-  
-  window.levelUpGamer.productos = productos;
-  return productos;
 }
 
 function inicializarCarrito() {
@@ -230,7 +220,7 @@ async function esVendedor() {
 // =============== AUTENTICACIÓN ===============
 async function iniciarSesion(correo, password) {
   try {
-    // Intentar login con API
+    // Login solo con API
     const response = await apiLogin(correo, password);
     
     if (response && response.accessToken) {
@@ -239,33 +229,17 @@ async function iniciarSesion(correo, password) {
       return { success: true, usuario: response.usuario };
     }
     
-    // Fallback a localStorage
-    const usuarios = getLocalStorage('usuarios', []);
-    const usuario = usuarios.find(u => 
-      u.correo?.toLowerCase() === correo.toLowerCase() && u.pass === password
-    );
-
-    if (usuario) {
-      setLocalStorage('sesion', {
-        correo: usuario.correo,
-        tipo: usuario.tipoUsuario
-      });
-      window.levelUpGamer.usuario = usuario;
-      actualizarNavegacion();
-      return { success: true, usuario: usuario };
-    }
-    
     return { success: false, error: 'Credenciales incorrectas' };
     
   } catch (error) {
     console.error('Error en login:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: 'Error de conexión con el servidor. Verifica que el backend esté funcionando.' };
   }
 }
 
 async function registrarUsuario(userData) {
   try {
-    // Intentar registro con API primero
+    // Registro solo con API
     const response = await makeApiRequest('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData)
@@ -274,29 +248,12 @@ async function registrarUsuario(userData) {
     if (response) {
       return { success: true, usuario: response };
     }
+    
+    return { success: false, error: 'Error en el registro' };
   } catch (error) {
-    console.warn('API register failed, using localStorage fallback');
+    console.error('Error en registro:', error);
+    return { success: false, error: 'Error de conexión con el servidor. Verifica que el backend esté funcionando.' };
   }
-
-  // Fallback a localStorage
-  const usuarios = getLocalStorage('usuarios', []);
-  
-  // Verificar si ya existe
-  if (usuarios.some(u => u.correo?.toLowerCase() === userData.correo?.toLowerCase())) {
-    return { success: false, error: 'El correo ya está registrado' };
-  }
-
-  const nuevoUsuario = {
-    ...userData,
-    id: Date.now(),
-    fechaRegistro: new Date().toISOString(),
-    tipoUsuario: userData.tipoUsuario || 'cliente'
-  };
-
-  usuarios.push(nuevoUsuario);
-  setLocalStorage('usuarios', usuarios);
-  
-  return { success: true, usuario: nuevoUsuario };
 }
 
 function cerrarSesion() {
@@ -791,36 +748,24 @@ function mostrarMensaje(mensaje, tipo = "info") {
   }, 5000);
 }
 
-// =============== FALLBACK LOCAL ===============
-function inicializarFallbackLocal() {
-  console.warn('🔄 Usando modo fallback con localStorage');
+// =============== ERROR HANDLER ===============
+function mostrarErrorConexion() {
+  const mensaje = `
+    <div style="text-align: center; padding: 40px; background: var(--panel); border-radius: 8px; margin: 20px;">
+      <h3>⚠️ Error de Conexión</h3>
+      <p>No se puede conectar con el servidor backend.</p>
+      <p>Verifica que el backend esté funcionando en:</p>
+      <code style="background: var(--fondo); padding: 8px; border-radius: 4px;">
+        ${API_CONFIG.BASE_URL}
+      </code>
+      <br><br>
+      <button onclick="window.location.reload()" class="btn btn-primario">
+        Reintentar
+      </button>
+    </div>
+  `;
   
-  // Inicializar datos base si no existen
-  if (!localStorage.getItem("productos") && window.productosBase) {
-    localStorage.setItem("productos", JSON.stringify(window.productosBase));
-  }
-  
-  ['usuarios', 'carrito', 'pedidos', 'resenas'].forEach(key => {
-    if (!localStorage.getItem(key)) {
-      localStorage.setItem(key, JSON.stringify(key === 'resenas' ? {} : []));
-    }
-  });
-
-  // Cargar datos locales
-  window.levelUpGamer.productos = JSON.parse(localStorage.getItem("productos") || "[]");
-  window.levelUpGamer.carrito = JSON.parse(localStorage.getItem("carrito") || "[]");
-  
-  // Verificar sesión local
-  const sesion = JSON.parse(localStorage.getItem("sesion") || "null");
-  if (sesion) {
-    const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-    window.levelUpGamer.usuario = usuarios.find(u => 
-      u.correo?.toLowerCase() === sesion.correo?.toLowerCase()
-    );
-  }
-
-  window.levelUpGamer.inicializado = true;
-  actualizarNavegacion();
+  document.body.innerHTML = mensaje;
 }
 
 // =============== EXPOSICIÓN GLOBAL ===============

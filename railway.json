@@ -1,0 +1,24 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd backend-spring && mvn clean package -DskipTests"
+  },
+  "deploy": {
+    "startCommand": "cd backend-spring && java -jar target/levelup-gamer-0.0.1-SNAPSHOT.jar",
+    "healthcheckPath": "/actuator/health",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "SPRING_PROFILES_ACTIVE": "prod",
+        "JWT_SECRET_KEY": "levelUpGamerSecretKey2024ForJWTTokenGenerationProduction",
+        "JWT_EXPIRATION": "86400000",
+        "JWT_REFRESH_EXPIRATION": "604800000"
+      }
+    }
+  }
+}
