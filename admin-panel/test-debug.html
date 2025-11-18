@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    <div id="debug-info"></div>
+    <div id="productos-test"></div>
+
+    <script src="/LevelUpGamer_FullStack/site/datos.js"></script>
+    <script>
+        console.log('=== DEBUG TEST ===');
+        console.log('window.productosBase:', window.productosBase);
+        console.log('window.regiones:', window.regiones);
+        console.log('window.categorias:', window.categorias);
+
+        document.getElementById('debug-info').innerHTML = `
+            <h2>Variables Globales:</h2>
+            <p>productosBase: ${window.productosBase ? 'CARGADO (' + window.productosBase.length + ' items)' : 'NO CARGADO'}</p>
+            <p>regiones: ${window.regiones ? 'CARGADO (' + window.regiones.length + ' items)' : 'NO CARGADO'}</p>
+            <p>categorias: ${window.categorias ? 'CARGADO (' + window.categorias.length + ' items)' : 'NO CARGADO'}</p>
+        `;
+
+        // Test API
+        const API_BASE_URL = 'https://levelupgamer-fullstack-production.up.railway.app/api';
+        
+        async function testAPI() {
+            try {
+                console.log('Probando API...');
+                const response = await fetch(`${API_BASE_URL}/productos/publicos`);
+                console.log('Response status:', response.status);
+                if (response.ok) {
+                    const productos = await response.json();
+                    console.log('Productos desde API:', productos);
+                    document.getElementById('productos-test').innerHTML = `
+                        <h2>API Test:</h2>
+                        <p>Estado: CONECTADO ✅</p>
+                        <p>Productos obtenidos: ${productos.length}</p>
+                        <pre>${JSON.stringify(productos.slice(0, 2), null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error API:', error);
+                document.getElementById('productos-test').innerHTML = `
+                    <h2>API Test:</h2>
+                    <p>Estado: ERROR ❌</p>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+
+        testAPI();
+    </script>
+</body>
+</html>
