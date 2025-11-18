@@ -15,5 +15,8 @@ RUN mvn clean package -DskipTests
 # Expose port
 EXPOSE 8080
 
-# Run the application
-CMD ["java", "-jar", "target/levelup-gamer-0.0.1-SNAPSHOT.jar"]
+# Set environment variables for Railway
+ENV SPRING_PROFILES_ACTIVE=prod
+
+# Run the application with proper JVM settings for Railway
+CMD ["java", "-Xmx512m", "-Xms256m", "-Dserver.port=${PORT:-8080}", "-jar", "target/levelup-gamer-0.0.1-SNAPSHOT.jar"]

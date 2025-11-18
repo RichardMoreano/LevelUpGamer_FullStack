@@ -1,18 +1,22 @@
 spring:
   datasource:
-    url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/levelup_gamer_db}
+    url: ${DATABASE_URL}
     driver-class-name: org.postgresql.Driver
   
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 server:
   port: ${PORT:8080}
 
 logging:
   level:
-    org.springframework.web: INFO
-    cl.duoc.levelup: INFO
+    '[org.springframework.web]': INFO
+    '[cl.duoc.levelup]': INFO
+    '[org.springframework.boot.actuator.endpoint.web]': DEBUG
