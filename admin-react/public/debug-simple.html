@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Simple - Level Up Gamer</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        button { margin: 10px 5px; padding: 10px 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Debug Simple - Level Up Gamer</h1>
+    
+    <h2>Test de Conexión</h2>
+    <button onclick="testAll()">Probar Todo</button>
+    
+    <div id="results"></div>
+
+    <!-- Cargar archivos en el mismo orden que el sitio -->
+    <script src="/LevelUpGamer_FullStack/site/datos.js"></script>
+    <script src="/LevelUpGamer_FullStack/site/app.js"></script>
+    <script>
+        function addResult(message, isSuccess = true) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            results.appendChild(div);
+        }
+
+        function testAll() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            addResult('Iniciando tests...');
+            
+            // Test 1: Variables globales
+            if (window.productosBase && Array.isArray(window.productosBase)) {
+                addResult(`✅ productosBase cargado - ${window.productosBase.length} productos`);
+            } else {
+                addResult('❌ productosBase NO cargado', false);
+            }
+            
+            if (window.regiones && Array.isArray(window.regiones)) {
+                addResult(`✅ regiones cargado - ${window.regiones.length} regiones`);
+            } else {
+                addResult('❌ regiones NO cargado', false);
+            }
+            
+            if (window.categorias && Array.isArray(window.categorias)) {
+                addResult(`✅ categorias cargado - ${window.categorias.length} categorías`);
+            } else {
+                addResult('❌ categorias NO cargado', false);
+            }
+            
+            // Test 2: Funciones del app.js
+            if (typeof cargarProductosDesdeAPI === 'function') {
+                addResult('✅ cargarProductosDesdeAPI función disponible');
+            } else {
+                addResult('❌ cargarProductosDesdeAPI función NO disponible', false);
+            }
+            
+            if (typeof renderDestacados === 'function') {
+                addResult('✅ renderDestacados función disponible');
+            } else {
+                addResult('❌ renderDestacados función NO disponible', false);
+            }
+            
+            if (typeof inicializarRegistro === 'function') {
+                addResult('✅ inicializarRegistro función disponible');
+            } else {
+                addResult('❌ inicializarRegistro función NO disponible', false);
+            }
+            
+            // Test 3: API
+            testAPI();
+        }
+
+        async function testAPI() {
+            const API_BASE_URL = 'https://levelupgamer-fullstack-production.up.railway.app/api';
+            
+            try {
+                addResult('Probando conexión API...');
+                const response = await fetch(`${API_BASE_URL}/productos/publicos`);
+                
+                if (response.ok) {
+                    const productos = await response.json();
+                    addResult(`✅ API conectada - ${productos.length} productos obtenidos`);
+                } else {
+                    addResult(`⚠️ API respondió con status ${response.status}`, false);
+                }
+            } catch (error) {
+                addResult(`❌ Error de conexión API: ${error.message}`, false);
+            }
+        }
+
+        // Auto test al cargar
+        setTimeout(testAll, 1000);
+    </script>
+</body>
+</html>

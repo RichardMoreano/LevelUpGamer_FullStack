@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API - Level Up Gamer</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        button { margin: 10px 5px; padding: 10px 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Test API - Level Up Gamer</h1>
+    
+    <h2>Test de Conexión API</h2>
+    <button onclick="testProductos()">Test Productos</button>
+    <button onclick="testRegistro()">Test Registro</button>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testVariablesGlobales()">Test Variables Globales</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const API_BASE_URL = 'https://levelupgamer-fullstack-production.up.railway.app/api';
+
+        function addResult(message, isSuccess = true) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            results.appendChild(div);
+        }
+
+        async function testProductos() {
+            addResult('Iniciando test de productos...');
+            try {
+                const response = await fetch(`${API_BASE_URL}/productos/publicos`);
+                if (response.ok) {
+                    const productos = await response.json();
+                    addResult(`✅ API Productos OK - ${productos.length} productos encontrados`);
+                    console.log('Productos:', productos);
+                } else {
+                    addResult(`❌ API Productos Error: ${response.status} ${response.statusText}`, false);
+                }
+            } catch (error) {
+                addResult(`❌ Error de conexión: ${error.message}`, false);
+            }
+        }
+
+        async function testRegistro() {
+            addResult('Iniciando test de registro...');
+            const usuario = {
+                run: '12345678-9',
+                nombres: 'Test',
+                apellidos: 'Usuario',
+                correo: 'test@gmail.com',
+                fechaNacimiento: '1990-01-01',
+                tipoUsuario: 'cliente',
+                region: 'Región Metropolitana',
+                comuna: 'Santiago',
+                direccion: 'Test 123',
+                password: 'test123',
+                descuentoDuoc: false,
+                puntosLevelUp: 0,
+                codigoReferido: 'TEST123'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/usuarios/registro`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(usuario)
+                });
+
+                if (response.ok) {
+                    const resultado = await response.json();
+                    addResult('✅ API Registro OK');
+                    console.log('Registro:', resultado);
+                } else {
+                    const error = await response.text();
+                    addResult(`⚠️ API Registro Response: ${response.status} - ${error}`);
+                }
+            } catch (error) {
+                addResult(`❌ Error de conexión registro: ${error.message}`, false);
+            }
+        }
+
+        async function testLogin() {
+            addResult('Iniciando test de login...');
+            const credenciales = {
+                correo: 'admin@duoc.cl',
+                password: 'admin123'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/usuarios/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(credenciales)
+                });
+
+                if (response.ok) {
+                    const resultado = await response.json();
+                    addResult('✅ API Login OK');
+                    console.log('Login:', resultado);
+                } else {
+                    const error = await response.text();
+                    addResult(`⚠️ API Login Response: ${response.status} - ${error}`);
+                }
+            } catch (error) {
+                addResult(`❌ Error de conexión login: ${error.message}`, false);
+            }
+        }
+
+        function testVariablesGlobales() {
+            addResult('Verificando variables globales...');
+            
+            if (window.productosBase) {
+                addResult(`✅ window.productosBase OK - ${window.productosBase.length} productos`);
+            } else {
+                addResult('❌ window.productosBase no está definido', false);
+            }
+
+            if (window.regiones) {
+                addResult(`✅ window.regiones OK - ${window.regiones.length} regiones`);
+            } else {
+                addResult('❌ window.regiones no está definido', false);
+            }
+
+            if (window.categorias) {
+                addResult(`✅ window.categorias OK - ${window.categorias.length} categorías`);
+            } else {
+                addResult('❌ window.categorias no está definido', false);
+            }
+        }
+
+        // Test inicial al cargar la página
+        window.addEventListener('load', () => {
+            addResult('Página de test cargada. Presiona los botones para ejecutar tests.');
+        });
+    </script>
+    
+    <!-- Cargar datos igual que en el sitio -->
+    <script src="/LevelUpGamer_FullStack/site/datos.js"></script>
+</body>
+</html>

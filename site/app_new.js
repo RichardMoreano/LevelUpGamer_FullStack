@@ -3,23 +3,8 @@
  * Versión con integración Backend Spring Boot
  */
 
-// Import datos base
-let productosBase = [];
-let regiones = [];
-let categorias = [];
-
-// Cargar datos desde datos.js si está disponible
-if (window.productosBase) productosBase = window.productosBase;
-if (window.regiones) regiones = window.regiones;
-if (window.categorias) categorias = window.categorias;
-
-// =============== CONFIGURACIÓN API ===============
-const API_CONFIG = {
-  BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8080/api/v1'
-    : 'https://levelup-gamer-backend.up.railway.app/api/v1',
-  TIMEOUT: 10000
-};
+import { productosBase, regiones, categorias } from "./datos.js";
+import * as apiService from "../admin-react/src/services/apiService.js";
 
 // =============== CONFIGURACIÓN GLOBAL ===============
 window.levelUpGamer = {
@@ -28,103 +13,6 @@ window.levelUpGamer = {
   carrito: [],
   inicializado: false
 };
-
-// =============== UTILIDADES API ===============
-async function makeApiRequest(endpoint, options = {}) {
-  const url = `${API_CONFIG.BASE_URL}${endpoint}`;
-  const token = localStorage.getItem('authToken');
-  
-  const config = {
-    timeout: API_CONFIG.TIMEOUT,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
-    },
-    ...options
-  };
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), config.timeout);
-
-    const response = await fetch(url, {
-      ...config,
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await response.json();
-    }
-    return await response.text();
-  } catch (error) {
-    console.warn('API request failed:', error.message);
-    return null;
-  }
-}
-
-// =============== FUNCIONES API LOCALES ===============
-async function apiLogin(correo, password) {
-  try {
-    const response = await makeApiRequest('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ correo, password })
-    });
-
-    if (response && response.accessToken) {
-      localStorage.setItem('authToken', response.accessToken);
-      localStorage.setItem('sesion', JSON.stringify({
-        correo: response.usuario.correo,
-        tipo: response.usuario.tipoUsuario
-      }));
-      return response;
-    }
-    return null;
-  } catch (error) {
-    return null;
-  }
-}
-
-async function apiGetCurrentUser() {
-  try {
-    return await makeApiRequest('/usuarios/me');
-  } catch (error) {
-    return null;
-  }
-}
-
-async function apiGetProducts() {
-  try {
-    const response = await makeApiRequest('/productos');
-    return Array.isArray(response) ? response : null;
-  } catch (error) {
-    return null;
-  }
-}
-
-function getLocalStorage(key, defaultValue) {
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : defaultValue;
-  } catch {
-    return defaultValue;
-  }
-}
-
-function setLocalStorage(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.error('Error saving to localStorage:', error);
-  }
-}
 
 // =============== INICIALIZACIÓN ===============
 async function inicializarApp() {
@@ -155,57 +43,31 @@ async function inicializarApp() {
 }
 
 async function cargarUsuarioActual() {
-  // Verificar sesión local primero
-  const sesion = getLocalStorage('sesion', null);
-  if (!sesion) return null;
-
   try {
-    // Intentar obtener usuario de la API
-    const usuario = await apiGetCurrentUser();
-    if (usuario) {
-      window.levelUpGamer.usuario = usuario;
-      return usuario;
-    }
+    const usuario = await apiService.usuarioActual();
+    window.levelUpGamer.usuario = usuario;
+    return usuario;
   } catch (error) {
-    console.warn('Error obteniendo usuario de API, usando localStorage');
+    console.warn('Usuario no autenticado o error de API');
+    return null;
   }
-
-  // Fallback a localStorage
-  const usuarios = getLocalStorage('usuarios', []);
-  const usuario = usuarios.find(u => 
-    u.correo?.toLowerCase() === sesion.correo?.toLowerCase()
-  );
-  
-  window.levelUpGamer.usuario = usuario || null;
-  return usuario;
 }
 
 async function cargarProductos() {
   try {
-    // Intentar obtener productos de la API
-    const productos = await apiGetProducts();
-    if (productos && productos.length > 0) {
-      window.levelUpGamer.productos = productos;
-      return productos;
-    }
+    const productos = await apiService.obtenerProductos();
+    window.levelUpGamer.productos = productos || [];
+    return productos;
   } catch (error) {
-    console.warn('Error cargando productos de API, usando localStorage/datos base');
+    console.warn('Error cargando productos, usando datos base');
+    window.levelUpGamer.productos = productosBase || [];
+    return window.levelUpGamer.productos;
   }
-
-  // Fallback a localStorage o datos base
-  let productos = getLocalStorage('productos', []);
-  if (productos.length === 0 && window.productosBase) {
-    productos = window.productosBase;
-    setLocalStorage('productos', productos);
-  }
-  
-  window.levelUpGamer.productos = productos;
-  return productos;
 }
 
 function inicializarCarrito() {
-  const carrito = getLocalStorage('carrito', []);
-  window.levelUpGamer.carrito = carrito;
+  const carrito = apiService.obtenerCarrito();
+  window.levelUpGamer.carrito = carrito || [];
   actualizarContadorCarrito();
 }
 
@@ -230,8 +92,7 @@ async function esVendedor() {
 // =============== AUTENTICACIÓN ===============
 async function iniciarSesion(correo, password) {
   try {
-    // Intentar login con API
-    const response = await apiLogin(correo, password);
+    const response = await apiService.login(correo, password);
     
     if (response && response.accessToken) {
       window.levelUpGamer.usuario = response.usuario;
@@ -239,23 +100,7 @@ async function iniciarSesion(correo, password) {
       return { success: true, usuario: response.usuario };
     }
     
-    // Fallback a localStorage
-    const usuarios = getLocalStorage('usuarios', []);
-    const usuario = usuarios.find(u => 
-      u.correo?.toLowerCase() === correo.toLowerCase() && u.pass === password
-    );
-
-    if (usuario) {
-      setLocalStorage('sesion', {
-        correo: usuario.correo,
-        tipo: usuario.tipoUsuario
-      });
-      window.levelUpGamer.usuario = usuario;
-      actualizarNavegacion();
-      return { success: true, usuario: usuario };
-    }
-    
-    return { success: false, error: 'Credenciales incorrectas' };
+    throw new Error('Credenciales incorrectas');
     
   } catch (error) {
     console.error('Error en login:', error);
@@ -265,45 +110,22 @@ async function iniciarSesion(correo, password) {
 
 async function registrarUsuario(userData) {
   try {
-    // Intentar registro con API primero
-    const response = await makeApiRequest('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    });
+    const response = await apiService.register(userData);
     
     if (response) {
       return { success: true, usuario: response };
     }
+    
+    throw new Error('Error en el registro');
+    
   } catch (error) {
-    console.warn('API register failed, using localStorage fallback');
+    console.error('Error en registro:', error);
+    return { success: false, error: error.message };
   }
-
-  // Fallback a localStorage
-  const usuarios = getLocalStorage('usuarios', []);
-  
-  // Verificar si ya existe
-  if (usuarios.some(u => u.correo?.toLowerCase() === userData.correo?.toLowerCase())) {
-    return { success: false, error: 'El correo ya está registrado' };
-  }
-
-  const nuevoUsuario = {
-    ...userData,
-    id: Date.now(),
-    fechaRegistro: new Date().toISOString(),
-    tipoUsuario: userData.tipoUsuario || 'cliente'
-  };
-
-  usuarios.push(nuevoUsuario);
-  setLocalStorage('usuarios', usuarios);
-  
-  return { success: true, usuario: nuevoUsuario };
 }
 
 function cerrarSesion() {
-  // Limpiar tokens y sesión
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('sesion');
-  
+  apiService.logout();
   window.levelUpGamer.usuario = null;
   window.levelUpGamer.carrito = [];
   actualizarNavegacion();
@@ -373,7 +195,7 @@ function agregarAlCarrito(codigo, cantidad = 1) {
   }
 
   window.levelUpGamer.carrito = carrito;
-  setLocalStorage('carrito', carrito);
+  apiService.guardarCarrito(carrito);
   actualizarContadorCarrito();
   renderCarrito();
   
@@ -383,7 +205,7 @@ function agregarAlCarrito(codigo, cantidad = 1) {
 function quitarDelCarrito(codigo) {
   const carrito = obtenerCarrito().filter(item => item.codigo !== codigo);
   window.levelUpGamer.carrito = carrito;
-  setLocalStorage('carrito', carrito);
+  apiService.guardarCarrito(carrito);
   actualizarContadorCarrito();
   renderCarrito();
 }
@@ -406,7 +228,7 @@ function cambiarCantidad(codigo, nuevaCantidad) {
     }
     
     window.levelUpGamer.carrito = carrito;
-    setLocalStorage('carrito', carrito);
+    apiService.guardarCarrito(carrito);
     actualizarContadorCarrito();
     renderCarrito();
   }
@@ -414,7 +236,7 @@ function cambiarCantidad(codigo, nuevaCantidad) {
 
 function limpiarCarrito() {
   window.levelUpGamer.carrito = [];
-  localStorage.removeItem('carrito');
+  apiService.limpiarCarrito();
   actualizarContadorCarrito();
   renderCarrito();
 }
@@ -692,30 +514,7 @@ async function procesarPago() {
       total: calcularTotal()
     };
 
-    let response;
-    
-    try {
-      // Intentar crear pedido en API
-      response = await makeApiRequest('/pedidos', {
-        method: 'POST',
-        body: JSON.stringify(pedidoData)
-      });
-    } catch (error) {
-      console.warn('API create pedido failed, using localStorage fallback');
-    }
-
-    // Fallback a localStorage si API no funciona
-    if (!response) {
-      const pedidos = getLocalStorage('pedidos', []);
-      response = {
-        id: 'PED-' + Date.now(),
-        fecha: new Date().toISOString(),
-        estado: 'pendiente',
-        ...pedidoData
-      };
-      pedidos.push(response);
-      setLocalStorage('pedidos', pedidos);
-    }
+    const response = await apiService.crearPedido(pedidoData);
     
     if (response) {
       limpiarCarrito();
