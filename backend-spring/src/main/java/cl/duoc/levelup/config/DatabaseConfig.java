@@ -28,13 +28,28 @@ public class DatabaseConfig {
         System.out.println("Railway DATABASE_URL found: " + databaseUrl);
         
         try {
-            // Simple regex replacement for Railway URL
+            // Parse Railway PostgreSQL URL
             if (databaseUrl.startsWith("postgresql://")) {
-                String jdbcUrl = databaseUrl.replace("postgresql://", "jdbc:postgresql://");
-                System.out.println("Converted to JDBC URL: " + jdbcUrl);
+                // Extract components from postgresql://user:pass@host:port/db
+                String withoutProtocol = databaseUrl.substring("postgresql://".length());
+                String[] userHostSplit = withoutProtocol.split("@");
+                String[] userPassSplit = userHostSplit[0].split(":");
+                
+                String username = userPassSplit[0];
+                String password = userPassSplit[1];
+                String hostPortDb = userHostSplit[1];
+                
+                String jdbcUrl = "jdbc:postgresql://" + hostPortDb;
+                
+                System.out.println("Parsed components:");
+                System.out.println("- Username: " + username);
+                System.out.println("- Password: [HIDDEN]");
+                System.out.println("- JDBC URL: " + jdbcUrl);
                 
                 return DataSourceBuilder.create()
                         .url(jdbcUrl)
+                        .username(username)
+                        .password(password)
                         .driverClassName("org.postgresql.Driver")
                         .build();
             }
@@ -46,7 +61,8 @@ public class DatabaseConfig {
                     .build();
                     
         } catch (Exception e) {
-            System.err.println("Error configuring database: " + e.getMessage());
+            System.err.println("Error parsing DATABASE_URL: " + e.getMessage());
+            System.err.println("DATABASE_URL was: " + databaseUrl);
             e.printStackTrace();
             throw new RuntimeException("Failed to configure database", e);
         }
