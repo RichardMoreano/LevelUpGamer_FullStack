@@ -14,11 +14,24 @@ if (window.regiones) regiones = window.regiones;
 if (window.categorias) categorias = window.categorias;
 
 // =============== CONFIGURACIÓN API ===============
+const POSSIBLE_RAILWAY_URLS = [
+  'https://levelupgamer-fullstack-production.up.railway.app',
+  'https://web-production.up.railway.app',
+  'https://levelup-gamer-backend.up.railway.app',
+  'https://proyecto-semestral-full-stack-2.up.railway.app',
+  'https://levelupgamer-fullstack-production-4f72a309.up.railway.app',
+  'https://web-production-4f72.up.railway.app',
+  'https://web-production-3fc2.up.railway.app'
+];
+
+let DETECTED_RAILWAY_URL = null;
+
 const API_CONFIG = {
   BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8080/api/v1'
-    : 'https://web-production-3fc2.up.railway.app/api/v1', // URL Railway actualizada
-  TIMEOUT: 30000 // Aumentar timeout para Railway
+    : null, // Se detecta automáticamente
+  TIMEOUT: 30000,
+  HEALTH_CHECK: null
 };
 
 // =============== CONFIGURACIÓN GLOBAL ===============
@@ -29,10 +42,61 @@ window.levelUpGamer = {
   inicializado: false
 };
 
+// =============== DETECCIÓN AUTOMÁTICA DE RAILWAY URL ===============
+async function detectRailwayURL() {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    API_CONFIG.BASE_URL = 'http://localhost:8080/api/v1';
+    return 'http://localhost:8080';
+  }
+
+  console.log('🔍 Detectando URL de Railway...');
+  mostrarMensaje('🔍 Conectando con el backend...', 'info');
+
+  for (const baseUrl of POSSIBLE_RAILWAY_URLS) {
+    try {
+      console.log(`Probando: ${baseUrl}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const response = await fetch(`${baseUrl}/health`, { 
+        method: 'GET',
+        signal: controller.signal,
+        mode: 'cors',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const data = await response.json();
+        DETECTED_RAILWAY_URL = baseUrl;
+        API_CONFIG.BASE_URL = `${baseUrl}/api/v1`;
+        API_CONFIG.HEALTH_CHECK = baseUrl;
+        
+        console.log('✅ Railway URL detectada:', baseUrl);
+        console.log('📊 Health check:', data);
+        mostrarMensaje(`✅ Backend conectado: ${baseUrl}`, 'success');
+        
+        return baseUrl;
+      }
+    } catch (error) {
+      console.log(`❌ ${baseUrl}: ${error.message}`);
+    }
+  }
+  
+  console.error('🚨 No se pudo detectar la URL de Railway');
+  mostrarMensaje('❌ No se pudo conectar al backend. Usando datos locales.', 'warning');
+  
+  // Fallback: usar datos locales
+  API_CONFIG.BASE_URL = null;
+  return null;
+}
+
 // =============== UTILIDADES API ===============
 async function makeApiRequest(endpoint, options = {}) {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`;
-  const token = localStorage.getItem('authToken');
+  const token = window.levelUpGamer?.usuario?.token;
   
   const config = {
     timeout: API_CONFIG.TIMEOUT,
@@ -133,7 +197,11 @@ async function inicializarApp() {
   console.log('🎮 Inicializando Level-Up Gamer...');
   
   try {
-    // Cargar datos iniciales
+    // 1. Detectar URL de Railway automáticamente
+    console.log('🔍 Detectando backend Railway...');
+    await detectRailwayURL();
+    
+    // 2. Cargar datos iniciales
     await Promise.all([
       cargarUsuarioActual(),
       cargarProductos(),
