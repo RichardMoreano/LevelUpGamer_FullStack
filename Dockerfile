@@ -16,7 +16,7 @@ RUN mvn clean package -DskipTests
 EXPOSE 8080
 
 # Set environment variables for Railway
-ENV SPRING_PROFILES_ACTIVE=railway
+ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_OPTS="-Xmx512m -Xms256m -Djava.security.egd=file:/dev/./urandom"
 
 # Create a non-root user
