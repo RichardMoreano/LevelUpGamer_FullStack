@@ -93,13 +93,31 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: frontend-dist
-        path: ./dist
+        path: ./admin-panel
+    
+    - name: Prepare Full Site for Deployment
+      run: |
+        # Copiar todo el sitio
+        mkdir -p ./deploy
+        cp -r cliente ./deploy/
+        cp -r admin-panel ./deploy/
+        cp -r css ./deploy/
+        cp -r img ./deploy/
+        cp -r site ./deploy/
+        cp vite.svg ./deploy/
+        # Crear el index.html que redirige directo al cliente
+        echo '<!DOCTYPE html>
+        <html><head><meta charset="UTF-8">
+        <script>window.location.href="cliente/";</script>
+        </head><body>Redirecting...</body></html>' > ./deploy/index.html
+        # Crear .nojekyll para GitHub Pages
+        touch ./deploy/.nojekyll
     
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
+        publish_dir: ./deploy
 
   # Job 4: Deploy Backend to Railway (opcional)
   deploy-backend:
