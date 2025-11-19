@@ -4,11 +4,13 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+  main:
+    lazy-initialization: false
 
 server:
   port: ${PORT:8080}
 
 logging:
   level:
-    root: INFO
+    root: WARN
     '[cl.duoc.levelup]': INFO

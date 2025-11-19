@@ -6,19 +6,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 @Configuration
 public class DatabaseConfig {
 
     @Bean
     @Primary
-    public DataSource dataSource() throws URISyntaxException {
+    public DataSource dataSource() {
         String databaseUrl = System.getenv("DATABASE_URL");
         
-        if (databaseUrl == null) {
-            // Fallback for local development
+        if (databaseUrl == null || databaseUrl.isEmpty()) {
+            System.out.println("DATABASE_URL not found, using MySQL for local development");
             return DataSourceBuilder.create()
                     .url("jdbc:mysql://localhost:3306/levelup_gamer?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC")
                     .username("root")
@@ -27,22 +25,30 @@ public class DatabaseConfig {
                     .build();
         }
 
-        System.out.println("DATABASE_URL found: " + databaseUrl);
+        System.out.println("Railway DATABASE_URL found: " + databaseUrl);
         
-        // Parse Railway PostgreSQL URL
-        URI dbUri = new URI(databaseUrl);
-        String username = dbUri.getUserInfo().split(":")[0];
-        String password = dbUri.getUserInfo().split(":")[1];
-        String jdbcUrl = "jdbc:postgresql://" + dbUri.getHost() + ":" + dbUri.getPort() + dbUri.getPath();
-        
-        System.out.println("Parsed JDBC URL: " + jdbcUrl);
-        System.out.println("Username: " + username);
-        
-        return DataSourceBuilder.create()
-                .url(jdbcUrl)
-                .username(username)
-                .password(password)
-                .driverClassName("org.postgresql.Driver")
-                .build();
+        try {
+            // Simple regex replacement for Railway URL
+            if (databaseUrl.startsWith("postgresql://")) {
+                String jdbcUrl = databaseUrl.replace("postgresql://", "jdbc:postgresql://");
+                System.out.println("Converted to JDBC URL: " + jdbcUrl);
+                
+                return DataSourceBuilder.create()
+                        .url(jdbcUrl)
+                        .driverClassName("org.postgresql.Driver")
+                        .build();
+            }
+            
+            // If already JDBC format, use as-is
+            return DataSourceBuilder.create()
+                    .url(databaseUrl)
+                    .driverClassName("org.postgresql.Driver")
+                    .build();
+                    
+        } catch (Exception e) {
+            System.err.println("Error configuring database: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to configure database", e);
+        }
     }
 }
