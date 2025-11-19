@@ -17,7 +17,7 @@ if (window.categorias) categorias = window.categorias;
 const API_CONFIG = {
   BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8080/api/v1'
-    : 'https://levelupgamer-fullstack-production.up.railway.app/api/v1',
+    : 'https://web-production-3fc2.up.railway.app/api/v1', // URL Railway actualizada
   TIMEOUT: 30000 // Aumentar timeout para Railway
 };
 
