@@ -790,6 +790,12 @@ function norm(texto) {
 }
 
 function mostrarMensaje(mensaje, tipo = "info") {
+  // Verificar que el DOM esté listo
+  if (!document.body) {
+    console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
+    return;
+  }
+
   // Crear o reutilizar contenedor de mensajes
   let contenedor = document.getElementById("mensajes-sistema");
   if (!contenedor) {
