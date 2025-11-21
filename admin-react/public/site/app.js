@@ -1,6 +1,122 @@
 // =============== CONFIGURACIÓN ===============
-// Usando JSONPlaceholder como backend temporal funcional
-const API_BASE_URL = 'https://jsonplaceholder.typicode.com';
+const API_BASE_URL = 'http://localhost:8080/api';
+
+// =============== CACHE GLOBAL DE PRODUCTOS ===============
+let productosCache = null;
+
+// =============== DATOS ESTÁTICOS ===============
+const REGIONES_COMUNAS = {
+  "Metropolitana": [
+    "Santiago", "Las Condes", "Providencia", "Ñuñoa", "La Florida", "Maipú", 
+    "Puente Alto", "Peñalolén", "La Reina", "Vitacura", "Lo Barnechea", 
+    "Macul", "San Miguel", "Quinta Normal", "Estación Central"
+  ],
+  "Valparaíso": [
+    "Valparaíso", "Viña del Mar", "Quilpué", "Villa Alemana", "Concón", 
+    "Casablanca", "San Antonio", "Cartagena", "El Quisco", "Algarrobo"
+  ],
+  "Biobío": [
+    "Concepción", "Talcahuano", "Chillán", "Los Ángeles", "Coronel", 
+    "San Pedro de la Paz", "Hualpén", "Tomé", "Penco", "Lota"
+  ],
+  "La Araucanía": [
+    "Temuco", "Padre Las Casas", "Villarrica", "Pucón", "Angol", 
+    "Victoria", "Nueva Imperial", "Lautaro", "Pitrufquén", "Carahue"
+  ],
+  "Los Lagos": [
+    "Puerto Montt", "Osorno", "Castro", "Puerto Varas", "Ancud", 
+    "Calbuco", "Frutillar", "Los Muermos", "Maullín", "Llanquihue"
+  ],
+  "Antofagasta": [
+    "Antofagasta", "Calama", "Tocopilla", "Mejillones", "San Pedro de Atacama", 
+    "Taltal", "Sierra Gorda", "María Elena", "Ollagüe"
+  ],
+  "Atacama": [
+    "Copiapó", "Vallenar", "Chañaral", "Diego de Almagro", "Caldera", 
+    "Tierra Amarilla", "Alto del Carmen", "Freirina", "Huasco"
+  ],
+  "Coquimbo": [
+    "La Serena", "Coquimbo", "Ovalle", "Illapel", "Vicuña", "Combarbalá", 
+    "Los Vilos", "Andacollo", "Monte Patria", "Punitaqui"
+  ]
+};
+
+const CATEGORIAS_PRODUCTOS = [
+  "Juegos de Mesa",
+  "Accesorios",
+  "Consolas",
+  "Computadores Gamers",
+  "Sillas Gamers",
+  "Mouse",
+  "Mousepad",
+  "Poleras Personalizadas",
+  "Polerones Gamers Personalizados",
+  "Servivio técnico"
+];
+
+
+// =============== GESTIÓN DE USUARIOS ===============
+function crearUsuariosPrueba() {
+  const usuariosIniciales = [
+    {
+      run: "12345678-9",
+      nombres: "Administrador",
+      apellidos: "Sistema",
+      correo: "admin@levelup.cl",
+      pass: "admin123",
+      tipoUsuario: "admin",
+      region: "Metropolitana",
+      comuna: "Santiago",
+      direccion: "Av. Principal 123",
+      fechaNacimiento: "1985-01-01",
+      descuentoDuoc: false,
+      puntosLevelUp: 0,
+      codigoReferido: "ADMIN001",
+      compras: []
+    },
+    {
+      run: "33333333-3",
+      nombres: "Richard",
+      apellidos: "Moreano",
+      correo: "richard@duoc.cl",
+      pass: "admin",
+      tipoUsuario: "admin",
+      region: "Metropolitana",
+      comuna: "Santiago",
+      direccion: "Campus Duoc UC",
+      fechaNacimiento: "1990-01-01",
+      descuentoDuoc: true,
+      puntosLevelUp: 0,
+      codigoReferido: "RICH001",
+      compras: []
+    },
+    {
+      run: "98765432-1",
+      nombres: "Juan Carlos",
+      apellidos: "Vendedor",
+      correo: "vendedor@levelup.cl",
+      pass: "vendedor123",
+      tipoUsuario: "vendedor",
+      region: "Metropolitana",
+      comuna: "Las Condes",
+      direccion: "Av. Apoquindo 456",
+      fechaNacimiento: "1988-03-15",
+      descuentoDuoc: false,
+      puntosLevelUp: 0,
+      codigoReferido: "VEND001",
+      compras: []
+    }
+  ];
+  
+  console.log("⚠️ FUNCIÓN OBSOLETA: Los usuarios están en la base de datos del backend");
+  console.log("� Usuarios disponibles para login:");
+  console.log("  • admin@levelup.cl / admin123");
+  console.log("  • richard@duoc.cl / admin");  
+  console.log("  • vendedor@levelup.cl / vendedor123");
+  
+  // NO guardamos usuarios en localStorage - solo usamos la API
+  return usuariosIniciales;
+}
 
 // =============== UTILIDADES ===============
 function obtener(key, defecto) {
@@ -15,566 +131,2134 @@ function guardar(key, valor) {
   localStorage.setItem(key, JSON.stringify(valor));
 }
 
-function usuarioActual() { 
-  return obtener("sesionActual", null); 
-}
-
-function formatoPrecio(precio) {
-  return new Intl.NumberFormat('es-CL', { 
-    style: 'currency', 
-    currency: 'CLP' 
-  }).format(precio);
-}
-
-function norm(texto) {
-  return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-// =============== API FUNCTIONS ===============
-async function cargarProductosDesdeAPI() {
-  try {
-    console.log('Cargando productos desde API...');
-    const response = await fetch(`${API_BASE_URL}/productos/publicos`);
-    if (response.ok) {
-      const productos = await response.json();
-      console.log('Productos cargados desde API:', productos);
-      guardar("productos", productos);
-      return productos;
-    } else {
-      console.warn('Error al cargar productos desde API, usando datos locales');
-      return obtener("productos", window.productosBase || []);
+function eliminarUsuarioFantasma() {
+  console.log('🧹🧹🧹 LIMPIEZA TOTAL DE USUARIOS FANTASMA 🧹🧹🧹');
+  
+  // Obtener TODAS las keys antes de empezar
+  const todasLasKeys = [...Object.keys(localStorage), ...Object.keys(sessionStorage)];
+  console.log('🔍 Keys encontradas:', todasLasKeys);
+  
+  let eliminados = 0;
+  
+  // Lista COMPLETA de keys prohibidas (EXCLUIMOS 'usuario' porque es la key correcta para datos de usuario)
+  const keysProhibidas = [
+    'usuarioActual', 'currentUser', 'user', 'session', 'login',
+    'userData', 'authData', 'sessionData', 'logged', 'isLogged', 'auth',
+    'loggedIn', 'userInfo', 'profile', 'account', 'clientData', 'userSession'
+  ];
+  
+  // Eliminar keys prohibidas específicas
+  keysProhibidas.forEach(key => {
+    if (localStorage.getItem(key) !== null) {
+      localStorage.removeItem(key);
+      eliminados++;
+      console.log(`❌ localStorage eliminado: ${key}`);
     }
-  } catch (error) {
-    console.warn('Error de conexión con API, usando datos locales:', error);
-    return obtener("productos", window.productosBase || []);
+    if (sessionStorage.getItem(key) !== null) {
+      sessionStorage.removeItem(key);
+      eliminados++;
+      console.log(`❌ sessionStorage eliminado: ${key}`);
+    }
+  });
+  
+  // NO verificar contenido de keys permitidas de localStorage - solo eliminar keys no permitidas que NO sean sospechosas
+  [...Object.keys(localStorage)].forEach(key => {
+    // Solo preservar keys legítimas: 'carrito', 'jwt_token', 'token', 'refreshToken', 'usuario'
+    const keysPermitidas = ['carrito', 'jwt_token', 'token', 'refreshToken', 'usuario'];
+    if (!keysPermitidas.includes(key)) {
+      // Solo eliminar si el nombre de la key es obviamente sospechoso
+      if (key.includes('user') || key.includes('auth') || key.includes('login') || key.includes('session')) {
+        localStorage.removeItem(key);
+        eliminados++;
+        console.log(`❌ Key con nombre sospechoso eliminada: ${key}`);
+      }
+    }
+  });
+  
+  // Limpiar sessionStorage completamente (excepto keys permitidas)
+  [...Object.keys(sessionStorage)].forEach(key => {
+    const keysPermitidas = ['carrito', 'jwt_token', 'token', 'refreshToken', 'usuario'];
+    if (!keysPermitidas.includes(key)) {
+      sessionStorage.removeItem(key);
+      eliminados++;
+      console.log(`❌ SessionStorage eliminado: ${key}`);
+    }
+  });
+  
+  // Estado final
+  const finales = [...Object.keys(localStorage), ...Object.keys(sessionStorage)];
+  console.log('📋 Keys restantes:', finales);
+  
+  if (eliminados > 0) {
+    console.log(`🧹 ${eliminados} usuarios fantasma ELIMINADOS TOTALMENTE`);
+  } else {
+    console.log('✅ No se encontraron usuarios fantasma esta vez');
   }
 }
 
-async function registrarUsuario(userData) {
+function usuarioActual() {
+  // PRIMERO: Eliminar cualquier usuario fantasma antes de verificar sesión
+  eliminarUsuarioFantasma();
+  
+  // Solo verificar si hay token JWT válido del backend
+  const token = localStorage.getItem('jwt_token');
+  
+  console.log('👤 Verificando sesión JWT:', { token: !!token });
+  
+  if (!token) {
+    console.log('❌ No hay sesión JWT activa - sin usuario logueado');
+    // Doble verificación - si no hay token, NO DEBE HABER USUARIO
+    console.log('🔍 Verificación final: NO hay usuario logueado');
+    return null;
+  }
+
   try {
-    // Simulando registro exitoso con JSONPlaceholder
-    const response = await fetch(`${API_BASE_URL}/posts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        title: 'Usuario Registrado',
-        body: `Registro de ${userData.nombres} ${userData.apellidos}`,
-        userId: Math.floor(Math.random() * 100)
-      })
-    });
+    // Decodificar JWT para obtener datos de sesión
+    const payload = JSON.parse(atob(token.split('.')[1]));
     
-    if (response.ok) {
-      const result = await response.json();
-      // Simular respuesta exitosa
-      return { 
-        success: true, 
-        data: {
-          message: "¡Registro exitoso! Backend temporal funcionando.",
-          usuario: {
-            run: userData.run,
-            nombres: userData.nombres,
-            apellidos: userData.apellidos,
-            correo: userData.correo,
-            tipoUsuario: "cliente"
-          }
-        }
-      };
-    } else {
-      const error = await response.text();
-      return { success: false, error };
+    // Verificar que no esté expirado
+    if (payload.exp * 1000 < Date.now()) {
+      console.log('❌ Token JWT expirado');
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('usuario');
+      return null;
     }
+    
+    // Obtener datos completos del usuario desde localStorage
+    const usuarioGuardado = localStorage.getItem('usuario');
+    console.log('🔍 DEBUG: usuarioGuardado en localStorage:', usuarioGuardado);
+    
+    if (usuarioGuardado) {
+      try {
+        const datosUsuario = JSON.parse(usuarioGuardado);
+        console.log('✅ Sesión JWT válida con datos completos:', datosUsuario);
+        
+        // Verificar que los datos sean válidos
+        if (datosUsuario && datosUsuario.nombres && datosUsuario.correo) {
+          return datosUsuario;
+        } else {
+          console.log('⚠️ Datos de usuario incompletos en localStorage');
+        }
+      } catch (e) {
+        console.log('⚠️ Error parsing usuario guardado:', e);
+      }
+    }
+    
+    // Fallback: usar datos del JWT si no hay usuario guardado - CORREGIDO
+    console.log('⚠️ FALLBACK: No hay datos válidos de usuario en localStorage');
+    console.log('🔍 Payload del JWT:', payload);
+    
+    // El JWT contiene el RUN en 'sub', no el correo, así que no usamos fallback
+    console.log('❌ No se puede usar JWT como fallback - faltan datos del usuario');
+    
+    // Limpiar todo y forzar re-login
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('usuario');
+    
+    return null;
   } catch (error) {
-    return { success: false, error: error.message };
+    console.error('❌ Error validando JWT:', error);
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('usuario');
+    return null;
   }
 }
 
-async function loginUsuario(credentials) {
-  try {
-    // Simulando login exitoso con JSONPlaceholder
-    const response = await fetch(`${API_BASE_URL}/posts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        title: 'Login Usuario',
-        body: `Login de ${credentials.correo}`,
-        userId: Math.floor(Math.random() * 100)
-      })
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      // Simular respuesta exitosa
-      const usuario = {
-        correo: credentials.correo,
-        nombres: "Usuario Temporal",
-        apellidos: "Backend Funcional",
-        tipoUsuario: "cliente"
-      };
-      
-      guardar("sesionActual", usuario);
-      guardar("token", "temp-jwt-token-123");
-      
-      return { 
-        success: true, 
-        data: {
-          message: "¡Login exitoso! Backend temporal funcionando.",
-          token: "temp-jwt-token-123",
-          usuario: usuario
-        }
-      };
-    } else {
-      const error = await response.text();
-      return { success: false, error };
+// =============== FUNCIONES JWT ===============
+
+// Usar el sistema de login original del usuario (sin JWT backend)
+function loginUsuario(correo, password) {
+  return new Promise((resolve, reject) => {
+    // Validaciones básicas
+    if (!correo || !password) {
+      reject(new Error('Correo y contraseña son requeridos'));
+      return;
     }
-  } catch (error) {
-    return { success: false, error: error.message };
+    
+    if (password.length < 4 || password.length > 10) {
+      reject(new Error('Contraseña debe tener entre 6 y 10 caracteres'));
+      return;
+    }
+    
+    const usuarios = obtener("usuarios", []);
+    const usuario = usuarios.find(u => u.correo?.toLowerCase() === correo.toLowerCase());
+    
+    if (!usuario) {
+      reject(new Error('Usuario no encontrado'));
+      return;
+    }
+    
+    if (usuario.pass !== password) {
+      reject(new Error('Contraseña incorrecta'));
+      return;
+    }
+    
+    // NO GUARDAR SESIÓN - Solo usar JWT del backend
+    
+    resolve({
+      usuario: usuario,
+      message: `¡Bienvenido/a, ${usuario.nombres || 'Usuario'}!`
+    });
+  });
+}
+
+function cerrarSesion() {
+  console.log('🔐 Cerrando sesión JWT...');
+  
+  // Limpiar TODAS las claves de autenticación
+  localStorage.removeItem('jwt_token');
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('usuario');
+  localStorage.removeItem('sesion');
+  localStorage.removeItem('sesionActual');
+  
+  console.log('✅ Sesión cerrada correctamente - localStorage limpiado');
+  
+  // Actualizar navegación inmediatamente
+  actualizarNavegacion();
+  
+  // Forzar recarga completa para limpiar todo el estado en memoria
+  console.log('🔄 Recargando página para limpiar estado...');
+  window.location.reload();
+}
+
+// =============== NAVEGACIÓN ===============
+function actualizarNavegacion() {
+  // LIMPIEZA ADICIONAL en cada actualización de navegación
+  eliminarUsuarioFantasma();
+  
+  const u = usuarioActual();
+  
+  // DEBUG: Ver el tipo de usuario
+  console.log("🔍 DEBUG actualizarNavegacion - Usuario:", u);
+  if (u) {
+    console.log("🔍 DEBUG tipoUsuario:", u.tipoUsuario);
   }
+  
+  // Enlaces de navegación
+  const linkRegistro = document.getElementById("linkRegistro");
+  const linkLogin = document.getElementById("linkLogin");
+  const linkSalir = document.getElementById("linkSalir");
+  const linkAdmin = document.getElementById("linkAdmin");
+  const linkVendedor = document.getElementById("linkVendedor");
+  const linkMiCuenta = document.getElementById("linkMiCuenta");
+  const btnPerfilDesk = document.getElementById("btnPerfilDesk");
+
+  if (linkRegistro) linkRegistro.classList.toggle("oculto", !!u);
+  if (linkLogin) linkLogin.classList.toggle("oculto", !!u);
+  if (linkSalir) linkSalir.classList.toggle("oculto", !u);
+
+  // Normalizar el tipo de usuario y soportar formatos como 'ROLE_ADMIN', 'Admin', 'admin'
+  const tipo = (u && u.tipoUsuario) ? String(u.tipoUsuario).toLowerCase() : '';
+  const esAdmin = tipo.includes('admin');
+  const esVendedor = tipo.includes('vendedor') || tipo.includes('seller');
+
+  if (linkAdmin) linkAdmin.classList.toggle('oculto', !(u && esAdmin));
+  if (linkVendedor) linkVendedor.classList.toggle('oculto', !(u && esVendedor));
+
+  if (linkMiCuenta) linkMiCuenta.classList.toggle("oculto", !u);
+  if (btnPerfilDesk) btnPerfilDesk.classList.toggle("oculto", !u);
+
+  actualizarContadorCarrito();
 }
 
 // =============== CARRITO ===============
-function obtenerCarrito() {
-  return obtener("carrito", []);
+function obtenerCarrito() { 
+  return obtener("carrito", []); 
 }
 
-function guardarCarrito(carrito) {
-  guardar("carrito", carrito);
+function guardarCarrito(c) { 
+  guardar("carrito", c); 
+  actualizarContadorCarrito(); 
+  renderCarrito(); 
 }
 
-function agregarAlCarrito(codigo) {
-  console.log("Agregando producto al carrito:", codigo);
-  const productos = obtener("productos", []);
-  const producto = productos.find(p => p.codigo === codigo);
-  if (!producto) {
-    console.error("Producto no encontrado:", codigo);
-    alert("Producto no encontrado");
+async function agregarAlCarrito(codigo, cantidad = 1) {
+  console.log('🛒 Agregando al carrito:', { codigo, cantidad });
+  
+  // Asegurar que tenemos productos del backend
+  let productos = productosCache;
+  if (!productos || productos.length === 0) {
+    console.log('🔄 Cargando productos para agregar al carrito...');
+    productos = await obtenerProductos();
+    productosCache = productos;
+  }
+  
+  const prod = productos.find(p => p.codigo === codigo);
+  if (!prod) {
+    console.log('❌ Producto no encontrado:', codigo);
+    mostrarDialogoStock("Producto no encontrado", "Error");
+    return;
+  }
+
+  console.log('📦 Producto encontrado:', prod);
+
+  const stock = Number(prod.stock) || 0;
+  if (stock <= 0) {
+    mostrarDialogoStock("Sin stock disponible", "Stock");
     return;
   }
 
   const carrito = obtenerCarrito();
-  const item = carrito.find(i => i.codigo === codigo);
-  
-  if (item) {
-    item.cantidad++;
+  const idx = carrito.findIndex(it => it.codigo === codigo);
+  const enCarrito = idx >= 0 ? (Number(carrito[idx].cantidad) || 0) : 0;
+
+  const restante = stock - enCarrito;
+  if (restante <= 0) {
+    mostrarDialogoStock("Alcanzaste el máximo según stock disponible para este producto.", "Stock");
+    return;
+  }
+
+  const aAgregar = Math.min(Number(cantidad) || 1, restante);
+
+  if (idx >= 0) carrito[idx].cantidad = enCarrito + aAgregar;
+  else carrito.push({ codigo, cantidad: aAgregar });
+
+  console.log('🛒 Carrito actualizado:', carrito);
+  guardarCarrito(carrito);
+
+  if ((Number(cantidad) || 1) > aAgregar) {
+    mostrarDialogoStock(`Solo quedaban ${restante} unidad(es) disponibles. Se ajustó la cantidad en el carrito.`, "Stock");
   } else {
-    carrito.push({ ...producto, cantidad: 1 });
+    console.log('✅ Producto agregado exitosamente al carrito');
+  }
+}
+
+function quitarDelCarrito(codigo) {
+  guardarCarrito(obtenerCarrito().filter(it => it.codigo !== codigo));
+}
+
+async function cambiarCantidad(codigo, nuevaCant) {
+  console.log('🔄 Cambiando cantidad:', { codigo, nuevaCant });
+  
+  // Asegurar que tenemos productos del backend
+  let productos = productosCache;
+  if (!productos || productos.length === 0) {
+    productos = await obtenerProductos();
+    productosCache = productos;
   }
   
-  guardarCarrito(carrito);
-  actualizarContadorCarrito();
-  alert(`${producto.nombre} agregado al carrito`);
+  const prod = productos.find(p => p.codigo === codigo);
+  if (!prod) return;
+
+  const stock = Number(prod.stock) || 0;
+
+  const c = obtenerCarrito();
+  const i = c.findIndex(it => it.codigo === codigo);
+  if (i >= 0) {
+    let cant = Math.max(1, parseInt(nuevaCant || "1", 10));
+    if (cant > stock) {
+      cant = stock;
+      mostrarDialogoStock(`La cantidad supera el stock disponible (${stock}). Se ajustó automáticamente.`, "Stock");
+    }
+    c[i].cantidad = cant;
+  }
+  guardarCarrito(c);
 }
 
 function actualizarContadorCarrito() {
-  const carrito = obtenerCarrito();
-  const total = carrito.reduce((sum, item) => sum + item.cantidad, 0);
-  const contador = document.getElementById("contadorCarrito");
-  if (contador) {
-    contador.textContent = total;
-  }
+  const total = obtenerCarrito().reduce((sum, it) => sum + (Number(it.cantidad) || 0), 0);
+  const el = document.getElementById("contadorCarrito");
+  if (el) el.textContent = total;
 }
 
-// =============== PRODUCTOS DESTACADOS ===============
-async function renderDestacados() {
-  const cont = document.getElementById("gridDestacados");
+async function renderCarrito() {
+  const cont = document.getElementById("listaCarrito");
   if (!cont) return;
+  
+  console.log('🛒 Renderizando carrito...');
+  
+  const carrito = obtenerCarrito();
+  console.log('🛒 Items en carrito:', carrito);
+  
+  if (carrito.length === 0) {
+    cont.innerHTML = '<p class="carrito-vacio">El carrito está vacío</p>';
+    const totalEl = document.getElementById("totalCarrito");
+    if (totalEl) totalEl.textContent = formatoPrecio(0);
+    return;
+  }
+  
+  // Asegurarnos de tener productos desde el backend
+  let productos = productosCache;
+  if (!productos || productos.length === 0) {
+    console.log('🔄 Cargando productos para carrito...');
+    productos = await obtenerProductos();
+    productosCache = productos;
+  }
+  
+  console.log('📦 Productos disponibles:', productos.length);
+  
+  let total = 0, totalSinDesc = 0;
+  
+  const itemsHTML = carrito.map(it => {
+    const p = productos.find(x => x.codigo === it.codigo);
+    if (!p) {
+      console.log('⚠️ Producto no encontrado:', it.codigo);
+      return `<div class="item-carrito">
+        <div><strong>Producto no disponible</strong><br><small>${it.codigo}</small></div>
+        <div>—</div>
+        <div>
+          <button class="btn peligro" onclick="quitarDelCarrito('${it.codigo}')">Eliminar</button>
+        </div>
+      </div>`;
+    }
+    
+    const precio = precioConDescuento(p.precio);
+    total += precio * it.cantidad;
+    totalSinDesc += p.precio * it.cantidad;
+    
+    const stockDisp = Number(p.stock) || 0;
+    
+    console.log('🛒 Item:', { codigo: it.codigo, nombre: p.nombre, cantidad: it.cantidad, precio, stock: stockDisp });
+    
+    return `<div class="item-carrito">
+      <div><strong>${p.nombre}</strong><br><small>${p.codigo}</small></div>
+      <div>${formatoPrecio(precio)}</div>
+      <div>
+        <input type="number" min="1" max="${stockDisp}" value="${Math.min(it.cantidad, stockDisp)}"
+              onchange="cambiarCantidad('${p.codigo}', this.value)">
+        <button class="btn secundario" onclick="quitarDelCarrito('${p.codigo}')">Quitar</button>
+        ${stockDisp <= (p.stockCritico ?? -1) ? '<small class="stock-critico">⚠ Bajo stock</small>' : ''}
+      </div>
+    </div>`;
+  });
+  
+  cont.innerHTML = itemsHTML.join("");
+  
+  console.log('💰 Total calculado:', total, 'Total sin descuento:', totalSinDesc);
 
-  cont.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando productos...</div>';
+  const u = usuarioActual();
+  if (document.getElementById("textoDescuento")) {
+    const hayDuoc = !!(u && u.correo?.toLowerCase().endsWith("@duoc.cl"));
+    document.getElementById("textoDescuento").classList.toggle("oculto", !(hayDuoc && totalSinDesc > total));
+    if (hayDuoc) document.getElementById("montoDescuento").textContent = "- " + formatoPrecio(totalSinDesc - total);
+  }
+  
+  const totalEl = document.getElementById("totalCarrito");
+  if (totalEl) totalEl.textContent = formatoPrecio(total);
+  
+  console.log('✅ Carrito renderizado correctamente');
+}
+
+// =============== FUNCIONES HELPER PARA CARRITO ===============
+function formatoPrecio(num) {
+  return num.toLocaleString("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+}
+
+function precioConDescuento(precio) {
+  const u = usuarioActual();
+  const esDuoc = !!(u && u.correo?.toLowerCase().endsWith("@duoc.cl"));
+  return esDuoc ? Math.round(precio * 0.8) : precio; // 20% descuento Duoc
+}
+
+function mostrarDialogoStock(mensaje, titulo = "Aviso") {
+  let dlg = document.getElementById("dlgAvisoStock");
+  // Si la página no lo tiene, lo creamos dinámicamente
+  if (!dlg) {
+    dlg = document.createElement("dialog");
+    dlg.id = "dlgAvisoStock";
+    dlg.className = "modal";
+    dlg.innerHTML = `
+      <form method="dialog" class="formulario" style="min-width:320px;max-width:480px">
+        <h3 id="dlgAvisoStockTitulo">Aviso</h3>
+        <p id="dlgAvisoStockMsg">Mensaje</p>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+          <button class="btn primario" value="ok">Entendido</button>
+        </div>
+      </form>
+    `;
+    document.body.appendChild(dlg);
+  }
+  
+  document.getElementById("dlgAvisoStockTitulo").textContent = titulo;
+  document.getElementById("dlgAvisoStockMsg").textContent = mensaje;
+  dlg.showModal();
+}
+
+// =============== FUNCIONALIDAD DE PROCESAR PAGO ===============
+async function procesarPago() {
+  const carrito = obtenerCarrito();
+  
+  if (carrito.length === 0) {
+    mostrarDialogoStock("El carrito está vacío. Agrega productos antes de procesar el pago.", "Carrito Vacío");
+    return;
+  }
+  
+  const usuario = usuarioActual();
+  if (!usuario) {
+    mostrarDialogoStock("Debes iniciar sesión para procesar el pago.", "Sesión Requerida");
+    window.location.href = "/cliente/login.html";
+    return;
+  }
   
   try {
-    const productos = await cargarProductosDesdeAPI();
-    const destacados = productos.slice(0, 6);
+    // Verificar stock actualizado antes de procesar
+    const productos = productosCache || await obtenerProductos();
+    let hayProblemas = false;
     
-    cont.innerHTML = destacados.map(p => `
-      <article class="tarjeta tarjeta-producto">
-        <img src="${p.imagen}" alt="${p.nombre}" onerror="this.src='../img/placeholder.jpg'">
-        <div class="contenido">
-          <h3>${p.nombre}</h3>
-          <p class="precio">${formatoPrecio(p.precio)}</p>
-          <div class="acciones">
-            <a class="btn secundario" href="producto.html?codigo=${encodeURIComponent(p.codigo)}">Ver</a>
-            <button class="btn primario" data-agregar="${p.codigo}">Añadir</button>
-          </div>
-        </div>
-      </article>
-    `).join("");
-
-    // Agregar event listeners
-    cont.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-agregar]");
-      if (btn) {
-        agregarAlCarrito(btn.getAttribute("data-agregar"));
+    for (const item of carrito) {
+      const producto = productos.find(p => p.codigo === item.codigo);
+      if (!producto) {
+        mostrarDialogoStock(`El producto ${item.codigo} ya no está disponible.`, "Producto No Disponible");
+        hayProblemas = true;
+        break;
+      }
+      
+      if (producto.stock < item.cantidad) {
+        mostrarDialogoStock(`Stock insuficiente para ${producto.nombre}. Disponible: ${producto.stock}, solicitado: ${item.cantidad}.`, "Stock Insuficiente");
+        hayProblemas = true;
+        break;
+      }
+    }
+    
+    if (hayProblemas) return;
+    
+    // Calcular total
+    let total = 0;
+    const prods = productosCache || obtener("productos", []);
+    carrito.forEach(it => {
+      const p = prods.find(x => x.codigo === it.codigo);
+      if (p) {
+        const precio = precioConDescuento(p.precio);
+        total += precio * it.cantidad;
       }
     });
+    
+    // Simular procesamiento de pago (aquí irían las llamadas al backend)
+    const pedido = {
+      usuario: usuario.correo,
+      fecha: new Date().toISOString(),
+      items: carrito.map(item => {
+        const producto = productos.find(p => p.codigo === item.codigo);
+        return {
+          codigo: item.codigo,
+          nombre: producto.nombre,
+          cantidad: item.cantidad,
+          precio: precioConDescuento(producto.precio),
+          subtotal: precioConDescuento(producto.precio) * item.cantidad
+        };
+      }),
+      total: total,
+      descuentoDuoc: usuario.correo?.toLowerCase().endsWith("@duoc.cl")
+    };
+    
+    console.log('🛒 Pedido procesado:', pedido);
+    
+    // Limpiar carrito después del pago exitoso
+    guardarCarrito([]);
+    
+    // Mostrar mensaje de éxito
+    mostrarDialogoStock(`¡Pago procesado exitosamente! Total: ${formatoPrecio(total)}. Tu pedido será procesado pronto.`, "Pago Exitoso");
+    
+    // Opcional: redirigir a una página de confirmación
+    setTimeout(() => {
+      window.location.href = "/cliente/misCompras.html";
+    }, 3000);
+    
   } catch (error) {
-    console.error('Error al cargar productos destacados:', error);
-    cont.innerHTML = '<div style="text-align: center; padding: 20px;">Error al cargar productos</div>';
+    console.error('Error procesando pago:', error);
+    mostrarDialogoStock("Error al procesar el pago. Inténtalo nuevamente.", "Error de Pago");
   }
 }
 
-// =============== PRODUCTOS (página productos) ===============
-async function renderProductos() {
-  const grid = document.getElementById("gridProductos");
-  if (!grid) return;
+// Exponer funciones globalmente
+Object.assign(window, {
+  agregarAlCarrito,
+  quitarDelCarrito,
+  cambiarCantidad,
+  procesarPago
+});
 
-  const texto = norm(document.getElementById("buscador")?.value || "");
-  const cat = document.getElementById("filtroCategoria")?.value || "";
+// =============== FORMULARIOS ===============
+function inicializarLogin() {
+  const form = document.getElementById("formLogin");
+  if (!form) return;
 
-  grid.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando productos...</div>';
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const correo = document.getElementById("correoLogin").value.trim();
+    const password = document.getElementById("passwordLogin").value;
+    
+    try {
+      const resultado = await loginUsuario(correo, password);
+      const msg = document.getElementById("msgLogin");
+      if (msg) msg.textContent = resultado.message;
+      
+      setTimeout(() => {
+        window.location.href = "productos.html";
+      }, 700);
+    } catch (error) {
+      const msg = document.getElementById("msgLogin");
+      if (msg) msg.textContent = error.message;
+    }
+  });
+}
 
-  try {
-    const productos = await cargarProductosDesdeAPI();
-    const filtrados = productos.filter(p => {
-      const okCat = !cat || p.categoria === cat;
-      const okTxt = !texto || norm(p.nombre).includes(texto) || norm(p.codigo).includes(texto);
-      return okCat && okTxt;
+// =============== VALIDACIONES DE FORMULARIO ===============
+
+// Funciones de validación
+function validarRUN(run) {
+  if (!run) return "El RUN es obligatorio";
+  
+  // Remover puntos y guiones
+  run = run.replace(/[\.\-]/g, '').toUpperCase();
+  
+  if (run.length < 8 || run.length > 9) {
+    return "RUN debe tener entre 8 y 9 caracteres";
+  }
+  
+  // Verificar formato básico
+  if (!/^\d{7,8}[0-9K]$/.test(run)) {
+    return "Formato de RUN inválido";
+  }
+  
+  return null; // Sin error
+}
+
+function validarCorreo(correo) {
+  if (!correo) return "El correo es obligatorio";
+  
+  const formatoValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+  if (!formatoValido) return "Formato de correo inválido";
+  
+  const dominiosPermitidos = ['duoc.cl', 'profesor.duoc.cl', 'gmail.com'];
+  const dominio = correo.split('@')[1];
+  
+  if (!dominiosPermitidos.includes(dominio)) {
+    return "Solo se permiten correos: @duoc.cl, @profesor.duoc.cl, @gmail.com";
+  }
+  
+  return null;
+}
+
+function validarFecha(fecha) {
+  if (!fecha) return "La fecha de nacimiento es obligatoria";
+  
+  const hoy = new Date();
+  const fechaNac = new Date(fecha);
+  const edad = hoy.getFullYear() - fechaNac.getFullYear();
+  
+  if (edad < 18) return "Debes ser mayor de 18 años";
+  if (edad > 120) return "Fecha inválida";
+  
+  return null;
+}
+
+// Funciones específicas para el perfil
+function esCorreoPermitido(correo) {
+  if (!correo) return false;
+  const dominiosPermitidos = ['duoc.cl', 'profesor.duoc.cl', 'gmail.com'];
+  const dominio = correo.split('@')[1];
+  return dominiosPermitidos.includes(dominio);
+}
+
+function esMayorDe18(fecha) {
+  if (!fecha) return false;
+  const hoy = new Date();
+  const fechaNac = new Date(fecha);
+  const edad = hoy.getFullYear() - fechaNac.getFullYear();
+  return edad >= 18 && edad <= 120;
+}
+
+function validarPassword(password, password2) {
+  if (!password) return "La contraseña es obligatoria";
+  if (password.length < 6) return "Mínimo 6 caracteres";
+  if (password.length > 10) return "Máximo 10 caracteres";
+  
+  if (password2 !== undefined && password !== password2) {
+    return "Las contraseñas no coinciden";
+  }
+  
+  return null;
+}
+
+function mostrarError(campo, mensaje) {
+  const errorElement = document.getElementById(`err${campo.charAt(0).toUpperCase() + campo.slice(1)}`);
+  if (errorElement) {
+    if (mensaje && mensaje.trim() !== '') {
+      errorElement.textContent = mensaje;
+      errorElement.style.display = 'block';
+    } else {
+      errorElement.textContent = '';
+      errorElement.style.display = 'none';
+    }
+  }
+}
+
+function limpiarErrores() {
+  const campos = ['Run', 'Nombres', 'Apellidos', 'Correo', 'Fecha', 'Tipo', 'Region', 'Comuna', 'Direccion', 'Pass', 'Pass2'];
+  campos.forEach(campo => mostrarError(campo.toLowerCase(), ''));
+}
+
+// Funciones específicas para login  
+function limpiarErroresLogin() {
+  const msgLogin = document.getElementById('msgLogin');
+  if (msgLogin) {
+    msgLogin.textContent = '';
+    msgLogin.style.display = 'none';
+    msgLogin.classList.remove('exito', 'error');
+  }
+}
+
+function mostrarMensajeLogin(mensaje, tipo = 'exito') {
+  const msgElement = document.getElementById('msgLogin');
+  if (msgElement) {
+    msgElement.textContent = mensaje;
+    msgElement.style.display = 'block';
+    
+    // Remover clases previas y agregar la apropiada
+    msgElement.classList.remove('exito', 'error');
+    
+    if (tipo === 'error') {
+      msgElement.classList.add('error');
+    } else {
+      msgElement.classList.add('exito');
+    }
+  }
+}
+
+function validarFormulario(datos) {
+  limpiarErrores();
+  let esValido = true;
+  
+  // Validar RUN
+  const errorRun = validarRUN(datos.run);
+  if (errorRun) {
+    mostrarError('run', errorRun);
+    esValido = false;
+  }
+  
+  // Validar nombres (obligatorio)
+  if (!datos.nombres.trim()) {
+    mostrarError('nombres', 'Los nombres son obligatorios');
+    esValido = false;
+  }
+  
+  // Validar apellidos (obligatorio)
+  if (!datos.apellidos.trim()) {
+    mostrarError('apellidos', 'Los apellidos son obligatorios');
+    esValido = false;
+  }
+  
+  // Validar correo
+  const errorCorreo = validarCorreo(datos.correo);
+  if (errorCorreo) {
+    mostrarError('correo', errorCorreo);
+    esValido = false;
+  }
+  
+  // Validar fecha
+  const errorFecha = validarFecha(datos.fechaNacimiento);
+  if (errorFecha) {
+    mostrarError('fecha', errorFecha);
+    esValido = false;
+  }
+  
+  // Validar región
+  if (!datos.region) {
+    mostrarError('region', 'Selecciona una región');
+    esValido = false;
+  }
+  
+  // Validar comuna
+  if (!datos.comuna) {
+    mostrarError('comuna', 'Selecciona una comuna');
+    esValido = false;
+  }
+  
+  // Validar dirección
+  if (!datos.direccion.trim()) {
+    mostrarError('direccion', 'La dirección es obligatoria');
+    esValido = false;
+  }
+  
+  // Validar contraseña
+  const errorPass = validarPassword(datos.password, datos.password2);
+  if (errorPass) {
+    mostrarError('pass', errorPass);
+    esValido = false;
+  }
+  
+  // Validar confirmación de contraseña
+  if (datos.password !== datos.password2) {
+    mostrarError('pass2', 'Las contraseñas no coinciden');
+    esValido = false;
+  }
+  
+  return esValido;
+}
+
+function inicializarRegistro() {
+  console.log('🚀 Inicializando formulario de registro...');
+  const form = document.getElementById("formRegistro");
+  if (!form) {
+    console.log('❌ No se encontró el formulario de registro');
+    return;
+  }
+  console.log('✅ Formulario de registro encontrado');
+
+  // Poblar regiones y configurar eventos
+  poblarRegiones();
+  configurarEventosRegistro();
+  
+  // Limpiar errores y mensaje de éxito al inicio
+  limpiarErrores();
+  const msgElement = document.getElementById("msgRegistro");
+  if (msgElement) {
+    msgElement.textContent = '';
+    msgElement.style.display = "none";
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    console.log('📝 Formulario enviado, capturando datos...');
+    
+    // Verificar cada elemento individualmente
+    const runElement = document.getElementById("run");
+    const nombresElement = document.getElementById("nombres");
+    const apellidosElement = document.getElementById("apellidos");
+    const correoElement = document.getElementById("correo");
+    const fechaNacimientoElement = document.getElementById("fechaNacimiento");
+    const passwordElement = document.getElementById("password");
+    const password2Element = document.getElementById("password2");
+    const tipoElement = document.getElementById("tipoUsuario");
+    const regionElement = document.getElementById("region");
+    const comunaElement = document.getElementById("comuna");
+    const direccionElement = document.getElementById("direccion");
+    
+    console.log('🔍 Elementos encontrados:', {
+      run: runElement ? 'SÍ' : 'NO',
+      nombres: nombresElement ? 'SÍ' : 'NO',
+      apellidos: apellidosElement ? 'SÍ' : 'NO',
+      correo: correoElement ? 'SÍ' : 'NO',
+      fechaNacimiento: fechaNacimientoElement ? 'SÍ' : 'NO',
+      password: passwordElement ? 'SÍ' : 'NO',
+      password2: password2Element ? 'SÍ' : 'NO',
+      tipoUsuario: tipoElement ? 'SÍ' : 'NO',
+      region: regionElement ? 'SÍ' : 'NO',
+      comuna: comunaElement ? 'SÍ' : 'NO',
+      direccion: direccionElement ? 'SÍ' : 'NO'
     });
-
-    if (filtrados.length === 0) {
-      grid.innerHTML = `
-        <div class="tarjeta" style="padding:16px; text-align:center;">
-          <p class="info">Sin resultados. Prueba otra búsqueda o categoría.</p>
-        </div>`;
+    
+    const datos = {
+      run: runElement?.value.trim() || '',
+      nombres: nombresElement?.value.trim() || '',
+      apellidos: apellidosElement?.value.trim() || '',
+      correo: correoElement?.value.trim() || '',
+      fechaNacimiento: fechaNacimientoElement?.value || '',
+      password: passwordElement?.value || '',
+      password2: password2Element?.value || '',
+      tipoUsuario: tipoElement?.value.toUpperCase() || '',
+      region: regionElement?.value || "",
+      comuna: comunaElement?.value || "",
+      direccion: direccionElement?.value.trim() || ''
+    };
+    
+    console.log('📋 Datos capturados:', datos);
+    
+    // VALIDAR ANTES DE ENVIAR
+    if (!validarFormulario(datos)) {
+      console.log('❌ Formulario inválido, no se enviará');
+      mostrarMensajeRegistro("Por favor corrige los errores en el formulario", "error");
       return;
     }
-
-    grid.innerHTML = filtrados.map(p => `
-      <article class="tarjeta tarjeta-producto">
-        <img src="${p.imagen}" alt="${p.nombre}" onerror="this.src='../img/placeholder.jpg'">
-        <div class="contenido">
-          <h3>${p.nombre}</h3>
-          <p class="precio">${formatoPrecio(p.precio)}</p>
-          <div class="acciones">
-            <a class="btn secundario" href="producto.html?codigo=${encodeURIComponent(p.codigo)}">Ver</a>
-            <button class="btn primario" data-add="${p.codigo}">Añadir</button>
-          </div>
-        </div>
-      </article>
-    `).join("");
-
-    // Agregar event listeners
-    grid.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-add]");
-      if (btn) {
-        agregarAlCarrito(btn.getAttribute("data-add"));
+    
+    console.log('✅ Formulario válido, enviando...');
+    
+    try {
+      // Solo enviar datos necesarios para el backend (sin fechaNacimiento y password2)
+      const datosBackend = {
+        run: datos.run,
+        nombres: datos.nombres,
+        apellidos: datos.apellidos,
+        correo: datos.correo,
+        password: datos.password,
+        tipoUsuario: datos.tipoUsuario,
+        region: datos.region,
+        comuna: datos.comuna,
+        direccion: datos.direccion
+      };
+      
+      // Guardar datos adicionales localmente (como fechaNacimiento que el backend no maneja)
+      if (datos.fechaNacimiento) {
+        const datosLocales = {
+          correo: datos.correo,
+          fechaNacimiento: datos.fechaNacimiento
+        };
+        localStorage.setItem('datosUsuarioLocal', JSON.stringify(datosLocales));
+        console.log('📅 Fecha de nacimiento guardada localmente:', datos.fechaNacimiento);
       }
-    });
-  } catch (error) {
-    console.error('Error al cargar productos:', error);
-    grid.innerHTML = '<div style="text-align: center; padding: 20px;">Error al cargar productos</div>';
+      
+      await registrarUsuario(datosBackend);
+      mostrarMensajeRegistro("¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.", "exito");
+      form.reset();
+      limpiarErrores();
+      // Limpiar selects después del reset
+      poblarRegiones();
+    } catch (error) {
+      console.error('Error en registro:', error);
+      mostrarMensajeRegistro("Error al crear la cuenta. Intenta nuevamente.", "error");
+    }
+  });
+}
+
+// Poblar dropdown de regiones
+function poblarRegiones() {
+  console.log('🌎 Poblando regiones...');
+  const selectRegion = document.getElementById("region");
+  const selectComuna = document.getElementById("comuna");
+  
+  if (!selectRegion) {
+    console.log('❌ No se encontró el select de región');
+    return;
+  }
+  console.log('✅ Select de región encontrado');
+
+  // Limpiar y agregar opción por defecto
+  selectRegion.innerHTML = '<option value="">Selecciona una región</option>';
+  
+  // Agregar todas las regiones
+  Object.keys(REGIONES_COMUNAS).forEach(region => {
+    const option = document.createElement("option");
+    option.value = region;
+    option.textContent = region;
+    selectRegion.appendChild(option);
+  });
+
+  // Limpiar comunas
+  if (selectComuna) {
+    selectComuna.innerHTML = '<option value="">Primero selecciona una región</option>';
   }
 }
 
-// =============== CATEGORÍAS ===============
-function popularCategorias() {
-  const select = document.getElementById("filtroCategoria");
-  if (!select || !window.categorias) return;
-
-  select.innerHTML = '<option value="">Todas las categorías</option>';
-  window.categorias.forEach(cat => {
-    select.innerHTML += `<option value="${cat}">${cat}</option>`;
-  });
-}
-
-// =============== REGIONES Y COMUNAS ===============
-function inicializarRegiones() {
-  const selRegion = document.getElementById("region");
-  const selComuna = document.getElementById("comuna");
+// Configurar eventos para regiones/comunas
+function configurarEventosRegistro() {
+  const selectRegion = document.getElementById("region");
+  const selectComuna = document.getElementById("comuna");
   
-  if (!selRegion || !selComuna || !window.regiones) return;
+  if (!selectRegion || !selectComuna) return;
 
-  // Llenar regiones
-  selRegion.innerHTML = '<option value="">Seleccionar región</option>';
-  window.regiones.forEach(region => {
-    selRegion.innerHTML += `<option value="${region.nombre}">${region.nombre}</option>`;
-  });
-
-  // Manejar cambio de región
-  selRegion.addEventListener("change", () => {
-    const regionSeleccionada = window.regiones.find(r => r.nombre === selRegion.value);
+  selectRegion.addEventListener("change", () => {
+    const regionSeleccionada = selectRegion.value;
     
-    selComuna.innerHTML = '<option value="">Seleccionar comuna</option>';
-    if (regionSeleccionada) {
-      regionSeleccionada.comunas.forEach(comuna => {
-        selComuna.innerHTML += `<option value="${comuna}">${comuna}</option>`;
+    // Limpiar comunas
+    selectComuna.innerHTML = '<option value="">Selecciona una comuna</option>';
+    
+    if (regionSeleccionada && REGIONES_COMUNAS[regionSeleccionada]) {
+      // Agregar comunas de la región seleccionada
+      REGIONES_COMUNAS[regionSeleccionada].forEach(comuna => {
+        const option = document.createElement("option");
+        option.value = comuna;
+        option.textContent = comuna;
+        selectComuna.appendChild(option);
       });
     }
   });
 }
 
-// =============== REGISTRO ===============
-function inicializarRegistro() {
-  console.log("=== INICIANDO REGISTRO ===");
-  console.log("DOM actual:", document.readyState);
+// Mostrar mensaje de registro con estilo
+function mostrarMensajeRegistro(mensaje, tipo = "exito") {
+  console.log(`📢 Mostrando mensaje: "${mensaje}" (${tipo})`);
+  const msgElement = document.getElementById("msgRegistro");
   
-  const form = document.getElementById("formRegistro");
-  console.log("Formulario encontrado:", form);
-  
-  if (!form) {
-    console.error("❌ FORMULARIO DE REGISTRO NO ENCONTRADO");
-    console.log("Elementos disponibles:", document.querySelectorAll("form"));
+  if (!msgElement) {
+    console.error('❌ No se encontró elemento msgRegistro');
     return;
   }
 
-  console.log("✅ Formulario de registro encontrado, configurando eventos...");
-  inicializarRegiones();
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    console.log("Formulario de registro enviado");
-    
-    // Obtener valores directamente por ID
-    const run = document.getElementById("run").value.trim();
-    const nombres = document.getElementById("nombres").value.trim();
-    const apellidos = document.getElementById("apellidos").value.trim();
-    const correo = document.getElementById("correo").value.trim();
-    const fechaNacimiento = document.getElementById("fechaNacimiento").value;
-    const tipoUsuario = document.getElementById("tipoUsuario").value;
-    const region = document.getElementById("region").value;
-    const comuna = document.getElementById("comuna").value;
-    const direccion = document.getElementById("direccion").value.trim();
-    const password = document.getElementById("password").value;
-    const password2 = document.getElementById("password2").value;
-
-    // Validaciones básicas
-    if (!run || !nombres || !apellidos || !correo || !password) {
-      alert("Por favor completa todos los campos obligatorios");
-      return;
-    }
-
-    if (password !== password2) {
-      alert("Las contraseñas no coinciden");
-      return;
-    }
-
-    const userData = {
-      run,
-      nombres,
-      apellidos,
-      correo,
-      fechaNacimiento,
-      tipoUsuario: tipoUsuario || "cliente",
-      region,
-      comuna,
-      direccion,
-      password,
-      descuentoDuoc: correo.toLowerCase().endsWith("@duoc.cl"),
-      puntosLevelUp: 0,
-      codigoReferido: "REF" + Math.random().toString(36).substring(2,8).toUpperCase()
-    };
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
-    submitBtn.textContent = "Registrando...";
-    submitBtn.disabled = true;
-
-    try {
-      const result = await registrarUsuario(userData);
-      
-      if (result.success) {
-        alert("Registro exitoso. Ahora puedes iniciar sesión.");
-        window.location.href = "login.html";
-      } else {
-        alert(`Error en el registro: ${result.error}`);
-      }
-    } catch (error) {
-      alert(`Error: ${error.message}`);
-    } finally {
-      submitBtn.textContent = originalText;
-      submitBtn.disabled = false;
-    }
-  });
-}
-
-// =============== LOGIN ===============
-function inicializarLogin() {
-  console.log("=== INICIANDO LOGIN ===");
-  console.log("DOM actual:", document.readyState);
-  
-  const form = document.getElementById("formLogin");
-  console.log("Formulario encontrado:", form);
-  
-  if (!form) {
-    console.error("❌ FORMULARIO DE LOGIN NO ENCONTRADO");
-    console.log("Elementos disponibles:", document.querySelectorAll("form"));
-    return;
-  }
-
-  console.log("✅ Formulario de login encontrado, configurando eventos...");
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    console.log("Formulario de login enviado");
-    
-    const correo = document.getElementById("correoLogin").value.trim();
-    const password = document.getElementById("passwordLogin").value;
-
-    if (!correo || !password) {
-      alert("Por favor ingresa email y contraseña");
-      return;
-    }
-
-    const credentials = {
-      correo,
-      password
-    };
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
-    submitBtn.textContent = "Iniciando sesión...";
-    submitBtn.disabled = true;
-
-    try {
-      const result = await loginUsuario(credentials);
-      
-      if (result.success) {
-        alert("Inicio de sesión exitoso");
-        actualizarNavegacion();
-        window.location.href = "index.html";
-      } else {
-        alert(`Error: ${result.error}`);
-      }
-    } catch (error) {
-      alert(`Error: ${error.message}`);
-    } finally {
-      submitBtn.textContent = originalText;
-      submitBtn.disabled = false;
-    }
-  });
-}
-
-// =============== NAVEGACIÓN ===============
-function actualizarNavegacion() {
-  const usuario = usuarioActual();
-  
-  const linkRegistro = document.getElementById("linkRegistro");
-  const linkLogin = document.getElementById("linkLogin");
-  const linkAdmin = document.getElementById("linkAdmin");
-  const linkSalir = document.getElementById("linkSalir");
-
-  if (usuario) {
-    // Usuario logueado
-    if (linkRegistro) linkRegistro.style.display = "none";
-    if (linkLogin) linkLogin.style.display = "none";
-    
-    if (usuario.tipoUsuario === "admin" && linkAdmin) {
-      linkAdmin.style.display = "inline";
-      linkAdmin.href = "/admin";
-    }
-    
-    if (linkSalir) linkSalir.style.display = "inline";
+  if (mensaje && mensaje.trim() !== '') {
+    msgElement.textContent = mensaje;
+    msgElement.className = tipo; // "exito" o "error" - usa los estilos del CSS
+    msgElement.style.display = "block";
   } else {
-    // Usuario no logueado
-    if (linkRegistro) linkRegistro.style.display = "inline";
-    if (linkLogin) linkLogin.style.display = "inline";
-    if (linkAdmin) linkAdmin.style.display = "none";
-    if (linkSalir) linkSalir.style.display = "none";
+    msgElement.textContent = '';
+    msgElement.style.display = "none";
   }
-}
-
-function cerrarSesion() {
-  localStorage.removeItem("sesionActual");
-  localStorage.removeItem("token");
-  actualizarNavegacion();
-  window.location.href = "index.html";
-}
-
-// =============== FILTROS ===============
-function configurarFiltros() {
-  const buscador = document.getElementById("buscador");
-  const filtroCategoria = document.getElementById("filtroCategoria");
-
-  if (buscador) {
-    buscador.addEventListener("input", renderProductos);
-  }
-
-  if (filtroCategoria) {
-    filtroCategoria.addEventListener("change", renderProductos);
-  }
-}
-
-// =============== MENÚ MÓVIL ===============
-function configurarMenuMovil() {
-  const btnMenu = document.getElementById("btnMenu");
-  const menuLateral = document.getElementById("menuLateral");
   
-  if (btnMenu && menuLateral) {
-    btnMenu.addEventListener("click", () => {
-      const isOpen = menuLateral.classList.contains("activo");
-      menuLateral.classList.toggle("activo", !isOpen);
-      btnMenu.setAttribute("aria-expanded", !isOpen);
+  console.log('✅ Mensaje mostrado correctamente');
+  console.log('🔍 Clase aplicada:', msgElement.className);
+  console.log('🔍 Elemento HTML:', msgElement.outerHTML);
+  
+  // Forzar aplicación de estilos
+  const computedStyles = window.getComputedStyle(msgElement);
+  console.log('🔍 Background computado:', computedStyles.backgroundColor);
+  console.log('🔍 Color computado:', computedStyles.color);
+  console.log('🔍 Display computado:', computedStyles.display);
+  console.log('🔍 Padding computado:', computedStyles.padding);
+
+  // Si es éxito, redirigir al login después de 5 segundos
+  if (tipo === "exito") {
+    console.log('⏰ Iniciando countdown para redirección a login...');
+    setTimeout(() => {
+      console.log('🔄 Redirigiendo a login.html...');
+      window.location.href = '/cliente/login.html';
+    }, 5000);
+  } else {
+    // Si es error, solo ocultar después de 5 segundos
+    setTimeout(() => {
+      msgElement.style.display = "none";
+    }, 5000);
+  }
+}
+
+// =============== PERFIL ===============
+async function inicializarPerfil() {
+  const form = document.getElementById("formPerfil");
+  if (!form) return; // no estás en perfil.html
+
+  const usuario = usuarioActual();
+  if (!usuario) { 
+    console.log("❌ No hay usuario logueado, redirigiendo a login");
+    window.location.href = "login.html"; 
+    return; 
+  }
+
+  console.log("👤 Cargando datos del perfil:", usuario);
+
+  // Referencias a los campos del formulario
+  const iRun   = document.getElementById("p_run");
+  const iNom   = document.getElementById("p_nombres");
+  const iApe   = document.getElementById("p_apellidos");
+  const iMail  = document.getElementById("p_correo");
+  const iFecha = document.getElementById("p_fecha");
+  const iReg   = document.getElementById("region");
+  const iCom   = document.getElementById("comuna");
+  const iDir   = document.getElementById("p_direccion");
+  const msg    = document.getElementById("msgPerfil");
+
+  // Cargar regiones y comunas usando REGIONES_COMUNAS definidas en el archivo
+  if (iReg && iCom) {
+    // Usar las regiones definidas directamente en app.js
+    iReg.innerHTML = '<option value="">Selecciona una región</option>' + 
+      Object.keys(REGIONES_COMUNAS).map(region => `<option value="${region}">${region}</option>`).join("");
+    
+    const actualizarComunas = () => {
+      const regionSeleccionada = iReg.value;
+      iCom.innerHTML = '<option value="">Selecciona una comuna</option>' + 
+        (REGIONES_COMUNAS[regionSeleccionada] || []).map(c => `<option value="${c}">${c}</option>`).join("");
+    };
+    
+    iReg.addEventListener("change", actualizarComunas);
+    actualizarComunas(); // primera carga
+  }
+
+  // Establecer valores iniciales con los datos del usuario
+  if (iRun)   iRun.value = usuario.run || "";
+  if (iNom)   iNom.value = usuario.nombres || "";
+  if (iApe)   iApe.value = usuario.apellidos || "";
+  if (iMail)  iMail.value = usuario.correo || "";
+  if (iFecha) iFecha.value = usuario.fechaNacimiento || "";
+  if (iDir)   iDir.value = usuario.direccion || "";
+
+  // Establecer región y comuna
+  if (iReg && usuario.region) {
+    iReg.value = usuario.region;
+    if (iReg.dispatchEvent) {
+      iReg.dispatchEvent(new Event("change"));
+    }
+  }
+  
+  if (iCom && usuario.comuna) {
+    setTimeout(() => {
+      iCom.value = usuario.comuna;
+    }, 100); // Dar tiempo para que se carguen las comunas
+  }
+
+  // Configurar el envío del formulario
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    console.log("💾 Guardando cambios del perfil...");
+    
+    // Limpiar mensajes de error
+    ["errPNombres","errPApellidos","errPCorreo","errPFecha","errPRegion","errPComuna","errPDireccion","msgPerfil"]
+      .forEach(id => { 
+        const el = document.getElementById(id); 
+        if (el) el.textContent = ""; 
+      });
+
+    const nombres = iNom.value.trim();
+    const apellidos = iApe.value.trim();
+    const correo = iMail.value.trim();
+    const fechaNac = iFecha.value;
+    const region = iReg ? iReg.value : "";
+    const comuna = iCom ? iCom.value : "";
+    const direccion = iDir.value.trim();
+
+    let ok = true;
+    
+    // Validaciones básicas
+    if (!nombres) { 
+      document.getElementById("errPNombres").textContent = "Requerido."; 
+      ok = false; 
+    }
+    if (!apellidos) { 
+      document.getElementById("errPApellidos").textContent = "Requerido."; 
+      ok = false; 
+    }
+    if (!esCorreoPermitido(correo) || correo.length > 100) {
+      document.getElementById("errPCorreo").textContent = "Correo no permitido o demasiado largo."; 
+      ok = false;
+    }
+    if (!esMayorDe18(fechaNac)) { 
+      document.getElementById("errPFecha").textContent = "Debés ser mayor de 18."; 
+      ok = false; 
+    }
+    if (iReg && !region) { 
+      document.getElementById("errPRegion").textContent = "Seleccioná una región."; 
+      ok = false; 
+    }
+    if (iCom && !comuna) { 
+      document.getElementById("errPComuna").textContent = "Seleccioná una comuna."; 
+      ok = false; 
+    }
+    if (!direccion || direccion.length > 300) { 
+      document.getElementById("errPDireccion").textContent = "Dirección inválida (máx 300)."; 
+      ok = false; 
+    }
+
+    if (!ok) return;
+
+    try {
+      // Actualizar datos del usuario en localStorage
+      const usuarioActualizado = {
+        ...usuario,
+        nombres,
+        apellidos,
+        correo,
+        fechaNacimiento: fechaNac,
+        region,
+        comuna,
+        direccion
+      };
+
+      localStorage.setItem('usuario', JSON.stringify(usuarioActualizado));
+      
+      // También guardar la fecha de nacimiento por separado para futuras sesiones
+      if (fechaNac) {
+        const datosLocales = {
+          correo: correo,
+          fechaNacimiento: fechaNac
+        };
+        localStorage.setItem('datosUsuarioLocal', JSON.stringify(datosLocales));
+        console.log('📅 Fecha de nacimiento actualizada localmente:', fechaNac);
+      }
+      
+      if (msg) {
+        msg.textContent = "✅ Datos guardados correctamente.";
+        msg.style.display = "block";
+      }
+      
+      setTimeout(() => { 
+        if (msg) {
+          msg.textContent = ""; 
+          msg.style.display = "none";
+        }
+      }, 3000);
+      
+      actualizarNavegacion();
+      
+    } catch (error) {
+      console.error("Error al guardar perfil:", error);
+      if (msg) {
+        msg.textContent = "❌ Error al guardar los datos.";
+        msg.style.display = "block";
+      }
+    }
+  });
+
+  // =============== CONFIGURAR MODAL DE CAMBIO DE CONTRASEÑA ===============
+  const dlg = document.getElementById("dlgPass");
+  const btnCambiar = document.getElementById("btnCambiarPass");
+  const formPass = document.getElementById("formPass");
+  const btnCancelarPass = document.getElementById("btnCancelarPass");
+
+  // Abrir modal
+  if (btnCambiar && dlg) {
+    btnCambiar.addEventListener("click", () => {
+      console.log("🔑 Abriendo modal de cambio de contraseña");
+      dlg.showModal();
     });
   }
+
+  // Cancelar modal
+  if (btnCancelarPass && dlg) {
+    btnCancelarPass.addEventListener("click", () => {
+      console.log("❌ Cancelando cambio de contraseña");
+      dlg.close();
+    });
+  }
+
+  // Submit cambio de contraseña
+  if (formPass && dlg) {
+    formPass.addEventListener("submit", (e) => {
+      e.preventDefault();
+      console.log("🔑 Procesando cambio de contraseña...");
+
+      // Limpiar errores previos
+      ["errPassActual", "errPassNueva", "errPassNueva2", "msgPass"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "";
+      });
+
+      const passActual = document.getElementById("passActual").value;
+      const passNueva = document.getElementById("passNueva").value;
+      const passNueva2 = document.getElementById("passNueva2").value;
+      let ok = true;
+
+      // Validaciones
+      if (!passActual) {
+        document.getElementById("errPassActual").textContent = "La contraseña actual es requerida";
+        ok = false;
+      }
+      if (passNueva.length < 4 || passNueva.length > 10) {
+        document.getElementById("errPassNueva").textContent = "Debe tener 4 a 10 caracteres";
+        ok = false;
+      }
+      if (passNueva !== passNueva2) {
+        document.getElementById("errPassNueva2").textContent = "La confirmación no coincide";
+        ok = false;
+      }
+
+      if (!ok) {
+        const msgEl = document.getElementById("msgPass");
+        if (msgEl) {
+          msgEl.textContent = 'Las contraseñas nuevas no coinciden';
+          msgEl.style.display = 'block';
+          msgEl.style.color = 'red';
+          msgEl.style.backgroundColor = '#f8d7da';
+          msgEl.style.borderColor = '#f5c6cb';
+        }
+        return;
+      }
+
+      // Intentar cambiar la contraseña por la API si hay token JWT
+      const token = localStorage.getItem('jwt_token') || localStorage.getItem('token');
+      const msgEl = document.getElementById("msgPass");
+
+      if (token) {
+        (async () => {
+          try {
+            const resp = await fetch(`${API_BASE_URL}/usuarios/me/cambiar-password`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ passwordActual: passActual, nuevaPassword: passNueva })
+            });
+
+            if (!resp.ok) {
+              console.error('❌ Error HTTP al cambiar contraseña:', resp.status);
+              if (msgEl) { 
+                msgEl.textContent = '❌ Error al cambiar contraseña'; 
+                msgEl.style.display = 'block'; 
+                msgEl.style.color = 'red';
+                msgEl.style.backgroundColor = '#f8d7da';
+                msgEl.style.borderColor = '#f5c6cb';
+              }
+              return;
+            }
+
+            const data = await resp.json();
+            if (data && data.success) {
+              console.log('✅ Contraseña cambiada en backend');
+              if (msgEl) { 
+                msgEl.textContent = 'Contraseña actualizada ✔'; 
+                msgEl.style.display = 'block'; 
+                msgEl.style.color = 'green';
+                msgEl.style.backgroundColor = '#d4edda';
+                msgEl.style.borderColor = '#c3e6cb';
+              }
+              formPass.reset();
+              setTimeout(() => { if (dlg) dlg.close(); if (msgEl) { msgEl.textContent = ''; msgEl.style.display = 'none'; } }, 1400);
+            } else {
+              console.log('⚠️ Backend respondió success=false');
+              if (msgEl) { 
+                msgEl.textContent = 'La contraseña actual es incorrecta'; 
+                msgEl.style.display = 'block'; 
+                msgEl.style.color = 'red';
+                msgEl.style.backgroundColor = '#f8d7da';
+                msgEl.style.borderColor = '#f5c6cb';
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error cambiando contraseña:', error);
+            if (msgEl) { 
+              msgEl.textContent = '❌ Error al cambiar contraseña'; 
+              msgEl.style.display = 'block'; 
+              msgEl.style.color = 'red';
+              msgEl.style.backgroundColor = '#f8d7da';
+              msgEl.style.borderColor = '#f5c6cb';
+            }
+          }
+        })();
+      } else {
+        // Sin token: intentar cambiar contraseña en localStorage (usuarios locales)
+        try {
+          const uStr = localStorage.getItem('usuario');
+          const u = uStr ? JSON.parse(uStr) : null;
+          if (!u || !u.pass) {
+            if (msgEl) { 
+              msgEl.textContent = 'No es posible cambiar la contraseña localmente'; 
+              msgEl.style.display = 'block'; 
+              msgEl.style.color = 'red';
+              msgEl.style.backgroundColor = '#f8d7da';
+              msgEl.style.borderColor = '#f5c6cb';
+            }
+            return;
+          }
+
+          if (u.pass !== passActual) {
+            if (msgEl) { 
+              msgEl.textContent = 'La contraseña actual no coincide'; 
+              msgEl.style.display = 'block'; 
+              msgEl.style.color = 'red';
+              msgEl.style.backgroundColor = '#f8d7da';
+              msgEl.style.borderColor = '#f5c6cb';
+            }
+            return;
+          }
+
+          // Guardar nueva pass localmente
+          u.pass = passNueva;
+          localStorage.setItem('usuario', JSON.stringify(u));
+          if (msgEl) { 
+            msgEl.textContent = 'Contraseña actualizada ✔ (local)'; 
+            msgEl.style.display = 'block'; 
+            msgEl.style.color = 'green';
+            msgEl.style.backgroundColor = '#d4edda';
+            msgEl.style.borderColor = '#c3e6cb';
+          }
+          formPass.reset();
+          setTimeout(() => { if (dlg) dlg.close(); if (msgEl) { msgEl.textContent = ''; msgEl.style.display = 'none'; } }, 1400);
+        } catch (error) {
+          console.error('❌ Error cambiando contraseña localmente:', error);
+          if (msgEl) { 
+            msgEl.textContent = '❌ Error al cambiar contraseña'; 
+            msgEl.style.display = 'block'; 
+            msgEl.style.color = 'red';
+            msgEl.style.backgroundColor = '#f8d7da';
+            msgEl.style.borderColor = '#f5c6cb';
+          }
+        }
+      }
+    });
+  }
+
+  console.log("✅ Perfil inicializado correctamente");
 }
 
 // =============== INICIALIZACIÓN ===============
-function inicializarDatos() {
-  // Inicializar datos locales si no existen
-  if (!localStorage.getItem("productos") && window.productosBase) {
-    guardar("productos", window.productosBase);
+async function inicializarPagina() {
+  // Renderizar contenido específico por página - OPTIMIZADO
+  const gridDestacados = document.getElementById("gridDestacados");
+  const gridProductos = document.getElementById("gridProductos");
+  
+  // Mostrar loading mientras cargan los productos
+  if (gridDestacados) {
+    gridDestacados.innerHTML = '<div style="text-align: center; padding: 20px;"><p>🔄 Cargando productos destacados...</p></div>';
   }
-  if (!localStorage.getItem("carrito")) guardar("carrito", []);
+  if (gridProductos) {
+    gridProductos.innerHTML = '<div style="text-align: center; padding: 20px;"><p>🔄 Cargando productos...</p></div>';
+  }
+  
+  // Cache productos una sola vez si hay múltiples grids
+  if (gridDestacados || gridProductos) {
+    console.log('🚀 Cargando productos una sola vez...');
+    const startTime = Date.now();
+    productosCache = await obtenerProductos();
+    const loadTime = Date.now() - startTime;
+    console.log(`⚡ Productos cargados en ${loadTime}ms`);
+    
+    if (gridDestacados) {
+      console.log('📋 Renderizando destacados...');
+      renderDestacados(productosCache);
+    }
+    if (gridProductos) {
+      console.log('🛍️ Renderizando productos...');
+      renderProductos(productosCache);
+    }
+  }
+  
+  if (window.location.pathname.includes('producto.html')) {
+    renderDetalleProducto();
+  }
+  
+  // Inicializar perfil si estamos en perfil.html
+  if (window.location.pathname.includes('perfil.html')) {
+    console.log('👤 Inicializando perfil...');
+    await inicializarPerfil();
+  }
+  
+  // Limpiar errores de formularios al cargar la página
+  if (document.getElementById('formLogin')) {
+    limpiarErroresLogin();
+  }
+  if (document.getElementById('formRegistro')) {
+    limpiarErrores();
+    const msgRegistro = document.getElementById('msgRegistro');
+    if (msgRegistro) {
+      msgRegistro.textContent = '';
+      msgRegistro.style.display = 'none';
+    }
+  }
 }
 
-// =============== INICIALIZACIÓN PRINCIPAL ===============
-document.addEventListener("DOMContentLoaded", async () => {
-  console.log("Inicializando aplicación...");
+document.addEventListener("DOMContentLoaded", () => {
+  // PRIMERO: Limpiar usuarios fantasma SIEMPRE al cargar cualquier página
+  console.log('🧹 LIMPIEZA AUTOMÁTICA DE USUARIOS FANTASMA EN TODA PÁGINA');
+  eliminarUsuarioFantasma();
   
-  // Verificar que los datos estén cargados
-  if (!window.productosBase || !window.regiones || !window.categorias) {
-    console.warn("Datos no cargados correctamente");
-  }
-
-  // Inicializar datos básicos
-  inicializarDatos();
+  // Cargar datos iniciales
+  if (!localStorage.getItem("carrito")) guardar("carrito", []);
   
-  // Actualizar navegación
+  console.log("🎯 Inicializando sin usuarios locales - solo backend API");
+  
+  // Inicializar navegación sin usuarios locales
   actualizarNavegacion();
   
-  // Configurar menú móvil
-  configurarMenuMovil();
+  // CONFIGURAR EVENT LISTENERS GLOBALES (delegación de eventos)
+  setupEventListeners();
   
-  // Actualizar contador del carrito
-  actualizarContadorCarrito();
-
-  // Configurar salir de sesión
+  // Inicializar página de forma asíncrona y optimizada
+  inicializarPagina();
+  
+  // Configurar event listeners de navegación
   const linkSalir = document.getElementById("linkSalir");
-  if (linkSalir) {
+  if (linkSalir && !linkSalir.dataset.bind) {
     linkSalir.addEventListener("click", (e) => {
       e.preventDefault();
       cerrarSesion();
     });
-  }
-
-  // Inicializar según la página actual
-  const path = window.location.pathname;
-  
-  if (path.includes("index.html") || path.endsWith("/") || path.endsWith("/cliente/")) {
-    // Página principal - cargar productos destacados
-    await renderDestacados();
+    linkSalir.dataset.bind = "1";
   }
   
-  if (path.includes("productos.html")) {
-    // Página de productos
-    popularCategorias();
-    configurarFiltros();
-    await renderProductos();
+  // Configurar botón perfil de escritorio
+  const btnPerfilDesk = document.getElementById("btnPerfilDesk");
+  if (btnPerfilDesk && !btnPerfilDesk.dataset.bind) {
+    btnPerfilDesk.addEventListener("click", (e) => {
+      e.preventDefault();
+      console.log("🖱️ Click en botón perfil");
+      const usuario = usuarioActual();
+      if (usuario) {
+        abrirPanelCuenta();
+      } else {
+        console.log("❌ No hay usuario logueado");
+        window.location.href = "login.html";
+      }
+    });
+    btnPerfilDesk.dataset.bind = "1";
   }
   
-  // Inicialización específica por página
-  console.log("Ruta actual:", path);
+  // Inicializar formularios
+  inicializarLogin();
+  inicializarRegistro();
   
-  if (path.includes("registro.html")) {
-    console.log("Detectada página de registro");
-    inicializarRegistro();
+  // Inicializar carrito
+  renderCarrito();
+  
+  // Configurar botón de pago
+  const btnPagar = document.getElementById("btnPagar");
+  if (btnPagar && !btnPagar.dataset.bind) {
+    btnPagar.addEventListener("click", (e) => {
+      e.preventDefault();
+      procesarPago();
+    });
+    btnPagar.dataset.bind = "1";
   }
   
-  if (path.includes("login.html")) {
-    console.log("Detectada página de login");
-    inicializarLogin();
-  }
-
+  // Inicializar menú móvil
+  inicializarMenuLateral();
+  
   console.log("Aplicación inicializada correctamente");
+});
+
+// =============== MENÚ LATERAL (MÓVIL) ===============
+function inicializarMenuLateral() {
+  const btn = document.getElementById("btnMenu");
+  const panel = document.getElementById("menuLateral");
+  const cortina = document.getElementById("cortina");
+  const navDesk = document.querySelector(".navegacion");
+  const lista = document.getElementById("menuLista");
+  
+  if (!btn || !panel || !navDesk || !lista) return;
+
+  // Reconstruir el nav móvil solo una vez
+  if (!lista.dataset.clonado) {
+    lista.innerHTML = "";
+
+    // Si hay usuario, agregar "Mi cuenta" y "Salir" primero
+    const u = usuarioActual();
+    if (u) {
+      const miCuenta = document.createElement("a");
+      miCuenta.href = "#";
+      miCuenta.id = "linkMiCuentaMov";
+      miCuenta.textContent = "Mi cuenta";
+      lista.appendChild(miCuenta);
+    }
+
+    // Clonar enlaces del nav de escritorio
+    navDesk.querySelectorAll("a").forEach(a => {
+      if (a.classList.contains("oculto")) return;
+      if ((a.id||"").toLowerCase() === "linksalir") return;
+      const nuevo = a.cloneNode(true);
+      nuevo.removeAttribute("id");
+      lista.appendChild(nuevo);
+    });
+    
+    // Agregar salir al final si hay usuario
+    if (u) {
+      const salirMov = document.createElement("a");
+      salirMov.href = "#";
+      salirMov.id = "linkSalirMov";
+      salirMov.textContent = "Salir";
+      lista.appendChild(salirMov);
+    }
+
+    lista.dataset.clonado = "1";
+  }
+
+  // Funciones abrir/cerrar menú
+  const abrir = () => {
+    document.body.classList.add("menu-abierto");
+    btn.setAttribute("aria-expanded", "true");
+    panel.setAttribute("aria-hidden", "false");
+    if (cortina) cortina.hidden = false;
+  };
+  
+  const cerrar = () => {
+    document.body.classList.remove("menu-abierto");
+    btn.setAttribute("aria-expanded", "false");
+    panel.setAttribute("aria-hidden", "true");
+    if (cortina) cortina.hidden = true;
+  };
+
+  // Event listeners del botón menú (solo una vez)
+  if (!btn.dataset.bind) {
+    btn.addEventListener("click", () => {
+      document.body.classList.contains("menu-abierto") ? cerrar() : abrir();
+    });
+    
+    if (cortina) {
+      cortina.addEventListener("click", cerrar);
+    }
+    
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && document.body.classList.contains("menu-abierto")) {
+        cerrar();
+      }
+    });
+    
+    lista.addEventListener("click", (e) => {
+      const esLink = e.target.closest("a");
+      if (esLink) cerrar();
+    });
+    
+    btn.dataset.bind = "1";
+  }
+
+  // Event listeners específicos del menú móvil
+  const linkMiCuentaMov = document.getElementById("linkMiCuentaMov");
+  if (linkMiCuentaMov && !linkMiCuentaMov.dataset.bind) {
+    linkMiCuentaMov.addEventListener("click", (e) => {
+      e.preventDefault();
+      abrirPanelCuenta();
+    });
+    linkMiCuentaMov.dataset.bind = "1";
+  }
+
+  const linkSalirMov = document.getElementById("linkSalirMov");
+  if (linkSalirMov && !linkSalirMov.dataset.bind) {
+    linkSalirMov.addEventListener("click", (e) => {
+      e.preventDefault();
+      console.log("🚪 Cerrando sesión desde menú móvil...");
+      
+      // Usar la función cerrarSesion() que ya limpia todo correctamente
+      cerrarSesion();
+    });
+    linkSalirMov.dataset.bind = "1";
+  }
+}
+
+// =============== PANEL MI CUENTA ===============
+function asegurarCodigoReferido(usuario) {
+  if (!usuario.codigoReferido) {
+    usuario.codigoReferido = "REF" + Math.random().toString(36).substring(2,8).toUpperCase();
+  }
+}
+
+function calcularNivel(p) {
+  if (p >= 500) return "Oro";
+  if (p >= 200) return "Plata";
+  return "Bronce";
+}
+
+function guardarUsuarioActual(u) {
+  // FUNCIÓN OBSOLETA - Los usuarios están en la base de datos
+  console.log('⚠️ FUNCIÓN OBSOLETA: guardarUsuarioActual ya no se usa');
+}
+
+function abrirPanelCuenta() {
+  const u = usuarioActual();
+  const panel = document.getElementById("panelCuenta");
+  const cortina = document.getElementById("cortinaCuenta");
+  
+  if (!u || !panel || !cortina) {
+    console.log("❌ No se puede abrir panel:", { usuario: !!u, panel: !!panel, cortina: !!cortina });
+    return;
+  }
+
+  console.log("👤 DEBUG: Usuario completo recibido:", u);
+  console.log("👤 DEBUG: Nombres:", u.nombres);
+  console.log("👤 DEBUG: Apellidos:", u.apellidos);
+  console.log("👤 DEBUG: Correo:", u.correo);
+  console.log("👤 Abriendo panel para:", u.nombres, u.apellidos);
+
+  asegurarCodigoReferido(u);
+  guardarUsuarioActual(u);
+
+  // Llenar campos
+  const nom = document.getElementById("cuentaNombre");
+  const cor = document.getElementById("cuentaCorreo");
+  const cod = document.getElementById("cuentaCodigoReferido");
+  const pts = document.getElementById("cuentaPuntos");
+  const niv = document.getElementById("cuentaNivel");
+  
+  if (nom) nom.textContent = `${u.nombres||""} ${u.apellidos||""}`.trim() || "—";
+  if (cor) cor.textContent = u.correo || "—";
+  if (cod) cod.value = u.codigoReferido;
+  if (pts) pts.textContent = u.puntosLevelUp ?? 0;
+  if (niv) niv.textContent = calcularNivel(u.puntosLevelUp || 0);
+
+  // Configurar botón copiar (solo una vez)
+  const btnCopiar = document.getElementById("btnCopiarCodigo");
+  if (btnCopiar && !btnCopiar.dataset.bind) {
+    btnCopiar.addEventListener("click", () => {
+      const inp = document.getElementById("cuentaCodigoReferido");
+      if (inp) {
+        inp.select();
+        document.execCommand("copy");
+        btnCopiar.textContent = "¡Copiado!";
+        setTimeout(() => btnCopiar.textContent = "Copiar", 1200);
+      }
+    });
+    btnCopiar.dataset.bind = "1";
+  }
+
+  // Función cerrar panel
+  const cerrar = () => {
+    panel.classList.remove("panel-cuenta--abierto");
+    panel.setAttribute("aria-hidden", "true");
+    cortina.hidden = true;
+  };
+
+  // Configurar botón cerrar (solo una vez)
+  const btnCerrar = document.getElementById("btnCerrarCuenta");
+  if (btnCerrar && !btnCerrar.dataset.bind) {
+    btnCerrar.addEventListener("click", cerrar);
+    btnCerrar.dataset.bind = "1";
+  }
+
+  // Configurar cortina (solo una vez)
+  if (!cortina.dataset.bind) {
+    cortina.addEventListener("click", cerrar);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && panel.classList.contains("panel-cuenta--abierto")) {
+        cerrar();
+      }
+    });
+    cortina.dataset.bind = "1";
+  }
+
+  // Configurar botón salir del panel (solo una vez)
+  const btnSalir = document.getElementById("btnSalirCuenta");
+  if (btnSalir && !btnSalir.dataset.bind) {
+    btnSalir.addEventListener("click", () => {
+      console.log("🚪 Cerrando sesión desde panel...");
+      cerrar(); // Cerrar el panel primero
+      
+      // Usar la función cerrarSesion() que ya limpia todo correctamente
+      cerrarSesion();
+    });
+    btnSalir.dataset.bind = "1";
+  }
+
+  // Abrir panel
+  panel.classList.add("panel-cuenta--abierto");
+  panel.setAttribute("aria-hidden", "false");
+  cortina.hidden = false;
+}
+
+// =============== FUNCIONES API BACKEND ===============
+async function obtenerProductos() {
+  try {
+    console.log('🛍️ Cargando productos desde API...');
+    const response = await fetch(`${API_BASE_URL}/productos/publicos`);
+    
+    if (response.ok) {
+      const productos = await response.json();
+      console.log('✅ Productos cargados desde BASE DE DATOS:', productos.length);
+      return productos;
+    } else {
+      console.error('❌ Error HTTP:', response.status, response.statusText);
+      if (response.status === 401) {
+        console.error('🚫 BACKEND REQUIERE AUTENTICACIÓN - DEBES INICIAR SPRING BOOT CORRECTAMENTE');
+      }
+      console.error('� SIN BACKEND NO HAY PRODUCTOS - INICIA EL SERVIDOR');
+      return [];
+    }
+  } catch (error) {
+    console.error('❌ Error obteniendo productos:', error);
+    console.error('� BACKEND NO DISPONIBLE - INICIA SPRING BOOT PRIMERO');
+    return [];
+  }
+}
+
+// Función para obtener un producto específico por código
+async function obtenerProductoPorCodigo(codigo) {
+  try {
+    console.log(`🔍 Obteniendo producto ${codigo} desde BASE DE DATOS...`);
+    
+    // Primero intentar usar el cache si existe
+    if (productosCache && productosCache.length > 0) {
+      const producto = productosCache.find(p => p.codigo === codigo);
+      if (producto) {
+        console.log('✅ Producto encontrado en CACHE:', producto.nombre);
+        return producto;
+      }
+    }
+    
+    // Si no hay cache, obtener todos los productos y buscar el específico
+    const response = await fetch(`${API_BASE_URL}/productos/publicos`);
+    
+    if (response.ok) {
+      const productos = await response.json();
+      const producto = productos.find(p => p.codigo === codigo);
+      if (producto) {
+        console.log('✅ Producto obtenido desde BASE DE DATOS:', producto.nombre);
+        return producto;
+      } else {
+        console.error(`❌ Producto ${codigo} no encontrado en la base de datos`);
+        return null;
+      }
+    } else {
+      console.error('❌ Error HTTP obteniendo productos:', response.status);
+      console.error('🚫 BACKEND NO DISPONIBLE - INICIA SPRING BOOT');
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Error obteniendo producto:', error);
+    console.error('🚫 BACKEND NO DISPONIBLE - INICIA SPRING BOOT');
+    return null;
+  }
+}
+
+// FUNCIÓN ELIMINADA - Solo usamos productos de la base de datos
+
+async function renderDestacados(productosCache = null) {
+  const grid = document.getElementById("gridDestacados");
+  if (!grid) return;
+  
+  try {
+    const productos = productosCache || await obtenerProductos();
+    
+    // Mostrar los primeros 6 productos como destacados
+    const destacados = productos.slice(0, 6);
+    
+    grid.setAttribute('data-bind', '1');
+    grid.innerHTML = destacados.map(p => `
+      <article class="tarjeta tarjeta-producto">
+        <img src="${p.imagen}" alt="${p.nombre}" onerror="this.src='img/placeholder.jpg'">
+        <div class="contenido">
+          <h3>${p.nombre}</h3>
+          <p class="precio">$${p.precio.toLocaleString()}</p>
+          <div class="acciones">
+            <a class="btn secundario" href="producto.html?codigo=${p.codigo}">Ver</a>
+            <button class="btn primario" data-agregar="${p.codigo}">Añadir</button>
+          </div>
+        </div>
+      </article>
+    `).join('');
+    
+    console.log(`✅ Productos destacados cargados: ${destacados.length}`);
+  } catch (error) {
+    console.error('Error renderizando destacados:', error);
+    grid.innerHTML = '<p>Error cargando productos destacados</p>';
+  }
+}
+
+async function renderProductos(productosCache = null) {
+  const grid = document.getElementById("gridProductos");
+  if (!grid) return;
+  
+  try {
+    const productos = productosCache || await obtenerProductos();
+    
+    grid.setAttribute('data-bind', '1');
+    grid.innerHTML = productos.map(p => `
+      <article class="tarjeta tarjeta-producto">
+        <img src="${p.imagen}" alt="${p.nombre}" onerror="this.src='img/placeholder.jpg'">
+        <div class="contenido">
+          <h3>${p.nombre}</h3>
+          <p class="precio">$${p.precio.toLocaleString()}</p>
+          <div class="acciones">
+            <a class="btn secundario" href="producto.html?codigo=${p.codigo}">Ver</a>
+            <button class="btn primario" data-agregar="${p.codigo}">Añadir</button>
+          </div>
+        </div>
+      </article>
+    `).join('');
+    
+    console.log(`✅ TODOS los productos cargados: ${productos.length}`);
+  } catch (error) {
+    console.error('Error renderizando productos:', error);
+    grid.innerHTML = '<p>Error cargando productos. Inicia el backend Spring Boot.</p>';
+  }
+}
+
+async function renderDetalleProducto() {
+  // Obtener código del producto desde URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const codigo = urlParams.get('codigo');
+  
+  if (!codigo) {
+    console.error('❌ No se especificó código de producto');
+    window.location.href = '/cliente/productos.html';
+    return;
+  }
+  
+  try {
+    const producto = await obtenerProductoPorCodigo(codigo);
+    
+    if (!producto) {
+      console.error('❌ Producto no encontrado:', codigo);
+      alert('Producto no encontrado');
+      window.location.href = '/cliente/productos.html';
+      return;
+    }
+    
+    // Actualizar contenido de la página
+    document.title = `${producto.nombre} | Level-Up Gamer`;
+    
+    // Actualizar imagen principal
+    const imgPrincipal = document.getElementById('imagenDetalle');
+    if (imgPrincipal) {
+      imgPrincipal.src = producto.imagen;
+      imgPrincipal.alt = producto.nombre;
+    }
+    
+    // Actualizar información
+    const nombreProducto = document.getElementById('nombreDetalle');
+    if (nombreProducto) nombreProducto.textContent = producto.nombre;
+    
+    const precioProducto = document.getElementById('precioDetalle');
+    if (precioProducto) precioProducto.textContent = `$${producto.precio.toLocaleString()}`;
+    
+    const descripcionProducto = document.getElementById('descripcionDetalle');
+    if (descripcionProducto) descripcionProducto.textContent = producto.descripcion;
+    
+    const categoriaProducto = document.getElementById('categoriaDetalle');
+    if (categoriaProducto) categoriaProducto.textContent = producto.categoria;
+    
+    // Actualizar detalles extra si existen
+    const detallesExtra = document.getElementById('detallesDetalle');
+    if (detallesExtra && producto.detalles) {
+      detallesExtra.textContent = producto.detalles;
+    }
+    
+    // Configurar botón agregar
+    const btnAgregar = document.getElementById('btnAgregarDetalle');
+    if (btnAgregar) {
+      btnAgregar.dataset.codigo = producto.codigo;
+      btnAgregar.disabled = producto.stock === 0;
+      btnAgregar.textContent = producto.stock > 0 ? 'Añadir al carrito' : 'Sin stock';
+    }
+    
+    // Configurar input de cantidad
+    const inputCantidad = document.getElementById('cantidadDetalle');
+    if (inputCantidad) {
+      inputCantidad.max = producto.stock;
+      inputCantidad.disabled = producto.stock === 0;
+    }
+    
+    console.log(`✅ Detalle de producto cargado: ${producto.nombre}`);
+  } catch (error) {
+    console.error('Error cargando detalle del producto:', error);
+    alert('Error cargando el producto');
+    window.location.href = '/cliente/productos.html';
+  }
+}
+
+// Configurar event listeners globales usando delegación
+function setupEventListeners() {
+  console.log('🔧 Configurando event listeners globales...');
+  
+  // Event listener global para botones de agregar al carrito (delegación)
+  document.addEventListener('click', function(e) {
+    // Interceptar clics en enlaces Admin/Vendedor
+    if (e.target.matches('#linkAdmin') || e.target.matches('#linkVendedor')) {
+      e.preventDefault();
+      console.log('🔗 Navegando al panel de administración...');
+      
+      // Verificar que el usuario esté logueado y tenga permisos
+      const usuario = usuarioActual();
+      if (!usuario) {
+        console.log('❌ Usuario no logueado - redirigiendo a login');
+        window.location.href = '/cliente/login.html';
+        return;
+      }
+      
+      // Verificar roles
+      const tipo = (usuario.tipoUsuario || '').toLowerCase();
+      const esAdmin = tipo.includes('admin');
+      const esVendedor = tipo.includes('vendedor') || tipo.includes('seller');
+      
+      if (esAdmin || esVendedor) {
+        console.log('✅ Usuario autorizado - navegando al panel admin');
+        // Abrir el dashboard de React 
+        console.log('🔄 Navegando al dashboard de React...');
+        window.location.assign('/admin');
+      } else {
+        console.log('❌ Usuario sin permisos de administración');
+        alert('No tienes permisos para acceder al panel de administración');
+      }
+      return;
+    }
+    
+    // Botón agregar al carrito
+    if (e.target.matches('[data-agregar]') || e.target.matches('#btnAgregarCarrito')) {
+      e.preventDefault();
+      const codigo = e.target.dataset.agregar || e.target.dataset.codigo;
+      if (codigo) {
+        console.log(`🛒 Agregando producto ${codigo} al carrito`);
+        agregarAlCarrito(codigo);
+      }
+      return;
+    }
+    
+    // Formulario de login
+    if (e.target.matches('#btnLogin') || e.target.closest('#formLogin')) {
+      const form = e.target.closest('#formLogin');
+      if (form && e.target.type === 'submit') {
+        e.preventDefault();
+        const correo = form.querySelector('#correoLogin')?.value;
+        const password = form.querySelector('#passwordLogin')?.value;
+        
+        if (correo && password) {
+          console.log('🔐 Intentando login con:', correo);
+          loginUsuarioAPI(correo, password);
+        }
+      }
+      return;
+    }
+  });
+  
+  // Event listener para formularios (submit) - SOLO LOGIN
+  document.addEventListener('submit', function(e) {
+    if (e.target.matches('#formLogin')) {
+      e.preventDefault();
+      
+      // Limpiar errores previos
+      limpiarErroresLogin();
+      
+      const correo = e.target.querySelector('#correoLogin')?.value?.trim();
+      const password = e.target.querySelector('#passwordLogin')?.value;
+      
+      // Validaciones básicas
+      let esValido = true;
+      
+      if (!correo) {
+        mostrarErrorLogin('Correo', 'El correo es obligatorio');
+        esValido = false;
+      } else {
+        const dominiosPermitidos = ['duoc.cl', 'profesor.duoc.cl', 'gmail.com'];
+        const dominio = correo.split('@')[1];
+        if (!dominio || !dominiosPermitidos.includes(dominio)) {
+          mostrarErrorLogin('Correo', 'Usa un correo @duoc.cl, @profesor.duoc.cl o @gmail.com');
+          esValido = false;
+        }
+      }
+      
+      if (!password) {
+        mostrarErrorLogin('Pass', 'La contraseña es obligatoria');
+        esValido = false;
+      } else if (password.length < 6) {
+        mostrarErrorLogin('Pass', 'La contraseña debe tener al menos 6 caracteres');
+        esValido = false;
+      }
+      
+      // Solo enviar si las validaciones pasan
+      if (esValido) {
+        console.log('🔐 Login form submit:', correo);
+        loginUsuarioAPI(correo, password);
+      }
+    }
+    // [REGISTRO REMOVIDO] - Se maneja en inicializarRegistro()
+  });
+  
+  console.log('✅ Event listeners configurados correctamente');
+}
+
+// Función de login usando API
+async function loginUsuarioAPI(correo, password) {
+  console.log('🔐 Intentando login con API:', correo);
+  
+  // Limpiar mensajes previos
+  limpiarErroresLogin();
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: correo, password })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Login exitoso:', data);
+      
+      // Usar los datos del usuario que ya vienen en la respuesta
+      const userData = data.usuario;
+      
+      // Guardar token y usuario en localStorage
+      localStorage.setItem('jwt_token', data.token); // Usando jwt_token para consistencia
+      localStorage.setItem('token', data.token); // También guardamos como token por compatibilidad
+      localStorage.setItem('refreshToken', data.refreshToken);
+      
+      // Verificar si hay datos adicionales locales (como fechaNacimiento) y combinarlos
+      const datosLocalesExtra = localStorage.getItem('datosUsuarioLocal');
+      if (datosLocalesExtra) {
+        try {
+          const extra = JSON.parse(datosLocalesExtra);
+          if (extra.correo === userData.correo) {
+            // Combinar datos del backend con datos locales
+            userData.fechaNacimiento = extra.fechaNacimiento;
+            console.log('📅 Fecha de nacimiento recuperada desde localStorage:', userData.fechaNacimiento);
+          }
+        } catch (e) {
+          console.log('⚠️ Error recuperando datos locales extra:', e);
+        }
+      }
+      
+      localStorage.setItem('usuario', JSON.stringify(userData));
+      
+      console.log('✅ Usuario autenticado:', userData);
+      
+      // Mostrar mensaje de éxito
+      mostrarMensajeLogin(data.message || 'Login exitoso');
+      
+      // Actualizar navegación
+      actualizarNavegacion();
+      
+      // Esperar un momento para que se vea el mensaje y luego redireccionar
+      setTimeout(() => {
+        // Redireccionar según el tipo de usuario
+        if (userData.tipoUsuario === 'ADMIN' || userData.tipoUsuario === 'VENDEDOR') {
+          window.location.href = '/admin-panel/index.html';
+        } else {
+          window.location.href = '/cliente/index.html';
+        }
+      }, 1000);
+      
+    } else {
+      const error = await response.json();
+      console.error('❌ Error en login:', error);
+      
+      // Mostrar error en msgLogin en lugar de errores individuales
+      mostrarMensajeLogin(error.message || 'Correo o contraseña incorrectos', 'error');
+    }
+  } catch (error) {
+    console.error('❌ Error conectando con el servidor:', error);
+    mostrarMensajeLogin('Error de conexión. Verificá tu conexión a internet.', 'error');
+  }
+}
+
+// Función de registro usando API - NUEVA VERSION
+async function registrarUsuario(datos) {
+  console.log('🚀 Enviando registro al servidor...');
+  console.log('📋 Datos a enviar:', JSON.stringify(datos, null, 2));
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        run: datos.run,
+        nombres: datos.nombres,
+        apellidos: datos.apellidos,
+        correo: datos.correo,
+        password: datos.password,
+        tipoUsuario: datos.tipoUsuario || 'CLIENTE',
+        region: datos.region,
+        comuna: datos.comuna,
+        direccion: datos.direccion
+      })
+    });
+    
+    console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Usuario registrado exitosamente:', result);
+      console.log('🎉 Registro completado - respuesta del backend recibida');
+      return result;
+      
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Error del servidor:', response.status, errorText);
+      throw new Error(`Error ${response.status}: ${errorText}`);
+    }
+  } catch (error) {
+    console.error('❌ Error de conexión completo:', error);
+    if (error.name === 'TypeError') {
+      throw new Error('Error de conexión. Verifica que el backend esté funcionando.');
+    }
+    throw error;
+  }
+}
+
+
+  
+  // LIMPIEZA PERIÓDICA cada 3 segundos para eliminar cualquier usuario fantasma
+  setInterval(() => {
+    eliminarUsuarioFantasma();
+  }, 3000);
+  
+  // LISTENER para detectar cambios en localStorage y limpiar inmediatamente
+  window.addEventListener('storage', function(e) {
+    if (e.key && (e.key.includes('usuario') || e.key.includes('user') || e.key.includes('auth'))) {
+      console.log('🚨 DETECTADO intento de crear usuario fantasma:', e.key);
+      eliminarUsuarioFantasma();
+    }
+  });
+
+// [ELIMINADO] DOMContentLoaded duplicado - usar solo el de la línea 409
+
+// Exponer funciones globales necesarias
+Object.assign(window, {
+  agregarAlCarrito,
+  quitarDelCarrito,
+  cambiarCantidad,
+  cerrarSesion,
+  abrirPanelCuenta,
+  crearUsuariosPrueba,
+  loginUsuario,
+  loginUsuarioAPI,
+  usuarioActual,
+  obtenerProductos,
+  renderDestacados,
+  renderProductos,
+  eliminarUsuarioFantasma
 });
