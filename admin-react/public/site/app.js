@@ -598,6 +598,13 @@ async function procesarPago() {
     return;
   }
   
+  const token = localStorage.getItem('jwt_token');
+  if (!token) {
+    mostrarDialogoStock("Sesión expirada. Por favor inicia sesión nuevamente.", "Sesión Expirada");
+    window.location.href = "/cliente/login.html";
+    return;
+  }
+  
   try {
     // Verificar stock actualizado antes de procesar
     const productos = productosCache || await obtenerProductos();
@@ -620,51 +627,76 @@ async function procesarPago() {
     
     if (hayProblemas) return;
     
-    // Calcular total
+    // Calcular total para mostrar al usuario
     let total = 0;
-    const prods = productosCache || obtener("productos", []);
     carrito.forEach(it => {
-      const p = prods.find(x => x.codigo === it.codigo);
+      const p = productos.find(x => x.codigo === it.codigo);
       if (p) {
         const precio = precioConDescuento(p.precio);
         total += precio * it.cantidad;
       }
     });
     
-    // Simular procesamiento de pago (aquí irían las llamadas al backend)
-    const pedido = {
-      usuario: usuario.correo,
-      fecha: new Date().toISOString(),
-      items: carrito.map(item => {
-        const producto = productos.find(p => p.codigo === item.codigo);
-        return {
-          codigo: item.codigo,
-          nombre: producto.nombre,
-          cantidad: item.cantidad,
-          precio: precioConDescuento(producto.precio),
-          subtotal: precioConDescuento(producto.precio) * item.cantidad
-        };
-      }),
-      total: total,
-      descuentoDuoc: usuario.correo?.toLowerCase().endsWith("@duoc.cl")
+    // Preparar datos para el backend según la estructura esperada
+    const pedidoRequest = {
+      items: carrito.map(item => ({
+        productoCodigo: item.codigo,
+        cantidad: item.cantidad
+      })),
+      direccion: usuario.direccion || "",
+      region: usuario.region || "",
+      comuna: usuario.comuna || "",
+      puntosAUsar: 0 // Por ahora no usamos puntos
     };
     
-    console.log('🛒 Pedido procesado:', pedido);
+    console.log('🚀 Enviando pedido al backend:', pedidoRequest);
     
-    // Limpiar carrito después del pago exitoso
-    guardarCarrito([]);
+    // Llamar al backend para crear el pedido
+    const response = await fetch(`${API_BASE_URL}/v1/pedidos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(pedidoRequest)
+    });
     
-    // Mostrar mensaje de éxito
-    mostrarDialogoStock(`¡Pago procesado exitosamente! Total: ${formatoPrecio(total)}. Tu pedido será procesado pronto.`, "Pago Exitoso");
-    
-    // Opcional: redirigir a una página de confirmación
-    setTimeout(() => {
-      window.location.href = "/cliente/misCompras.html";
-    }, 3000);
+    if (response.ok) {
+      const pedidoCreado = await response.json();
+      console.log('✅ Pedido guardado en base de datos:', pedidoCreado);
+      
+      // Limpiar carrito después del pago exitoso
+      guardarCarrito([]);
+      
+      // Mostrar mensaje de éxito
+      mostrarDialogoStock(`¡Pago procesado exitosamente! 
+      
+Pedido #${pedidoCreado.id}
+Total: ${formatoPrecio(total)}
+      
+Tu pedido ha sido guardado y será procesado pronto.`, "Pago Exitoso");
+      
+      // Redirigir a mis compras para ver el pedido
+      setTimeout(() => {
+        window.location.href = "/cliente/misCompras.html";
+      }, 4000);
+      
+    } else {
+      const errorData = await response.text();
+      console.error('❌ Error del backend al crear pedido:', response.status, errorData);
+      
+      if (response.status === 401) {
+        mostrarDialogoStock("Sesión expirada. Por favor inicia sesión nuevamente.", "Sesión Expirada");
+        localStorage.removeItem('jwt_token');
+        window.location.href = "/cliente/login.html";
+      } else {
+        mostrarDialogoStock("Error al procesar el pedido en el servidor. Inténtalo nuevamente.", "Error del Servidor");
+      }
+    }
     
   } catch (error) {
-    console.error('Error procesando pago:', error);
-    mostrarDialogoStock("Error al procesar el pago. Inténtalo nuevamente.", "Error de Pago");
+    console.error('❌ Error de conexión al procesar pago:', error);
+    mostrarDialogoStock("Error de conexión. Verifica que el backend esté funcionando e inténtalo nuevamente.", "Error de Conexión");
   }
 }
 
