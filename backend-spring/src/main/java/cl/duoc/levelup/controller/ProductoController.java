@@ -2,40 +2,61 @@ package cl.duoc.levelup.controller;
 
 import cl.duoc.levelup.entity.Producto;
 import cl.duoc.levelup.service.ProductoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/productos")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping("/api/productos")
+@CrossOrigin(origins = {"*"})
+@Tag(name = "Productos", description = "Gestión de productos del catálogo")
 public class ProductoController {
 
     @Autowired
     private ProductoService productoService;
 
+    @Operation(summary = "Obtener todos los productos", description = "Obtiene la lista completa de productos (requiere permisos de admin)")
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Producto>> getAllProducts() {
-        List<Producto> productos = productoService.obtenerTodos();
-        return ResponseEntity.ok(productos);
+        try {
+            List<Producto> productos = productoService.obtenerTodos();
+            return ResponseEntity.ok(productos);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-    @GetMapping("/activos")
+    @Operation(summary = "Obtener productos públicos", description = "Obtiene la lista de productos activos para visualización pública")
+    @GetMapping("/publicos")
     public ResponseEntity<List<Producto>> getActiveProducts() {
-        List<Producto> productos = productoService.obtenerActivos();
-        return ResponseEntity.ok(productos);
+        try {
+            List<Producto> productos = productoService.obtenerActivos();
+            return ResponseEntity.ok(productos);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
+    @Operation(summary = "Obtener producto por código", description = "Obtiene un producto específico por su código")
     @GetMapping("/{codigo}")
     public ResponseEntity<Producto> getProductById(@PathVariable String codigo) {
-        return productoService.obtenerPorId(codigo)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return productoService.obtenerPorId(codigo)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/categoria/{categoria}")

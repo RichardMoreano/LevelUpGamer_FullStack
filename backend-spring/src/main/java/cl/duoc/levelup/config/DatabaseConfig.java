@@ -16,12 +16,12 @@ public class DatabaseConfig {
         String databaseUrl = System.getenv("DATABASE_URL");
         
         if (databaseUrl == null || databaseUrl.isEmpty()) {
-            System.out.println("DATABASE_URL not found, using MySQL for local development");
+            System.out.println("DATABASE_URL not found, using H2 PERSISTENT storage for local development");
             return DataSourceBuilder.create()
-                    .url("jdbc:mysql://localhost:3306/levelup_gamer?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC")
-                    .username("root")
-                    .password("admin")
-                    .driverClassName("com.mysql.cj.jdbc.Driver")
+                    .url("jdbc:h2:file:./data/levelup_gamer_dev")
+                    .username("sa")
+                    .password("")
+                    .driverClassName("org.h2.Driver")
                     .build();
         }
 

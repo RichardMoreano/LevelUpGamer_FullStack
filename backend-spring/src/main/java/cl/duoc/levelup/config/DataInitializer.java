@@ -5,17 +5,17 @@ import cl.duoc.levelup.entity.Usuario;
 import cl.duoc.levelup.repository.ProductoRepository;
 import cl.duoc.levelup.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Component
 @Profile("!prod")  // Solo ejecutar en perfiles que NO sean prod
-public class DataInitializer implements CommandLineRunner {
+public class DataInitializer {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -26,8 +26,8 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Override
-    public void run(String... args) throws Exception {
+    @PostConstruct
+    public void init() {
         initializeUsers();
         initializeProducts();
     }
@@ -104,7 +104,39 @@ public class DataInitializer implements CommandLineRunner {
         clienteNormal.setPuntosLevelUp(50);
         usuarioRepository.save(clienteNormal);
 
-        System.out.println("✅ Usuarios inicializados correctamente");
+        // Usuario Richard (para pruebas)
+        Usuario richard = new Usuario();
+        richard.setRun("33333333-3");
+        richard.setNombres("Richard");
+        richard.setApellidos("Moreano");
+        richard.setCorreo("richard@duoc.cl");
+        richard.setPassword(passwordEncoder.encode("admin123")); // Cambié a 7 caracteres
+        richard.setTipoUsuario(Usuario.TipoUsuario.ADMIN);
+        richard.setRegion("Metropolitana");
+        richard.setComuna("Santiago");
+        richard.setDireccion("Campus Duoc UC");
+        richard.setFechaRegistro(LocalDateTime.now());
+        richard.setActivo(true);
+        richard.setPuntosLevelUp(0);
+        usuarioRepository.save(richard);
+        
+        // Usuario para pruebas con el correo que intentas usar
+        Usuario ri = new Usuario();
+        ri.setRun("44444444-4");
+        ri.setNombres("Ricardo");
+        ri.setApellidos("Testing");
+        ri.setCorreo("ri@duoc.cl");
+        ri.setPassword(passwordEncoder.encode("123456")); // 6 caracteres mínimo
+        ri.setTipoUsuario(Usuario.TipoUsuario.CLIENTE);
+        ri.setRegion("Metropolitana");
+        ri.setComuna("Santiago");
+        ri.setDireccion("Campus Duoc UC");
+        ri.setFechaRegistro(LocalDateTime.now());
+        ri.setActivo(true);
+        ri.setPuntosLevelUp(100);
+        usuarioRepository.save(ri);
+
+        System.out.println("Usuarios inicializados correctamente");
     }
 
     private void initializeProducts() {
@@ -115,133 +147,137 @@ public class DataInitializer implements CommandLineRunner {
 
         System.out.println("🎮 Inicializando productos por defecto...");
 
-        // Consolas
+        // Producto 1: Catan
+        Producto catan = new Producto();
+        catan.setCodigo("JM001");
+        catan.setNombre("Catan");
+        catan.setCategoria("Juegos de Mesa");
+        catan.setDescripcion("Clásico de estrategia para 3-4 jugadores.");
+        catan.setPrecio(new BigDecimal("29990"));
+        catan.setStock(15);
+        catan.setStockCritico(5);
+        catan.setImagen("https://deviramericas.com/wp-content/uploads/2013/06/Catan-basico-bodegon-web.jpg");
+        catan.setActivo(true);
+        productoRepository.save(catan);
+
+        // Producto 2: Carcassonne
+        Producto carcassonne = new Producto();
+        carcassonne.setCodigo("JM002");
+        carcassonne.setNombre("Carcassonne");
+        carcassonne.setCategoria("Juegos de Mesa");
+        carcassonne.setDescripcion("Colocación de losetas, ideal 2-5 jugadores.");
+        carcassonne.setPrecio(new BigDecimal("24990"));
+        carcassonne.setStock(12);
+        carcassonne.setStockCritico(4);
+        carcassonne.setImagen("https://i0.wp.com/devir.mx/wp-content/uploads/2016/04/carcassonne-1200-components1.png?resize=600%2C600&ssl=1");
+        carcassonne.setActivo(true);
+        productoRepository.save(carcassonne);
+
+        // Producto 3: Control Xbox Series X
+        Producto controlXbox = new Producto();
+        controlXbox.setCodigo("AC001");
+        controlXbox.setNombre("Control Xbox Series X");
+        controlXbox.setCategoria("Accesorios");
+        controlXbox.setDescripcion("Ergonomía y respuesta táctil mejorada.");
+        controlXbox.setPrecio(new BigDecimal("59990"));
+        controlXbox.setStock(25);
+        controlXbox.setStockCritico(8);
+        controlXbox.setImagen("https://cms-assets.xboxservices.com/assets/87/a9/87a938ce-d645-49f3-a556-10010071d936.jpg?n=Xbox-Wireless-Controller_Image-Hero-0_957848-1_1083x609_01.jpg");
+        controlXbox.setActivo(true);
+        productoRepository.save(controlXbox);
+
+        // Producto 4: HyperX Cloud II
+        Producto hyperxCloud = new Producto();
+        hyperxCloud.setCodigo("AC002");
+        hyperxCloud.setNombre("HyperX Cloud II");
+        hyperxCloud.setCategoria("Accesorios");
+        hyperxCloud.setDescripcion("Sonido envolvente y micrófono desmontable.");
+        hyperxCloud.setPrecio(new BigDecimal("79990"));
+        hyperxCloud.setStock(18);
+        hyperxCloud.setStockCritico(6);
+        hyperxCloud.setImagen("https://row.hyperx.com/cdn/shop/files/hyperx_cloud_ii_red_1_main.jpg?v=1737720332&width=832");
+        hyperxCloud.setActivo(true);
+        productoRepository.save(hyperxCloud);
+
+        // Producto 5: PlayStation 5
         Producto ps5 = new Producto();
-        ps5.setCodigo("CON001");
+        ps5.setCodigo("CO001");
         ps5.setNombre("PlayStation 5");
         ps5.setCategoria("Consolas");
-        ps5.setDescripcion("Consola de videojuegos de última generación de Sony");
-        ps5.setPrecio(new BigDecimal("599990"));
-        ps5.setStock(10);
-        ps5.setStockCritico(5);
-        ps5.setImagen("ps5.jpg");
+        ps5.setDescripcion("Nueva generación de Sony con SSD ultra rápido.");
+        ps5.setPrecio(new BigDecimal("549990"));
+        ps5.setStock(8);
+        ps5.setStockCritico(3);
+        ps5.setImagen("https://comprarmag.com/wp-content/uploads/2023/12/397848fd-3262-3f6f-fd9d-0d57c7f965d4.png");
         ps5.setActivo(true);
         productoRepository.save(ps5);
 
-        Producto xbox = new Producto();
-        xbox.setCodigo("CON002");
-        xbox.setNombre("Xbox Series X");
-        xbox.setCategoria("Consolas");
-        xbox.setDescripcion("La consola Xbox más potente de la historia");
-        xbox.setPrecio(new BigDecimal("549990"));
-        xbox.setStock(8);
-        xbox.setStockCritico(3);
-        xbox.setImagen("xbox-series-x.jpg");
-        xbox.setActivo(true);
-        productoRepository.save(xbox);
+        // Producto 6: PC ASUS ROG Strix
+        Producto pcAsus = new Producto();
+        pcAsus.setCodigo("CG001");
+        pcAsus.setNombre("PC ASUS ROG Strix");
+        pcAsus.setCategoria("Computadores Gamers");
+        pcAsus.setDescripcion("Alto rendimiento para juegos AAA.");
+        pcAsus.setPrecio(new BigDecimal("1299990"));
+        pcAsus.setStock(5);
+        pcAsus.setStockCritico(2);
+        pcAsus.setImagen("https://dlcdnwebimgs.asus.com/files/media/8B74E7EE-B66A-4420-894E-3C3B980312EE/v1/img-webp/design/color/strix-g-2022-pink.webp");
+        pcAsus.setActivo(true);
+        productoRepository.save(pcAsus);
 
-        Producto nintendo = new Producto();
-        nintendo.setCodigo("CON003");
-        nintendo.setNombre("Nintendo Switch");
-        nintendo.setCategoria("Consolas");
-        nintendo.setDescripcion("Consola híbrida portátil y de sobremesa");
-        nintendo.setPrecio(new BigDecimal("299990"));
-        nintendo.setStock(15);
-        nintendo.setStockCritico(5);
-        nintendo.setImagen("nintendo-switch.jpg");
-        nintendo.setActivo(true);
-        productoRepository.save(nintendo);
+        // Producto 7: Secretlab Titan
+        Producto secretlabTitan = new Producto();
+        secretlabTitan.setCodigo("SG001");
+        secretlabTitan.setNombre("Secretlab Titan");
+        secretlabTitan.setCategoria("Sillas Gamers");
+        secretlabTitan.setDescripcion("Ergonómica para sesiones largas.");
+        secretlabTitan.setPrecio(new BigDecimal("349990"));
+        secretlabTitan.setStock(10);
+        secretlabTitan.setStockCritico(4);
+        secretlabTitan.setImagen("https://images.secretlab.co/theme/common/catalog-titanevo2022-overwatch-min-2.png");
+        secretlabTitan.setActivo(true);
+        productoRepository.save(secretlabTitan);
 
-        // Juegos PS5
-        Producto spiderMan = new Producto();
-        spiderMan.setCodigo("JUE001");
-        spiderMan.setNombre("Marvel's Spider-Man 2");
-        spiderMan.setCategoria("Juegos PS5");
-        spiderMan.setDescripcion("La secuela del exitoso juego de Spider-Man");
-        spiderMan.setPrecio(new BigDecimal("69990"));
-        spiderMan.setStock(25);
-        spiderMan.setStockCritico(10);
-        spiderMan.setImagen("spiderman-2.jpg");
-        spiderMan.setActivo(true);
-        productoRepository.save(spiderMan);
+        // Producto 8: Logitech G502 HERO
+        Producto logitechMouse = new Producto();
+        logitechMouse.setCodigo("MS001");
+        logitechMouse.setNombre("Logitech G502 HERO");
+        logitechMouse.setCategoria("Mouse");
+        logitechMouse.setDescripcion("Sensor de alta precisión y botones programables.");
+        logitechMouse.setPrecio(new BigDecimal("49990"));
+        logitechMouse.setStock(30);
+        logitechMouse.setStockCritico(10);
+        logitechMouse.setImagen("https://cdnx.jumpseller.com/easytech-store/image/24090186/D_NQ_NP_947437-MLC44815871328_022021-O.jpg?1652376809");
+        logitechMouse.setActivo(true);
+        productoRepository.save(logitechMouse);
 
-        Producto godOfWar = new Producto();
-        godOfWar.setCodigo("JUE002");
-        godOfWar.setNombre("God of War Ragnarök");
-        godOfWar.setCategoria("Juegos PS5");
-        godOfWar.setDescripcion("La épica conclusión de la saga nórdica");
-        godOfWar.setPrecio(new BigDecimal("59990"));
-        godOfWar.setStock(20);
-        godOfWar.setStockCritico(8);
-        godOfWar.setImagen("god-of-war-ragnarok.jpg");
-        godOfWar.setActivo(true);
-        productoRepository.save(godOfWar);
+        // Producto 9: Razer Goliathus Extended Chroma
+        Producto razerMousepad = new Producto();
+        razerMousepad.setCodigo("MP001");
+        razerMousepad.setNombre("Razer Goliathus Extended Chroma");
+        razerMousepad.setCategoria("Mousepad");
+        razerMousepad.setDescripcion("Superficie amplia con iluminación RGB.");
+        razerMousepad.setPrecio(new BigDecimal("29990"));
+        razerMousepad.setStock(20);
+        razerMousepad.setStockCritico(7);
+        razerMousepad.setImagen("https://m.media-amazon.com/images/I/81cLLSd5BPL._AC_SL1500_.jpg");
+        razerMousepad.setActivo(true);
+        productoRepository.save(razerMousepad);
 
-        // Juegos Xbox
-        Producto halo = new Producto();
-        halo.setCodigo("JUE003");
-        halo.setNombre("Halo Infinite");
-        halo.setCategoria("Juegos Xbox");
-        halo.setDescripcion("El regreso del Master Chief");
-        halo.setPrecio(new BigDecimal("49990"));
-        halo.setStock(18);
-        halo.setStockCritico(6);
-        halo.setImagen("halo-infinite.jpg");
-        halo.setActivo(true);
-        productoRepository.save(halo);
+        // Producto 10: Polera 'Level-Up'
+        Producto poleraLevelUp = new Producto();
+        poleraLevelUp.setCodigo("PP001");
+        poleraLevelUp.setNombre("Polera 'Level-Up'");
+        poleraLevelUp.setCategoria("Poleras Personalizadas");
+        poleraLevelUp.setDescripcion("Personalizable con tu gamer tag.");
+        poleraLevelUp.setPrecio(new BigDecimal("14990"));
+        poleraLevelUp.setStock(1); // Stock crítico para testing
+        poleraLevelUp.setStockCritico(5);
+        poleraLevelUp.setImagen("https://www.gustore.cl/img/estampados/8305/8305_1.png");
+        poleraLevelUp.setActivo(true);
+        productoRepository.save(poleraLevelUp);
 
-        // Juegos Nintendo
-        Producto mario = new Producto();
-        mario.setCodigo("JUE004");
-        mario.setNombre("Super Mario Odyssey");
-        mario.setCategoria("Juegos Nintendo");
-        mario.setDescripcion("Una gran aventura de Mario en 3D");
-        mario.setPrecio(new BigDecimal("59990"));
-        mario.setStock(22);
-        mario.setStockCritico(8);
-        mario.setImagen("mario-odyssey.jpg");
-        mario.setActivo(true);
-        productoRepository.save(mario);
-
-        // Accesorios
-        Producto controlPs5 = new Producto();
-        controlPs5.setCodigo("ACC001");
-        controlPs5.setNombre("DualSense Controller");
-        controlPs5.setCategoria("Accesorios");
-        controlPs5.setDescripcion("Control inalámbrico para PlayStation 5");
-        controlPs5.setPrecio(new BigDecimal("79990"));
-        controlPs5.setStock(30);
-        controlPs5.setStockCritico(15);
-        controlPs5.setImagen("dualsense-controller.jpg");
-        controlPs5.setActivo(true);
-        productoRepository.save(controlPs5);
-
-        Producto headset = new Producto();
-        headset.setCodigo("ACC002");
-        headset.setNombre("Gaming Headset RGB");
-        headset.setCategoria("Accesorios");
-        headset.setDescripcion("Auriculares gamer con micrófono y RGB");
-        headset.setPrecio(new BigDecimal("39990"));
-        headset.setStock(40);
-        headset.setStockCritico(20);
-        headset.setImagen("gaming-headset.jpg");
-        headset.setActivo(true);
-        productoRepository.save(headset);
-
-        // Producto con stock crítico para testing
-        Producto memoriaUsb = new Producto();
-        memoriaUsb.setCodigo("ACC003");
-        memoriaUsb.setNombre("Memoria USB Gaming 64GB");
-        memoriaUsb.setCategoria("Accesorios");
-        memoriaUsb.setDescripcion("Memoria USB de alta velocidad para gamers");
-        memoriaUsb.setPrecio(new BigDecimal("15990"));
-        memoriaUsb.setStock(2); // Stock crítico
-        memoriaUsb.setStockCritico(5);
-        memoriaUsb.setImagen("usb-gaming.jpg");
-        memoriaUsb.setActivo(true);
-        productoRepository.save(memoriaUsb);
-
-        System.out.println("✅ Productos inicializados correctamente");
-        System.out.println("📊 Total productos creados: " + productoRepository.count());
+        System.out.println("Productos inicializados correctamente");
+        System.out.println("Total productos creados: " + productoRepository.count());
     }
 }

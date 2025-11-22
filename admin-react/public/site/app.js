@@ -1529,6 +1529,12 @@ async function inicializarPagina() {
     console.log('👤 Inicializando perfil...');
     await inicializarPerfil();
   }
+
+  // Inicializar mis compras si estamos en misCompras.html
+  if (window.location.pathname.includes('misCompras.html')) {
+    console.log('🛒 Inicializando mis compras...');
+    await inicializarMisCompras();
+  }
   
   // Limpiar errores de formularios al cargar la página
   if (document.getElementById('formLogin')) {
@@ -2294,3 +2300,426 @@ Object.assign(window, {
   renderProductos,
   eliminarUsuarioFantasma
 });
+
+// ========================================
+// INICIALIZAR MIS COMPRAS
+// ========================================
+async function inicializarMisCompras() {
+  const listaCompras = document.getElementById('listaCompras');
+  if (!listaCompras) return;
+
+  // Verificar si el usuario está logueado
+  const usuario = usuarioActual();
+  if (!usuario) {
+    listaCompras.innerHTML = `
+      <div style="text-align: center; padding: 40px;">
+        <p>Debes iniciar sesión para ver tus compras.</p>
+        <a href="/cliente/login.html" class="btn primario">Iniciar Sesión</a>
+      </div>
+    `;
+    return;
+  }
+
+  // Mostrar loading
+  listaCompras.innerHTML = `
+    <div style="text-align: center; padding: 40px;">
+      <p>Cargando tus pedidos...</p>
+    </div>
+  `;
+
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No hay token de autenticación');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/v1/pedidos/mis-pedidos`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+
+    const pedidos = await response.json();
+    console.log('📦 Pedidos obtenidos:', pedidos);
+
+    if (!pedidos || pedidos.length === 0) {
+      listaCompras.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+          <p>📦 No tienes pedidos aún.</p>
+          <a href="/cliente/productos.html" class="btn primario">Ver Productos</a>
+        </div>
+      `;
+      return;
+    }
+
+    // Renderizar pedidos con funcionalidad completa
+    await renderPedidosCompletos(pedidos);
+
+  } catch (error) {
+    console.error('❌ Error al cargar pedidos:', error);
+    listaCompras.innerHTML = `
+      <div style="text-align: center; padding: 40px;">
+        <p>❌ Error al cargar tus pedidos: ${error.message}</p>
+        <button class="btn primario" onclick="location.reload()">Intentar de nuevo</button>
+      </div>
+    `;
+  }
+}
+
+async function renderPedidosCompletos(pedidosBackend){
+  const cont = document.getElementById("listaCompras");
+  if(!cont) return;
+
+  const u = usuarioActual();
+  if (!u) return;
+
+  // Convertir pedidos del backend al formato esperado por la UI
+  const compras = pedidosBackend.map(pedido => ({
+    id: `PED-${pedido.id}`, // Formato personalizado como pediste
+    fecha: pedido.fecha,
+    estado: pedido.estado.toLowerCase(), // PENDIENTE -> pendiente
+    items: [], // Los items los obtendremos del detalle si es necesario
+    subtotal: pedido.subtotal,
+    descuentoDuoc: pedido.descuentoDuoc,
+    descuentoPuntos: pedido.descuentoPuntos,
+    total: pedido.total,
+    direccion: pedido.direccion,
+    comuna: pedido.comuna,
+    region: pedido.region,
+    idOriginal: pedido.id // Guardamos el ID original para las API calls
+  }));
+
+  const prods = await obtenerProductos();
+  // más recientes primero
+  compras.sort((a,b)=> new Date(b.fecha) - new Date(a.fecha));
+
+  const pedidosHTML = compras.map(pedido => {
+    const fecha = new Date(pedido.fecha).toLocaleDateString('es-CL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const estadoClass = {
+      'pendiente': 'estado-pendiente',
+      'despachado': 'estado-despachado', 
+      'cancelado': 'estado-cancelado'
+    }[pedido.estado] || '';
+
+    const estadoEmoji = {
+      'pendiente': '⏳',
+      'despachado': '✅',
+      'cancelado': '❌'
+    }[pedido.estado] || '📦';
+
+    return `
+      <div class="pedido-card" data-pedido-id="${pedido.idOriginal}">
+        <div class="pedido-header">
+          <div class="pedido-info">
+            <h3>${pedido.id}</h3>
+            <p class="fecha">${fecha}</p>
+          </div>
+          <div class="pedido-estado ${estadoClass}">
+            ${estadoEmoji} ${pedido.estado.toUpperCase()}
+          </div>
+        </div>
+        
+        <div class="pedido-detalles">
+          <div class="direccion">
+            <strong>📍 Dirección:</strong> ${pedido.direccion}, ${pedido.comuna}, ${pedido.region}
+          </div>
+          
+          <div class="totales">
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span>${formatoPrecio(pedido.subtotal)}</span>
+            </div>
+            ${pedido.descuentoDuoc > 0 ? `
+              <div class="total-row descuento">
+                <span>Descuento Duoc (20%):</span>
+                <span>-${formatoPrecio(pedido.descuentoDuoc)}</span>
+              </div>
+            ` : ''}
+            ${pedido.descuentoPuntos > 0 ? `
+              <div class="total-row descuento">
+                <span>Descuento con puntos:</span>
+                <span>-${formatoPrecio(pedido.descuentoPuntos)}</span>
+              </div>
+            ` : ''}
+            <div class="total-row total-final">
+              <span><strong>Total:</strong></span>
+              <span><strong>${formatoPrecio(pedido.total)}</strong></span>
+            </div>
+          </div>
+          
+          <div class="pedido-acciones">
+            ${pedido.estado === 'pendiente' ? `
+              <button class="btn secundario" data-cancelar="${pedido.idOriginal}">Cancelar</button>
+            ` : ''}
+            ${pedido.estado === 'despachado' ? `
+              <button class="btn primario" onclick="window.location.href='/cliente/productos.html#resenas'">Escribir Reseña</button>
+            ` : ''}
+            <button class="btn primario" data-boleta="${pedido.id}">Generar Boleta</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  cont.innerHTML = `
+    <div class="pedidos-lista">
+      <h2>Mis Pedidos (${compras.length})</h2>
+      ${pedidosHTML}
+    </div>
+  `;
+
+  // Delegación: abrir modal (Cancelar y Boleta) – un solo listener
+  if (!cont.dataset.bind){
+    cont.addEventListener("click",(e)=>{
+      // --- Cancelar ---
+      const btnCancel = e.target.closest("[data-cancelar]");
+      if (btnCancel){
+        const idOriginal = btnCancel.getAttribute("data-cancelar");
+        const dlg = document.getElementById("dlgCancelarPedido");
+        const hid = document.getElementById("cancelarPedidoId");
+        if (!dlg || !hid) return;
+        hid.value = idOriginal;
+        dlg.showModal();
+        return;
+      }
+
+      // --- Boleta ---
+      const btnBol = e.target.closest("[data-boleta]");
+      if (btnBol){
+        const id = btnBol.getAttribute("data-boleta");
+        const dlg = document.getElementById("dlgBoleta");
+        const hid = document.getElementById("boletaPedidoId");
+        const resumen = document.getElementById("boletaResumen");
+        if (!dlg || !hid || !resumen) return;
+
+        // buscar la compra
+        const compra = compras.find(c => c.id === id);
+        if (!compra){ alert("Pedido no encontrado."); return; }
+
+        // preparar resumen HTML para la boleta
+        const fecha = new Date(compra.fecha).toLocaleString("es-CL");
+        resumen.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <div>
+              <strong>Level-Up Gamer</strong><br>
+              <small>Boleta electrónica</small><br>
+              <small>Pedido: ${compra.id}</small><br>
+              <small>Fecha: ${fecha}</small>
+            </div>
+            <div style="font-size:28px" aria-hidden="true">📄</div>
+          </div>
+          <hr>
+          <div style="margin:6px 0">
+            <small><strong>Cliente:</strong> ${u.nombres||""} ${u.apellidos||""} — ${u.correo||"—"}</small>
+          </div>
+          <div style="margin:6px 0">
+            <small><strong>Dirección:</strong> ${compra.direccion}, ${compra.comuna}, ${compra.region}</small>
+          </div>
+          <div style="overflow:auto">
+            <table style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding:6px 0">Detalle</th>
+                  <th style="text-align:right;padding:6px 0">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Subtotal</td>
+                  <td style="text-align:right">${formatoPrecio(compra.subtotal)}</td>
+                </tr>
+                ${compra.descuentoDuoc > 0 ? `
+                  <tr>
+                    <td>Descuento Duoc (20%)</td>
+                    <td style="text-align:right">-${formatoPrecio(compra.descuentoDuoc)}</td>
+                  </tr>
+                ` : ''}
+                ${compra.descuentoPuntos > 0 ? `
+                  <tr>
+                    <td>Descuento con puntos</td>
+                    <td style="text-align:right">-${formatoPrecio(compra.descuentoPuntos)}</td>
+                  </tr>
+                ` : ''}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td style="text-align:right;padding-top:8px"><strong>Total</strong></td>
+                  <td style="text-align:right;padding-top:8px"><strong>${formatoPrecio(compra.total)}</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        `;
+
+        hid.value = id;
+        dlg.showModal();
+      }
+    });
+    cont.dataset.bind = "1";
+  }
+
+  // Botones del modal Cancelar
+  (function wireCancelar(){
+    const dlg = document.getElementById("dlgCancelarPedido");
+    const btnOk = document.getElementById("btnConfirmarCancelacion");
+    const btnClose = document.getElementById("btnCerrarCancelacion");
+    if (dlg && btnOk && !btnOk.dataset.bind){
+      btnOk.addEventListener("click", async ()=>{
+        const id = document.getElementById("cancelarPedidoId").value;
+        if (!id) return;
+        
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(`${API_BASE_URL}/v1/pedidos/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            dlg.close();
+            inicializarMisCompras(); // Recargar la lista
+            alert("Pedido cancelado.");
+          } else {
+            alert("Error al cancelar el pedido");
+          }
+        } catch (error) {
+          console.error('Error al cancelar:', error);
+          alert("Error al cancelar el pedido");
+        }
+      });
+      btnOk.dataset.bind = "1";
+    }
+    if (dlg && btnClose && !btnClose.dataset.bind){
+      btnClose.addEventListener("click", ()=> dlg.close());
+      btnClose.dataset.bind = "1";
+    }
+  })();
+
+  // Botones del modal Boleta - Funcionalidad completa de PDF
+  (function wireBoleta(){
+    const dlgB = document.getElementById("dlgBoleta");
+    const btnPDF = document.getElementById("btnGenerarPDF");
+    const btnCloseB = document.getElementById("btnCerrarBoleta");
+
+    if (dlgB && btnPDF && !btnPDF.dataset.bind){
+      btnPDF.addEventListener("click",(e)=>{
+        e.preventDefault();
+        const id = document.getElementById("boletaPedidoId").value;
+        if (!id) return;
+
+        // obtener compra y armar HTML imprimible
+        const compra = compras.find(c => c.id === id);
+        if (!compra){ alert("Pedido no encontrado."); return; }
+
+        const fecha = new Date(compra.fecha).toLocaleString("es-CL");
+        const html = `
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Boleta ${compra.id}</title>
+<style>
+  body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; padding:20px; }
+  h1{ margin:0 0 6px 0; font-size:20px; }
+  table{ width:100%; border-collapse:collapse; }
+  th, td{ padding:6px 0; border-bottom:1px solid #ddd; font-size:14px; }
+  tfoot td{ border-bottom:0; }
+  .enc{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .enc .icon{ font-size:28px; }
+  .small{ color:#555; font-size:12px; }
+</style>
+</head>
+<body>
+  <div class="enc">
+    <div>
+      <h1>Level-Up Gamer</h1>
+      <div class="small">Boleta electrónica</div>
+      <div class="small">Pedido: ${compra.id}</div>
+      <div class="small">Fecha: ${fecha}</div>
+      <div class="small">Cliente: ${u.nombres||""} ${u.apellidos||""} — ${u.correo||"—"}</div>
+      <div class="small">Dirección: ${compra.direccion}, ${compra.comuna}, ${compra.region}</div>
+    </div>
+    <div class="icon">📄</div>
+  </div>
+  <hr>
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left">Detalle</th>
+        <th style="text-align:right">Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Subtotal</td>
+        <td style="text-align:right">${formatoPrecio(compra.subtotal)}</td>
+      </tr>
+      ${compra.descuentoDuoc > 0 ? `
+        <tr>
+          <td>Descuento Duoc (20%)</td>
+          <td style="text-align:right">-${formatoPrecio(compra.descuentoDuoc)}</td>
+        </tr>
+      ` : ''}
+      ${compra.descuentoPuntos > 0 ? `
+        <tr>
+          <td>Descuento con puntos</td>
+          <td style="text-align:right">-${formatoPrecio(compra.descuentoPuntos)}</td>
+        </tr>
+      ` : ''}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td style="text-align:right"><strong>Total</strong></td>
+        <td style="text-align:right"><strong>${formatoPrecio(compra.total)}</strong></td>
+      </tr>
+    </tfoot>
+  </table>
+  <script>window.onload = () => window.print();</script>
+</body>
+</html>
+        `.trim();
+
+        const w = window.open("", "_blank");
+        if (!w){ alert("Bloqueado por el navegador. Permití ventanas emergentes para generar el PDF."); return; }
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+      });
+      btnPDF.dataset.bind = "1";
+    }
+
+    if (dlgB && btnCloseB && !btnCloseB.dataset.bind){
+      btnCloseB.addEventListener("click", ()=> dlgB.close());
+      btnCloseB.dataset.bind = "1";
+    }
+  })();
+}
+
+// Funciones auxiliares para los pedidos
+function cancelarPedido(pedidoId) {
+  // TODO: Implementar cancelación de pedido
+  console.log('Cancelar pedido:', pedidoId);
+  alert('Función de cancelación pendiente de implementar');
+}
+
+function verDetallePedido(pedidoId) {
+  // TODO: Implementar vista de detalles
+  console.log('Ver detalle pedido:', pedidoId);
+  alert('Vista de detalles pendiente de implementar');
+}

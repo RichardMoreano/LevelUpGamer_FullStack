@@ -12,13 +12,13 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${spring.security.jwt.secret-key}")
+    @Value("${security.jwt.secret-key}")
     private String jwtSecret;
 
-    @Value("${spring.security.jwt.expiration}")
+    @Value("${security.jwt.expiration}")
     private int jwtExpirationInMs;
 
-    @Value("${spring.security.jwt.refresh-expiration}")
+    @Value("${security.jwt.refresh-expiration}")
     private int refreshExpirationInMs;
 
     private SecretKey getSigningKey() {

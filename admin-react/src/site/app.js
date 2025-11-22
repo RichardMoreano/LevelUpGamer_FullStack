@@ -25,13 +25,9 @@ import {
 // import { productosBase, regiones, categorias } from "./datos.js";
 
 
-/* =============== Primera carga =============== */
-if (!localStorage.getItem("productos") && Array.isArray(productosBase)) {
-  guardar("productos", productosBase);
-}
-if (!localStorage.getItem("usuarios")) guardar("usuarios", []);
-if (!localStorage.getItem("carrito"))  guardar("carrito", []);
-if (!localStorage.getItem("resenas"))   guardar("resenas", {});
+/* =============== NO INICIALIZACIÓN AUTOMÁTICA =============== */
+// REMOVIDO: No crear datos automáticamente
+// Los datos se crean MANUALMENTE cuando se necesiten
 
 /* ======== SANEADOR DE STORAGE ======== */
 function esObjPlano(x){ return x && typeof x === "object" && !Array.isArray(x); }
@@ -1933,4 +1929,105 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Menu movil
   inicializarMenuLateral();
+});
+
+// ============ FUNCIONES MANUALES DE INICIALIZACIÓN ============
+function crearUsuariosPrueba() {
+  console.log('🔧 Creando usuarios de prueba manualmente...');
+  
+  // Crear productos si no existen
+  if (!localStorage.getItem("productos") && Array.isArray(productosBase)) {
+    guardar("productos", productosBase);
+    console.log('📦 Productos base creados');
+  }
+  
+  // Crear arrays vacíos si no existen
+  if (!localStorage.getItem("carrito")) {
+    guardar("carrito", []);
+    console.log('🛒 Carrito inicializado');
+  }
+  
+  if (!localStorage.getItem("resenas")) {
+    guardar("resenas", {});
+    console.log('⭐ Reseñas inicializadas');
+  }
+  
+  // Crear usuarios de prueba
+  const usuarios = [
+    {
+      run: "12345678-9",
+      nombres: "Admin",
+      apellidos: "Principal",
+      correo: "admin@levelup.cl",
+      password: "admin123",
+      tipoUsuario: "admin",
+      region: "Región Metropolitana",
+      comuna: "Santiago",
+      direccion: "Calle Falsa 123",
+      fechaNacimiento: "1990-01-01",
+      puntosLevelUp: 0,
+      codigoReferido: "ADMIN001",
+      compras: []
+    },
+    {
+      run: "98765432-1",
+      nombres: "Richard",
+      apellidos: "Usuario",
+      correo: "richard@duoc.cl",
+      password: "admin",
+      tipoUsuario: "admin",
+      region: "Región Metropolitana", 
+      comuna: "Providencia",
+      direccion: "Avenida Siempre Viva 742",
+      fechaNacimiento: "1995-05-15",
+      puntosLevelUp: 150,
+      codigoReferido: "RICHARD01",
+      compras: []
+    },
+    {
+      run: "11111111-1",
+      nombres: "Vendedor",
+      apellidos: "Prueba",
+      correo: "vendedor@levelup.cl",
+      password: "vendedor123",
+      tipoUsuario: "vendedor",
+      region: "Región de Valparaíso",
+      comuna: "Valparaíso",
+      direccion: "Puerto Principal 456",
+      fechaNacimiento: "1988-12-10",
+      puntosLevelUp: 75,
+      codigoReferido: "VENDOR01",
+      compras: []
+    }
+  ];
+  
+  guardar("usuarios", usuarios);
+  console.log('👥 Usuarios de prueba creados:', usuarios.length);
+  return usuarios;
+}
+
+function loginUsuario(correo, password) {
+  console.log('🔑 Intentando login:', correo);
+  const usuarios = obtener("usuarios", []);
+  const usuario = usuarios.find(u => 
+    u.correo.toLowerCase() === correo.toLowerCase() && 
+    u.password === password
+  );
+  
+  if (usuario) {
+    guardar("sesion", {correo: usuario.correo, tipo: usuario.tipoUsuario});
+    console.log('✅ Login exitoso:', usuario.correo);
+    actualizarNavegacion();
+    return usuario;
+  } else {
+    console.log('❌ Login fallido');
+    return null;
+  }
+}
+
+// Exponer funciones globales necesarias
+Object.assign(window, {
+  crearUsuariosPrueba,
+  loginUsuario,
+  usuarioActual
 });

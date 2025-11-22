@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpiar Sesión - Level Up</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .container { max-width: 600px; margin: 0 auto; text-align: center; }
+        .btn { padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px; }
+        .btn:hover { background: #c0392b; }
+        .success { color: #2ecc71; margin: 20px 0; }
+        .info { background: #34495e; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Limpiador de Sesión Level Up</h1>
+        <p>Esta página te ayuda a eliminar completamente el usuario fantasma y limpiar la sesión.</p>
+        
+        <div class="info">
+            <p><strong>Estado actual:</strong></p>
+            <div id="estadoActual">Verificando...</div>
+        </div>
+
+        <button class="btn" onclick="limpiarTodo()">🗑️ Limpiar TODO</button>
+        <button class="btn" onclick="verificarEstado()">🔍 Verificar Estado</button>
+        <button class="btn" onclick="volverAlInicio()">🏠 Ir al Inicio</button>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        function mostrarEstado() {
+            const estado = document.getElementById('estadoActual');
+            let info = '';
+            
+            // Verificar localStorage
+            const keys = Object.keys(localStorage);
+            info += `📦 localStorage items: ${keys.length}<br>`;
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                info += `&nbsp;&nbsp;• ${key}: ${value ? value.substring(0, 50) + '...' : 'null'}<br>`;
+            });
+            
+            // Verificar sessionStorage
+            const sessionKeys = Object.keys(sessionStorage);
+            info += `💾 sessionStorage items: ${sessionKeys.length}<br>`;
+            
+            // Verificar cookies
+            info += `🍪 cookies: ${document.cookie || 'ninguna'}<br>`;
+            
+            estado.innerHTML = info;
+        }
+
+        function limpiarTodo() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>🧹 Limpiando...</p>';
+            
+            try {
+                // Limpiar localStorage
+                localStorage.clear();
+                
+                // Limpiar sessionStorage
+                sessionStorage.clear();
+                
+                // Limpiar cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                // Limpiar cualquier token JWT
+                localStorage.removeItem('jwt');
+                localStorage.removeItem('token');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('usuario');
+                localStorage.removeItem('usuarioActual');
+                sessionStorage.removeItem('jwt');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('authToken');
+                sessionStorage.removeItem('usuario');
+                sessionStorage.removeItem('usuarioActual');
+                
+                resultado.innerHTML = '<p class="success">✅ ¡Limpieza completa realizada!</p>';
+                
+                setTimeout(() => {
+                    mostrarEstado();
+                    resultado.innerHTML += '<p class="success">🔄 Ahora puedes ir al inicio. El usuario fantasma debe estar eliminado.</p>';
+                }, 1000);
+                
+            } catch (error) {
+                resultado.innerHTML = `<p style="color: #e74c3c;">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        function verificarEstado() {
+            mostrarEstado();
+        }
+
+        function volverAlInicio() {
+            window.location.href = '/cliente/index.html';
+        }
+
+        // Mostrar estado inicial
+        document.addEventListener('DOMContentLoaded', mostrarEstado);
+    </script>
+</body>
+</html>

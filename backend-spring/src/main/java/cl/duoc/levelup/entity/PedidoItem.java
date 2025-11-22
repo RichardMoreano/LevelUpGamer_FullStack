@@ -1,5 +1,7 @@
 package cl.duoc.levelup.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
@@ -13,10 +15,12 @@ public class PedidoItem {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pedido_id", nullable = false)
+    @JsonBackReference("pedido-items")  // Evita serialización circular
     private Pedido pedido;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "codigo_producto", referencedColumnName = "codigo", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Producto producto;
     
     @Column(name = "cantidad", nullable = false)

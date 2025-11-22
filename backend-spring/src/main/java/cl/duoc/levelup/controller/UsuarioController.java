@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/usuarios")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping("/api/usuarios")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000", "https://richardmoreano.github.io"})
 public class UsuarioController {
 
     @Autowired

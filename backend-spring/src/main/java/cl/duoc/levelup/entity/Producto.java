@@ -1,5 +1,6 @@
 package cl.duoc.levelup.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -53,6 +54,7 @@ public class Producto {
     
     // Relaciones
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Evita serialización circular
     private List<PedidoItem> pedidoItems;
     
     // Constructores

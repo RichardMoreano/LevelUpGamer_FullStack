@@ -2,22 +2,30 @@ spring:
   application:
     name: levelup-gamer-api
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:prod}
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   
+  # Configuración de base de datos H2 para desarrollo por defecto
   datasource:
-    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/levelup_gamer?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:admin}
-    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+    url: ${DATABASE_URL:jdbc:h2:mem:levelup_gamer}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
   
+  # Configuración JPA/Hibernate
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
+      ddl-auto: create-drop
+    show-sql: true
+  
+  # Habilitar consola H2
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY:levelUpGamerSecretKey2024ForJWTTokenGeneration}
+      secret-key: ${JWT_SECRET_KEY:levelUpGamerSecretKeyForDevelopment2024}
       expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days in milliseconds
 

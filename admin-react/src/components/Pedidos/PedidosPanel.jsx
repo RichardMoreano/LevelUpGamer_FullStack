@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { obtener, usuarioActual, guardar } from "../../utils/storage";
+import { pedidosAPI } from "../../services/apiService";
 
 /* ================= Helpers ================= */
 const CLP = (n) =>
@@ -37,25 +38,49 @@ const estadoLabel = (estado) => {
 
 const calcularNivel = (p) => (p >= 500 ? "Oro" : p >= 200 ? "Plata" : "Bronce");
 
-/* ============== Datos de sesión (LS) ============== */
+/* ============== Datos de sesión (Backend API) ============== */
 function useSessionData() {
   const [user, setUser] = useState(null);
   const [pedidos, setPedidos] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const u = usuarioActual();
-    if (!u) {
-      alert("Acceso restringido.");
-      window.location.href = "/index.html";
-      return;
-    }
-    setUser(u);
-    setPedidos(Array.isArray(obtener("pedidos", [])) ? obtener("pedidos", []) : []);
-    setUsuarios(Array.isArray(obtener("usuarios", [])) ? obtener("usuarios", []) : []);
+    const loadData = async () => {
+      try {
+        const u = await usuarioActual();
+        if (!u) {
+          alert("Acceso restringido.");
+          window.location.href = "/index.html";
+          return;
+        }
+        setUser(u);
+
+        // Cargar pedidos desde la API backend
+        console.log('🔄 Cargando pedidos desde API backend...');
+        const pedidosData = await pedidosAPI.getAll();
+        console.log('✅ Pedidos cargados:', pedidosData);
+        setPedidos(Array.isArray(pedidosData) ? pedidosData : []);
+        
+        // Mantener usuarios del localStorage por ahora (hasta implementar API de usuarios)
+        setUsuarios(Array.isArray(obtener("usuarios", [])) ? obtener("usuarios", []) : []);
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('❌ Error cargando datos:', error);
+        setError(error.message);
+        // Fallback a localStorage si hay error
+        setPedidos(Array.isArray(obtener("pedidos", [])) ? obtener("pedidos", []) : []);
+        setUsuarios(Array.isArray(obtener("usuarios", [])) ? obtener("usuarios", []) : []);
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
-  return { user, pedidos, usuarios };
+  return { user, pedidos, usuarios, loading, error };
 }
 
 /* ============== Header y SideMenu ============== */
@@ -237,46 +262,18 @@ function AccountPanel({ user, open, onClose }) {
 
 /* ============== Tarjeta Pedido ============== */
 function PedidoCard({ pedido, usuarios, onVerDetalle, onVerBoleta }) {
-  // 👇 AHORA incluimos 'pedido.comprador' como primera opción
-  const compradorDirect =
-    pedido.comprador || // <- clave en tus datos
-    pedido.usuario ||
-    pedido.cliente ||
-    pedido.user ||
-    {
-      nombres: pedido.nombres,
-      apellidos: pedido.apellidos,
-      correo: pedido.correo,
-    };
-
-  // Si aún faltan datos, buscamos en 'usuarios' por idUsuario o correo
-  const compradorResolved =
-    (compradorDirect?.nombres || compradorDirect?.apellidos || compradorDirect?.correo)
-      ? compradorDirect
-      : (pedido.idUsuario &&
-          Array.isArray(usuarios) &&
-          usuarios.find((u) => String(u.id) === String(pedido.idUsuario))) ||
-        (pedido.correo &&
-          Array.isArray(usuarios) &&
-          usuarios.find(
-            (u) => (u.correo || "").toLowerCase() === (pedido.correo || "").toLowerCase()
-          )) ||
-        {};
-
-  const nombreCompleto = `${compradorResolved.nombres || compradorResolved.nombre || ""} ${
-    compradorResolved.apellidos || compradorResolved.apellido || ""
-  }`.trim();
-
-  const correo = compradorResolved.correo || compradorResolved.email || pedido.correo || "—";
+  // Los datos del usuario vienen directos en el pedido del backend
+  const compradorData = pedido.usuario || {};
+  const nombreCompleto = `${compradorData.nombres || ""} ${compradorData.apellidos || ""}`.trim();
+  const correo = compradorData.correo || "—";
 
   const codigo = pedido.codigo || pedido.id || `PED-${pedido.timestamp || ""}`;
   const createdAt = pedido.fecha || pedido.createdAt || pedido.timestamp || pedido.fechaCreacion;
 
-  // 👇 tu envío viene como 'pedido.envio'
-  const envio = pedido.envio || pedido.direccionEnvio || {};
-  const dir = envio.direccion || envio.calle || envio.detalle || "—";
-  const comuna = envio.comuna || "—";
-  const region = envio.region || "—";
+  // Los datos de envío vienen directos del pedido (no en objeto envio)
+  const dir = pedido.direccion || "—";
+  const comuna = pedido.comuna || "—";
+  const region = pedido.region || "—";
 
   const total = pedido.total || pedido.totalCLP || 0;
   const estado = (pedido.estado || "pendiente").toLowerCase();
@@ -335,7 +332,7 @@ function PedidoCard({ pedido, usuarios, onVerDetalle, onVerBoleta }) {
 /* ============== Página ============== */
 export default function PedidosPanel() {
   const navigate = useNavigate();
-  const { user, pedidos, usuarios } = useSessionData();
+  const { user, pedidos, usuarios, loading, error } = useSessionData();
 
   // Generar/recuperar boleta y navegar al detalle
   const handleVerBoleta = (pedido) => {
@@ -423,12 +420,19 @@ export default function PedidosPanel() {
             </select>
           </div>
 
-          {!user ? (
-            <p className="info">Cargando…</p>
+          {loading ? (
+            <p className="info">🔄 Cargando pedidos desde el backend...</p>
+          ) : error ? (
+            <div className="info" style={{ color: '#dc2626' }}>
+              <p>❌ Error cargando pedidos: {error}</p>
+              <p><small>Revisa que el backend Spring Boot esté ejecutándose en puerto 8080</small></p>
+            </div>
+          ) : !user ? (
+            <p className="info">Cargando usuario…</p>
           ) : (
             <div id="listaPedidos" className="tarjetas">
               {pedidosFiltrados.length === 0 ? (
-                <p className="info">No hay pedidos para mostrar.</p>
+                <p className="info">📦 No hay pedidos para mostrar con los filtros actuales.</p>
               ) : (
                 pedidosFiltrados.map((p) => {
                   const raw = p.id || p.codigo || p.timestamp;

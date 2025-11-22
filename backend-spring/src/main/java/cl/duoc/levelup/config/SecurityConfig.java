@@ -47,29 +47,42 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())) // Para H2 console
             .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas de autenticación
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/auth/**").permitAll()
+                // Rutas completamente públicas (sin autenticación)
+                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/register").permitAll()
+                .requestMatchers("/api/auth/logout").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/users/register").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/productos/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 
-                // Rutas protegidas por rol
-                .requestMatchers(HttpMethod.POST, "/usuarios/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/usuarios/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasRole("ADMIN")
-                .requestMatchers("/usuarios/**").hasAnyRole("ADMIN", "VENDEDOR")
+                // Rutas públicas de productos
+                .requestMatchers(HttpMethod.GET, "/api/productos/publicos").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/productos/{codigo}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/productos/categoria/{categoria}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/productos/buscar").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/productos/categorias").permitAll()
                 
-                .requestMatchers(HttpMethod.POST, "/productos/**").hasAnyRole("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.PUT, "/productos/**").hasAnyRole("ADMIN", "VENDEDOR")
-                .requestMatchers(HttpMethod.DELETE, "/productos/**").hasRole("ADMIN")
+                // Rutas de administración de productos
+                .requestMatchers(HttpMethod.GET, "/api/productos").hasAnyRole("ADMIN", "VENDEDOR")
+                .requestMatchers(HttpMethod.POST, "/api/productos").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/productos/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasRole("ADMIN")
+                .requestMatchers("/api/productos/stock-critico").hasAnyRole("ADMIN", "VENDEDOR")
                 
-                .requestMatchers("/pedidos/**").hasAnyRole("ADMIN", "VENDEDOR", "CLIENTE")
-                .requestMatchers("/boletas/**").hasAnyRole("ADMIN", "VENDEDOR")
-                .requestMatchers("/reportes/**").hasAnyRole("ADMIN", "VENDEDOR")
+                // Rutas de usuarios
+                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+                
+                // Rutas de pedidos
+                .requestMatchers("/api/pedidos/**").hasAnyRole("ADMIN", "VENDEDOR", "CLIENTE")
+                .requestMatchers("/api/boletas/**").hasAnyRole("ADMIN", "VENDEDOR")
+                .requestMatchers("/api/reportes/**").hasAnyRole("ADMIN", "VENDEDOR")
                 
                 // Todas las demás rutas requieren autenticación
                 .anyRequest().authenticated()
@@ -84,11 +97,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:5173", 
-            "http://localhost:3000",
+            "http://localhost:*", 
+            "http://127.0.0.1:*",
+            "http://192.168.*.*:*",
             "https://richardmoreano.github.io"
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

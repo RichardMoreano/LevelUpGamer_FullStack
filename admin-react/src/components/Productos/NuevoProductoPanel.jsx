@@ -1,6 +1,7 @@
 // src/components/Productos/NuevoProductoPanel.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { obtener, guardar, usuarioActual } from "../../utils/storage";
+import { useAuth } from "../../context/AuthContext";
+import { obtenerProductos, productosAPI } from "../../services/apiService";
 
 // ===== helpers =====
 const calcularNivel = (p) => (p >= 500 ? "Oro" : p >= 200 ? "Plata" : "Bronce");
@@ -11,24 +12,45 @@ const CLP = (n) =>
 
 // ===== sesión y datos base =====
 function useSessionData() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [productos, setProductos] = useState([]);
 
   useEffect(() => {
-    const u = usuarioActual();
-    if (!u || u.tipoUsuario !== "admin") {
+    console.log('🔍 NuevoProductoPanel: Verificando usuario:', user);
+    console.log('🔍 Tipo de usuario:', user?.tipoUsuario);
+    console.log('🔍 Tipo de usuario (tipo):', user?.tipo);
+    
+    if (!user) {
+      console.log('❌ No hay usuario');
+      return; // No mostrar alerta aún, esperar a que cargue
+    }
+    
+    if (user.tipoUsuario !== "admin" && user.tipo !== "ADMIN") {
+      console.log('❌ Usuario no es admin:', user.tipoUsuario, user.tipo);
       alert("Acceso no permitido.");
       window.location.href = "/index.html";
       return;
     }
-    setUser(u);
-    setProductos(Array.isArray(obtener("productos", [])) ? obtener("productos", []) : []);
-  }, []);
+    
+    console.log('✅ Usuario autorizado, cargando productos...');
+    
+    // Cargar productos desde la API
+    const cargarProductos = async () => {
+      try {
+        const productosData = await obtenerProductos();
+        setProductos(productosData);
+        console.log('✅ Productos cargados:', productosData.length);
+      } catch (error) {
+        console.error('Error cargando productos:', error);
+        setProductos([]);
+      }
+    };
+    
+    cargarProductos();
+  }, [user]);
 
-  // categorías: intenta obtener desde “categorias” o derive de productos existentes
+  // categorías: intenta obtener desde productos existentes
   const categorias = useMemo(() => {
-    const base = Array.isArray(obtener("categorias", null)) ? obtener("categorias", null) : null;
-    if (Array.isArray(base) && base.length) return base.slice().sort();
     const derivadas = Array.from(
       new Set((Array.isArray(productos) ? productos : []).map((p) => p.categoria).filter(Boolean))
     );
@@ -116,9 +138,8 @@ function SideMenu({ open, onClose, onOpenAccount, isAdmin }) {
             data-bind="1"
             onClick={(e) => {
               e.preventDefault();
-              localStorage.removeItem("sesion");
+              logout();
               onClose();
-              window.location.href = "/index.html";
             }}
           >
             Salir
@@ -132,7 +153,7 @@ function SideMenu({ open, onClose, onOpenAccount, isAdmin }) {
 }
 
 // ===== Panel Mi Cuenta =====
-function AccountPanel({ user, open, onClose }) {
+function AccountPanel({ user, open, onClose, logout }) {
   const puntos = user?.puntosLevelUp ?? 0;
   const nivel = calcularNivel(puntos);
   const codigo = user?.codigoReferido || "";
@@ -197,10 +218,7 @@ function AccountPanel({ user, open, onClose }) {
             <button
               id="btnSalirCuenta"
               className="btn"
-              onClick={() => {
-                localStorage.removeItem("sesion");
-                window.location.href = "/cliente/index.html";
-              }}
+              onClick={logout}
             >
               Salir
             </button>
@@ -215,7 +233,9 @@ function AccountPanel({ user, open, onClose }) {
 
 // ===== Página: Nuevo Producto =====
 export default function NuevoProductoPanel() {
-  const { user, productos, categorias, setProductos } = useSessionData();
+  const { user, logout } = useAuth();
+  const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -239,6 +259,46 @@ export default function NuevoProductoPanel() {
   const [errCategoria, setErrCategoria] = useState("");
   const [msgOk, setMsgOk] = useState("");
 
+  // Cargar datos cuando el usuario esté disponible
+  useEffect(() => {
+    console.log('🔍 NuevoProductoPanel: useEffect principal - Usuario:', user);
+    
+    if (!user) {
+      console.log('🔍 Usuario no disponible aún');
+      return;
+    }
+    
+    console.log('🔍 Tipo de usuario:', user.tipoUsuario, user.tipo);
+    
+    if (user.tipoUsuario !== "admin" && user.tipo !== "ADMIN") {
+      console.log('❌ Usuario no es admin');
+      alert("Acceso no permitido.");
+      window.location.href = "/index.html";
+      return;
+    }
+    
+    console.log('✅ Usuario autorizado, cargando productos...');
+    
+    const cargarProductos = async () => {
+      try {
+        const productosData = await obtenerProductos();
+        setProductos(productosData);
+        
+        // Extraer categorías
+        const categoriasUnicas = [...new Set(productosData.map(p => p.categoria).filter(Boolean))];
+        setCategorias(categoriasUnicas.sort());
+        
+        console.log('✅ Productos y categorías cargados:', productosData.length, categoriasUnicas.length);
+      } catch (error) {
+        console.error('Error cargando productos:', error);
+        setProductos([]);
+        setCategorias([]);
+      }
+    };
+    
+    cargarProductos();
+  }, [user]);
+
   useEffect(() => {
     document.body.classList.toggle("menu-abierto", menuOpen);
     return () => document.body.classList.remove("menu-abierto");
@@ -250,11 +310,16 @@ export default function NuevoProductoPanel() {
     }
   }, [categorias]); // eslint-disable-line
 
-  if (!user) return null;
-  const isAdmin = user.tipoUsuario === "admin";
+  if (!user) {
+    console.log('🔍 NuevoProductoPanel: Usuario no cargado aún');
+    return null;
+  }
+  
+  console.log('🔍 NuevoProductoPanel - Usuario en componente principal:', user);
+  const isAdmin = user.tipoUsuario === "admin" || user.tipo === "ADMIN";
 
   // validar + guardar
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
 
     let ok = true;
@@ -301,17 +366,27 @@ export default function NuevoProductoPanel() {
       imagen: (imagen || "").trim(),
     };
 
-    const lista = Array.isArray(productos) ? productos.slice() : [];
-    lista.push(nuevo);
-    guardar("productos", lista);
-    setProductos(lista);
+    // Guardar en el backend
+    const guardarProducto = async () => {
+      try {
+        await productosAPI.create(nuevo);
+        setMsgOk("Producto guardado correctamente.");
+        
+        // Actualizar la lista local
+        const productosActualizados = [...productos, nuevo];
+        setProductos(productosActualizados);
+        
+        setTimeout(() => {
+          setMsgOk("");
+          window.location.href = "/admin/productos";
+        }, 1000);
+      } catch (error) {
+        console.error('Error guardando producto:', error);
+        alert("Error al guardar el producto: " + (error.message || "Error desconocido"));
+      }
+    };
 
-    setMsgOk("Producto guardado.");
-    setTimeout(() => {
-      setMsgOk("");
-      // igual que tu ProductosPanel: navegamos con <a>, así que redirijo por location
-      window.location.href = "/admin/productos";
-    }, 1000);
+    guardarProducto();
   };
 
   return (
@@ -479,7 +554,7 @@ export default function NuevoProductoPanel() {
         <p>© 2025 Level-Up Gamer — Chile</p>
       </footer>
 
-      <AccountPanel user={user} open={accountOpen} onClose={() => setAccountOpen(false)} />
+      <AccountPanel user={user} open={accountOpen} onClose={() => setAccountOpen(false)} logout={logout} />
     </div>
   );
 }

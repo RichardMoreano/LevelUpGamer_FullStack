@@ -1,5 +1,6 @@
 package cl.duoc.levelup.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ public class Boleta {
     
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pedido_id", nullable = false)
+    @JsonIgnore  // Evita serialización circular
     private Pedido pedido;
     
     @Column(name = "cliente_nombre", nullable = false, length = 200)

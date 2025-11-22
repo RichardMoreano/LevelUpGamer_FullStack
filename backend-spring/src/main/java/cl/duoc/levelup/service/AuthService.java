@@ -1,13 +1,19 @@
 package cl.duoc.levelup.service;
 
+import cl.duoc.levelup.dto.AuthResponse;
+import cl.duoc.levelup.dto.LoginRequest;
+import cl.duoc.levelup.dto.RegisterRequest;
 import cl.duoc.levelup.entity.Usuario;
+import cl.duoc.levelup.repository.UsuarioRepository;
 import cl.duoc.levelup.security.JwtTokenProvider;
 import cl.duoc.levelup.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,96 +26,155 @@ public class AuthService {
     private JwtTokenProvider tokenProvider;
 
     @Autowired
-    private UsuarioService usuarioService;
+    private UsuarioRepository usuarioRepository;
 
-    public JwtAuthenticationResponse authenticateUser(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getCorreo(),
-                        loginRequest.getPassword()
-                )
-        );
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+    public AuthResponse authenticateUser(LoginRequest loginRequest) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getEmail(),
+                            loginRequest.getPassword()
+                    )
+            );
 
-        String jwt = tokenProvider.generateToken(authentication);
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        
-        Usuario usuario = usuarioService.obtenerUsuarioAutenticado(userPrincipal);
-        
-        return new JwtAuthenticationResponse(jwt, usuario);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            String jwt = tokenProvider.generateToken(authentication);
+            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+            
+            Usuario usuario = usuarioRepository.findByCorreo(loginRequest.getEmail())
+                    .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
+            
+            String refreshToken = tokenProvider.generateRefreshToken(usuario.getCorreo());
+            
+            // No enviar contraseña en la respuesta
+            usuario.setPassword(null);
+            
+            return new AuthResponse(jwt, refreshToken, usuario);
+        } catch (Exception e) {
+            throw new BadCredentialsException("Credenciales inválidas", e);
+        }
     }
 
-    public Usuario registerUser(SignUpRequest signUpRequest) {
-        // Crear nuevo usuario
-        Usuario usuario = new Usuario();
-        usuario.setRun(signUpRequest.getRun());
-        usuario.setNombres(signUpRequest.getNombres());
-        usuario.setApellidos(signUpRequest.getApellidos());
-        usuario.setCorreo(signUpRequest.getCorreo());
-        usuario.setPassword(signUpRequest.getPassword());
-        usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE);
-        usuario.setRegion(signUpRequest.getRegion());
-        usuario.setComuna(signUpRequest.getComuna());
-        usuario.setDireccion(signUpRequest.getDireccion());
-
-        return usuarioService.crearUsuario(usuario);
-    }
-
-    // DTOs
-    public static class LoginRequest {
-        private String correo;
-        private String password;
-
-        public String getCorreo() { return correo; }
-        public void setCorreo(String correo) { this.correo = correo; }
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
-    }
-
-    public static class SignUpRequest {
-        private String run;
-        private String nombres;
-        private String apellidos;
-        private String correo;
-        private String password;
-        private String region;
-        private String comuna;
-        private String direccion;
-
-        public String getRun() { return run; }
-        public void setRun(String run) { this.run = run; }
-        public String getNombres() { return nombres; }
-        public void setNombres(String nombres) { this.nombres = nombres; }
-        public String getApellidos() { return apellidos; }
-        public void setApellidos(String apellidos) { this.apellidos = apellidos; }
-        public String getCorreo() { return correo; }
-        public void setCorreo(String correo) { this.correo = correo; }
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
-        public String getRegion() { return region; }
-        public void setRegion(String region) { this.region = region; }
-        public String getComuna() { return comuna; }
-        public void setComuna(String comuna) { this.comuna = comuna; }
-        public String getDireccion() { return direccion; }
-        public void setDireccion(String direccion) { this.direccion = direccion; }
-    }
-
-    public static class JwtAuthenticationResponse {
-        private String accessToken;
-        private String tokenType = "Bearer";
-        private Usuario usuario;
-
-        public JwtAuthenticationResponse(String accessToken, Usuario usuario) {
-            this.accessToken = accessToken;
-            this.usuario = usuario;
+    public Usuario registerUser(RegisterRequest registerRequest) {
+        // Verificar si el usuario ya existe por email
+        if (usuarioRepository.findByCorreo(registerRequest.getEmail()).isPresent()) {
+            throw new RuntimeException("El email ya está registrado");
         }
 
-        public String getAccessToken() { return accessToken; }
-        public void setAccessToken(String accessToken) { this.accessToken = accessToken; }
-        public String getTokenType() { return tokenType; }
-        public void setTokenType(String tokenType) { this.tokenType = tokenType; }
-        public Usuario getUsuario() { return usuario; }
-        public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+        // Verificar si el usuario ya existe por RUN
+        if (usuarioRepository.findByRun(registerRequest.getRun()).isPresent()) {
+            throw new RuntimeException("El RUN ya está registrado");
+        }
+
+        // Crear nuevo usuario
+        Usuario usuario = new Usuario();
+        usuario.setRun(registerRequest.getRun());
+        usuario.setNombres(registerRequest.getNombre());
+        usuario.setApellidos(registerRequest.getApellido());
+        usuario.setCorreo(registerRequest.getEmail());
+        usuario.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        usuario.setDireccion(registerRequest.getDireccion());
+        usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Por defecto, los nuevos usuarios son clientes
+        usuario.setActivo(true);
+
+        Usuario savedUsuario = usuarioRepository.save(usuario);
+        
+        // No retornar la contraseña
+        savedUsuario.setPassword(null);
+        
+        return savedUsuario;
     }
+
+    public Usuario registerUserFromEntity(Usuario usuarioRequest) {
+        // Verificar si el usuario ya existe por email
+        if (usuarioRepository.findByCorreo(usuarioRequest.getCorreo()).isPresent()) {
+            throw new RuntimeException("El email ya está registrado");
+        }
+
+        // Verificar si el usuario ya existe por RUN
+        if (usuarioRepository.findByRun(usuarioRequest.getRun()).isPresent()) {
+            throw new RuntimeException("El RUN ya está registrado");
+        }
+
+        // Crear nuevo usuario basado en la entidad recibida
+        Usuario usuario = new Usuario();
+        usuario.setRun(usuarioRequest.getRun());
+        usuario.setNombres(usuarioRequest.getNombres());
+        usuario.setApellidos(usuarioRequest.getApellidos());
+        usuario.setCorreo(usuarioRequest.getCorreo());
+        usuario.setPassword(passwordEncoder.encode(usuarioRequest.getPassword()));
+        usuario.setDireccion(usuarioRequest.getDireccion());
+        usuario.setRegion(usuarioRequest.getRegion());
+        usuario.setComuna(usuarioRequest.getComuna());
+        
+        // Usar tipo de usuario del request o CLIENTE por defecto
+        usuario.setTipoUsuario(usuarioRequest.getTipoUsuario() != null ? 
+            usuarioRequest.getTipoUsuario() : Usuario.TipoUsuario.CLIENTE);
+        usuario.setActivo(true);
+
+        Usuario savedUsuario = usuarioRepository.save(usuario);
+        
+        // No retornar la contraseña
+        savedUsuario.setPassword(null);
+        
+        return savedUsuario;
+    }
+
+    public Usuario registerUserFromRequest(cl.duoc.levelup.dto.RegistroUsuarioRequest registroRequest) {
+        // Verificar si el usuario ya existe por email
+        if (usuarioRepository.findByCorreo(registroRequest.getCorreo()).isPresent()) {
+            throw new RuntimeException("El email ya está registrado");
+        }
+
+        // Verificar si el usuario ya existe por RUN
+        if (usuarioRepository.findByRun(registroRequest.getRun()).isPresent()) {
+            throw new RuntimeException("El RUN ya está registrado");
+        }
+
+        // Crear nuevo usuario basado en el request
+        Usuario usuario = new Usuario();
+        usuario.setRun(registroRequest.getRun());
+        usuario.setNombres(registroRequest.getNombres());
+        usuario.setApellidos(registroRequest.getApellidos());
+        usuario.setCorreo(registroRequest.getCorreo());
+        usuario.setPassword(passwordEncoder.encode(registroRequest.getPassword()));
+        usuario.setDireccion(registroRequest.getDireccion());
+        usuario.setRegion(registroRequest.getRegion());
+        usuario.setComuna(registroRequest.getComuna());
+        
+        // Convertir string a enum
+        if (registroRequest.getTipoUsuario() != null) {
+            try {
+                usuario.setTipoUsuario(Usuario.TipoUsuario.valueOf(registroRequest.getTipoUsuario()));
+            } catch (IllegalArgumentException e) {
+                usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Por defecto
+            }
+        } else {
+            usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Por defecto
+        }
+        
+        usuario.setActivo(true);
+
+        Usuario savedUsuario = usuarioRepository.save(usuario);
+        
+        // No retornar la contraseña
+        savedUsuario.setPassword(null);
+        
+        return savedUsuario;
+    }
+
+    public Usuario getUserProfile(String email) {
+        Usuario usuario = usuarioRepository.findByCorreo(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        
+        // No retornar la contraseña
+        usuario.setPassword(null);
+        
+        return usuario;
+    }
+
 }

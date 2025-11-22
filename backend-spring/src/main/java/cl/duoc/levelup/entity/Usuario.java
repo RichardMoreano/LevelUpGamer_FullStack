@@ -1,5 +1,8 @@
 package cl.duoc.levelup.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -9,42 +12,52 @@ import java.util.List;
 
 @Entity
 @Table(name = "usuarios")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Usuario {
     
     @Id
+    @JsonProperty("run")
     @Column(name = "run", length = 12)
     private String run;
     
     @NotBlank
     @Size(max = 100)
+    @JsonProperty("nombres")
     @Column(name = "nombres", nullable = false, length = 100)
     private String nombres;
     
     @NotBlank
     @Size(max = 100)
+    @JsonProperty("apellidos")
     @Column(name = "apellidos", nullable = false, length = 100)
     private String apellidos;
     
     @Email
     @NotBlank
+    @JsonProperty("correo")
     @Column(name = "correo", nullable = false, unique = true, length = 120)
     private String correo;
     
     @Enumerated(EnumType.STRING)
+    @JsonProperty("tipoUsuario")
     @Column(name = "tipo_usuario", nullable = false)
     private TipoUsuario tipoUsuario;
     
+    @JsonProperty("region")
     @Column(name = "region", length = 100)
     private String region;
     
+    @JsonProperty("comuna")
     @Column(name = "comuna", length = 100)
     private String comuna;
     
+    @JsonProperty("direccion")
     @Column(name = "direccion", length = 200)
     private String direccion;
     
     @NotBlank
     @Size(min = 4, max = 255)
+    @JsonProperty("password")
     @Column(name = "password", nullable = false)
     private String password;
     
@@ -59,6 +72,7 @@ public class Usuario {
     
     // Relaciones
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Evita serialización circular
     private List<Pedido> pedidos;
     
     // Constructores

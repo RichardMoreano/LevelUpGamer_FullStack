@@ -5,9 +5,10 @@
 
 // Configuración de la API
 const API_CONFIG = {
-  BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8080/api/v1'
-    : 'https://levelup-gamer-backend.up.railway.app/api/v1',
+  BASE_URL: import.meta.env.VITE_API_URL || 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:8080/api'
+      : 'https://levelup-gamer-backend.up.railway.app/api'),
   TIMEOUT: 10000
 };
 
@@ -32,7 +33,10 @@ class ApiError extends Error {
 
 async function makeRequest(endpoint, options = {}) {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`;
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('jwt_token') || localStorage.getItem('authToken');
+  
+  console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+  console.log(`🔑 Token disponible:`, !!token);
   
   const config = {
     timeout: API_CONFIG.TIMEOUT,
@@ -57,6 +61,11 @@ async function makeRequest(endpoint, options = {}) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error(`❌ API Error: ${response.status} ${response.statusText}`, {
+        url,
+        status: response.status,
+        errorData
+      });
       throw new ApiError(
         errorData.message || `HTTP ${response.status}`,
         response.status,
@@ -83,26 +92,43 @@ async function makeRequest(endpoint, options = {}) {
 }
 
 // === AUTENTICACIÓN ===
-export async function login(correo, password) {
+export async function login(email, password) {
   try {
     const response = await makeRequest('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ correo, password })
+      body: JSON.stringify({ email, password })
     });
 
-    if (response && response.accessToken) {
-      localStorage.setItem('authToken', response.accessToken);
-      localStorage.setItem('sesion', JSON.stringify({
+    if (response && response.token) {
+      // Guardar tokens usando las llaves que espera el AuthContext
+      localStorage.setItem('jwt_token', response.token);
+      localStorage.setItem('authToken', response.token);
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
+      
+      // Guardar usuario en formato que espera el cliente
+      const userData = {
         correo: response.usuario.correo,
-        tipo: response.usuario.tipoUsuario
-      }));
+        email: response.usuario.correo,
+        tipoUsuario: response.usuario.tipoUsuario,
+        tipo: response.usuario.tipoUsuario,
+        nombres: response.usuario.nombres,
+        apellidos: response.usuario.apellidos,
+        run: response.usuario.run,
+        puntosLevelUp: response.usuario.puntosLevelUp || 0
+      };
+      
+      localStorage.setItem('sesion', JSON.stringify(userData));
+      localStorage.setItem('usuario', JSON.stringify(userData));
+      
       cache.usuario = response.usuario;
       return response;
     }
     throw new ApiError('Login failed', 401);
   } catch (error) {
-    // Fallback a localStorage para desarrollo
-    return loginLocalStorage(correo, password);
+    console.error('Login error:', error);
+    throw error;
   }
 }
 
@@ -128,13 +154,13 @@ export function logout() {
 
 // === USUARIO ACTUAL ===
 export async function usuarioActual() {
+  const token = localStorage.getItem('jwt_token') || localStorage.getItem('authToken');
+  if (!token) return null;
+
   // Verificar cache primero
   if (cache.usuario && (Date.now() - cache.timestamp) < CACHE_DURATION) {
     return cache.usuario;
   }
-
-  const sesion = getSesionLocal();
-  if (!sesion) return null;
 
   try {
     const response = await makeRequest('/usuarios/me');
@@ -144,11 +170,13 @@ export async function usuarioActual() {
       return response;
     }
   } catch (error) {
-    console.warn('Failed to fetch user from API, using localStorage');
+    console.warn('Failed to fetch user from API:', error.message);
+    // Si falla, usar datos locales temporalmente
+    const sesion = getSesionLocal();
+    return sesion;
   }
 
-  // Fallback a localStorage
-  return getUserFromLocalStorage(sesion.correo);
+  return null;
 }
 
 export async function esAdmin() {
@@ -169,18 +197,19 @@ export async function obtenerProductos() {
   }
 
   try {
-    const response = await makeRequest('/productos');
+    // Usar endpoint público para productos
+    const response = await makeRequest('/productos/publicos');
     if (response && Array.isArray(response)) {
       cache.productos = response;
       cache.timestamp = Date.now();
       return response;
     }
   } catch (error) {
-    console.warn('Failed to fetch products from API, using localStorage');
+    console.warn('Failed to fetch products from API:', error.message);
+    throw error;
   }
 
-  // Fallback a localStorage
-  return getFromLocalStorage('productos', []);
+  return [];
 }
 
 export async function obtenerProductoPorCodigo(codigo) {
@@ -260,10 +289,12 @@ export function limpiarCarrito() {
 // === PEDIDOS ===
 export async function obtenerPedidos() {
   try {
-    const response = await makeRequest('/pedidos');
+    // Usar endpoint correcto con autenticación
+    const response = await makeRequest('/v1/pedidos');
     return Array.isArray(response) ? response : [];
   } catch (error) {
-    return getFromLocalStorage('pedidos', []);
+    console.warn('Failed to fetch orders from API:', error.message);
+    throw error;
   }
 }
 
@@ -439,9 +470,83 @@ export function guardar(key, valor) {
   localStorage.setItem(key, JSON.stringify(valor));
 }
 
-export function guardarPedidos(pedidos) {
-  guardar('pedidos', pedidos);
-}
+// === API ENDPOINTS ESTRUCTURADOS ===
+export const authAPI = {
+  login: (credentials) => makeRequest('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials)
+  }),
+  register: (userData) => makeRequest('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData)
+  }),
+  logout: () => makeRequest('/auth/logout', { method: 'POST' }),
+  validateToken: () => makeRequest('/auth/validate'),
+  getProfile: () => makeRequest('/auth/profile')
+};
+
+export const productosAPI = {
+  getAll: () => makeRequest('/productos'),
+  getPublicos: () => makeRequest('/productos/publicos'),
+  getById: (codigo) => makeRequest(`/productos/${encodeURIComponent(codigo)}`),
+  getByCategory: (category) => makeRequest(`/productos/categoria/${encodeURIComponent(category)}`),
+  search: (query) => makeRequest(`/productos/buscar?nombre=${encodeURIComponent(query)}`),
+  getCategories: () => makeRequest('/productos/categorias'),
+  getCriticalStock: () => makeRequest('/productos/stock-critico'),
+  
+  // Admin endpoints
+  create: (producto) => makeRequest('/productos', {
+    method: 'POST',
+    body: JSON.stringify(producto)
+  }),
+  update: (codigo, producto) => makeRequest(`/productos/${encodeURIComponent(codigo)}`, {
+    method: 'PUT',
+    body: JSON.stringify(producto)
+  }),
+  delete: (codigo) => makeRequest(`/productos/${encodeURIComponent(codigo)}`, { method: 'DELETE' }),
+  updateStock: (codigo, stock) => makeRequest(`/productos/${encodeURIComponent(codigo)}/stock`, {
+    method: 'PUT',
+    body: JSON.stringify({ stock })
+  }),
+  activate: (codigo) => makeRequest(`/productos/${encodeURIComponent(codigo)}/activar`, { method: 'PUT' })
+};
+
+export const pedidosAPI = {
+  getAll: () => makeRequest('/v1/pedidos'),
+  getById: (id) => makeRequest(`/v1/pedidos/${id}`),
+  getMisPedidos: () => makeRequest('/v1/pedidos/mis-pedidos'),
+  create: (pedido) => makeRequest('/v1/pedidos', {
+    method: 'POST',
+    body: JSON.stringify(pedido)
+  }),
+  delete: (id) => makeRequest(`/v1/pedidos/${id}`, { method: 'DELETE' }),
+  
+  // Admin endpoints
+  updateStatus: (id, estado) => makeRequest(`/v1/pedidos/${id}/estado`, {
+    method: 'PUT',
+    body: JSON.stringify({ estado })
+  })
+};
+
+export const usuariosAPI = {
+  getAll: () => makeRequest('/usuarios'),
+  getById: (run) => makeRequest(`/usuarios/${run}`),
+  create: (usuario) => makeRequest('/usuarios', {
+    method: 'POST',
+    body: JSON.stringify(usuario)
+  }),
+  update: (run, usuario) => makeRequest(`/usuarios/${run}`, {
+    method: 'PUT',
+    body: JSON.stringify(usuario)
+  }),
+  activate: (run) => makeRequest(`/usuarios/${run}/activar`, { method: 'PUT' }),
+  deactivate: (run) => makeRequest(`/usuarios/${run}/desactivar`, { method: 'PUT' }),
+  getByType: (tipo) => makeRequest(`/usuarios/tipo/${tipo}`),
+  addPoints: (run, puntos) => makeRequest(`/usuarios/${run}/puntos`, {
+    method: 'POST', 
+    body: JSON.stringify({ puntos })
+  })
+};
 
 // Exportar la configuración para debug
 export { API_CONFIG };

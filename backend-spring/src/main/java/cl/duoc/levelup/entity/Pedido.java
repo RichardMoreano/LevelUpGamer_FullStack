@@ -1,5 +1,8 @@
 package cl.duoc.levelup.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -7,6 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "pedidos")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Pedido {
     
     @Id
@@ -46,10 +50,12 @@ public class Pedido {
     private BigDecimal total;
     
     // Relaciones
-    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonManagedReference("pedido-items")  // Evita serialización circular
     private List<PedidoItem> items;
     
     @OneToOne(mappedBy = "pedido", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Evita serialización circular
     private Boleta boleta;
     
     // Constructores
