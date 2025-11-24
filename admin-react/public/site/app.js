@@ -2202,7 +2202,7 @@ async function loginUsuarioAPI(correo, password) {
       setTimeout(() => {
         // Redireccionar según el tipo de usuario
         if (userData.tipoUsuario === 'ADMIN' || userData.tipoUsuario === 'VENDEDOR') {
-          window.location.href = '/admin-panel/index.html';
+          window.location.href = '/cliente/index.html';
         } else {
           window.location.href = '/cliente/index.html';
         }

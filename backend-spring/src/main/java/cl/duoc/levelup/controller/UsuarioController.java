@@ -128,4 +128,12 @@ public class UsuarioController {
         List<Usuario> usuarios = usuarioService.obtenerConPuntosMinimos(minPuntos);
         return ResponseEntity.ok(usuarios);
     }
+
+        @DeleteMapping("/{run}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable String run) {
+        usuarioService.desactivarUsuario(run);
+        return ResponseEntity.noContent().build();
+    }
+
 }

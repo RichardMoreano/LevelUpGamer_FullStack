@@ -7,7 +7,11 @@ import { pedidosAPI } from "../../services/apiService";
 /* ================= Helpers ================= */
 const CLP = (n) =>
   typeof n === "number"
-    ? n.toLocaleString("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 })
+    ? n.toLocaleString("es-CL", {
+        style: "currency",
+        currency: "CLP",
+        maximumFractionDigits: 0,
+      })
     : "—";
 
 const fechaHoraLarga = (ts) => {
@@ -27,8 +31,9 @@ const estadoBadgeClass = (estado) => {
   const e = (estado || "").toLowerCase();
   if (e === "despachado") return "badge exito";
   if (e === "cancelado") return "badge peligro";
-  return "badge secundario"; // pendiente u otros
+  return "badge secundario";
 };
+
 const estadoLabel = (estado) => {
   const e = (estado || "").toLowerCase();
   if (e === "despachado") return "Despachado";
@@ -57,22 +62,23 @@ function useSessionData() {
         }
         setUser(u);
 
-        // Cargar pedidos desde la API backend
-        console.log('🔄 Cargando pedidos desde API backend...');
         const pedidosData = await pedidosAPI.getAll();
-        console.log('✅ Pedidos cargados:', pedidosData);
         setPedidos(Array.isArray(pedidosData) ? pedidosData : []);
-        
-        // Mantener usuarios del localStorage por ahora (hasta implementar API de usuarios)
-        setUsuarios(Array.isArray(obtener("usuarios", [])) ? obtener("usuarios", []) : []);
-        
+
+        setUsuarios(
+          Array.isArray(obtener("usuarios", [])) ? obtener("usuarios", []) : []
+        );
         setLoading(false);
       } catch (error) {
-        console.error('❌ Error cargando datos:', error);
+        console.error("❌ Error cargando datos:", error);
         setError(error.message);
-        // Fallback a localStorage si hay error
-        setPedidos(Array.isArray(obtener("pedidos", [])) ? obtener("pedidos", []) : []);
-        setUsuarios(Array.isArray(obtener("usuarios", [])) ? obtener("usuarios", []) : []);
+
+        setPedidos(
+          Array.isArray(obtener("pedidos", [])) ? obtener("pedidos", []) : []
+        );
+        setUsuarios(
+          Array.isArray(obtener("usuarios", [])) ? obtener("usuarios", []) : []
+        );
         setLoading(false);
       }
     };
@@ -100,8 +106,12 @@ function Header({ onOpenAccount, onToggleMenu, isMenuOpen }) {
         aria-controls="menuLateral"
         onClick={onToggleMenu}
       >
-        <span className="icono-menu" aria-hidden="true">☰</span>
-        <span className="icono-cerrar" aria-hidden="true">✕</span>
+        <span className="icono-menu" aria-hidden="true">
+          ☰
+        </span>
+        <span className="icono-cerrar" aria-hidden="true">
+          ✕
+        </span>
       </button>
 
       <nav className="navegacion">
@@ -134,17 +144,15 @@ function SideMenu({ open, onClose, onOpenAccount }) {
         <div className="menu-cabecera">
           <a className="logo" href="/admin">
             <span className="marca">
-              LEVEL<span className="up">UP</span> <span className="gamer">GAMER</span>
+              LEVEL<span className="up">UP</span>{" "}
+              <span className="gamer">GAMER</span>
             </span>
           </a>
         </div>
 
-        {/* SOLO estos ítems */}
         <nav id="menuLista" className="menu-lista" data-clonado="1">
           <a
             href="#"
-            id="linkMiCuentaMov"
-            data-bind="1"
             onClick={(e) => {
               e.preventDefault();
               onClose();
@@ -153,12 +161,14 @@ function SideMenu({ open, onClose, onOpenAccount }) {
           >
             Mi cuenta
           </a>
-          <a href="/cliente/index.html" onClick={onClose}>Inicio</a>
-          <a href="/cliente/productos.html" onClick={onClose}>Productos</a>
+          <a href="/cliente/index.html" onClick={onClose}>
+            Inicio
+          </a>
+          <a href="/cliente/productos.html" onClick={onClose}>
+            Productos
+          </a>
           <a
             href="/index.html"
-            id="linkSalirMov"
-            data-bind="1"
             onClick={(e) => {
               e.preventDefault();
               localStorage.removeItem("sesion");
@@ -171,8 +181,12 @@ function SideMenu({ open, onClose, onOpenAccount }) {
         </nav>
       </aside>
 
-      {/* Cortina */}
-      <div id="cortina" className="cortina" hidden={!open} onClick={onClose} />
+      <div
+        id="cortina"
+        className="cortina"
+        hidden={!open}
+        onClick={onClose}
+      />
     </>
   );
 }
@@ -219,27 +233,48 @@ function AccountPanel({ user, open, onClose }) {
             <img src="/img/imgPerfil.png" alt="Foto de perfil" />
           </div>
 
-          <p><strong>Nombre:</strong> {`${user?.nombres || ""} ${user?.apellidos || ""}`.trim() || "—"}</p>
-          <p><strong>Correo:</strong> {user?.correo || "—"}</p>
-          <a className="btn secundario" href="/cliente/perfil.html">Editar Perfil</a>
+          <p>
+            <strong>Nombre:</strong>{" "}
+            {`${user?.nombres || ""} ${user?.apellidos || ""}`.trim()}
+          </p>
+          <p>
+            <strong>Correo:</strong> {user?.correo || "—"}
+          </p>
+          <a className="btn secundario" href="/cliente/perfil.html">
+            Editar Perfil
+          </a>
 
           <div className="panel-cuenta__bloque">
-            <label><strong>Código de referido</strong></label>
+            <label>
+              <strong>Código de referido</strong>
+            </label>
             <div className="panel-cuenta__ref">
               <input readOnly value={codigo} />
-              <button className="btn secundario" type="button" onClick={copyCode}>Copiar</button>
+              <button className="btn secundario" onClick={copyCode}>
+                Copiar
+              </button>
             </div>
-            <small className="pista">Compartí este código para ganar puntos.</small>
+            <small className="pista">
+              Compartí este código para ganar puntos.
+            </small>
           </div>
 
           <div className="panel-cuenta__bloque">
-            <p><strong>Puntos LevelUp:</strong> <span>{puntos}</span></p>
-            <p><strong>Nivel:</strong> <span>{nivel}</span></p>
-            <small className="pista">Bronce: 0–199 · Plata: 200–499 · Oro: 500+</small>
+            <p>
+              <strong>Puntos LevelUp:</strong> {puntos}
+            </p>
+            <p>
+              <strong>Nivel:</strong> {nivel}
+            </p>
+            <small className="pista">
+              Bronce: 0–199 · Plata: 200–499 · Oro: 500+
+            </small>
           </div>
 
           <div className="panel-cuenta__acciones">
-            <a className="btn secundario" href="/cliente/misCompras.html">Mis compras</a>
+            <a className="btn secundario" href="/cliente/misCompras.html">
+              Mis compras
+            </a>
             <button
               id="btnSalirCuenta"
               className="btn"
@@ -254,23 +289,36 @@ function AccountPanel({ user, open, onClose }) {
         </div>
       </aside>
 
-      {/* Cortina del panel */}
-      <div id="cortinaCuenta" className="cortina" onClick={onClose} />
+      <div
+        id="cortinaCuenta"
+        className="cortina"
+        onClick={onClose}
+      />
     </>
   );
 }
 
 /* ============== Tarjeta Pedido ============== */
-function PedidoCard({ pedido, usuarios, onVerDetalle, onVerBoleta }) {
-  // Los datos del usuario vienen directos en el pedido del backend
+function PedidoCard({
+  pedido,
+  usuarios,
+  onVerDetalle,
+  onVerBoleta,
+  canSeeBoletas,
+}) {
   const compradorData = pedido.usuario || {};
-  const nombreCompleto = `${compradorData.nombres || ""} ${compradorData.apellidos || ""}`.trim();
+  const nombreCompleto = `${compradorData.nombres || ""} ${
+    compradorData.apellidos || ""
+  }`.trim();
   const correo = compradorData.correo || "—";
 
   const codigo = pedido.codigo || pedido.id || `PED-${pedido.timestamp || ""}`;
-  const createdAt = pedido.fecha || pedido.createdAt || pedido.timestamp || pedido.fechaCreacion;
+  const createdAt =
+    pedido.fecha ||
+    pedido.createdAt ||
+    pedido.timestamp ||
+    pedido.fechaCreacion;
 
-  // Los datos de envío vienen directos del pedido (no en objeto envio)
   const dir = pedido.direccion || "—";
   const comuna = pedido.comuna || "—";
   const region = pedido.region || "—";
@@ -308,54 +356,75 @@ function PedidoCard({ pedido, usuarios, onVerDetalle, onVerBoleta }) {
             {estadoLabel(estado)}
           </button>
 
-          <button
-            className="btn secundario"
-            onClick={onVerDetalle}
-            style={{ cursor: "pointer" }}
-          >
+          <button className="btn secundario" onClick={onVerDetalle}>
             Ver detalle
           </button>
-          {/* Botón Ver boleta */}
-          <button
-            className="btn primario"
-            onClick={() => onVerBoleta && onVerBoleta(pedido)}
-            style={{ cursor: "pointer" }}
-          >
-            Ver boleta
-          </button>
+
+          {/* Botón Ver Boleta solo para ADMIN y VENDEDOR */}
+          {canSeeBoletas && (
+            <button
+              className="btn primario"
+              onClick={() => onVerBoleta && onVerBoleta(pedido)}
+              style={{ cursor: "pointer" }}
+            >
+              Ver boleta
+            </button>
+          )}
         </div>
       </div>
     </article>
   );
 }
 
-/* ============== Página ============== */
+/* ============== Página principal ============== */
 export default function PedidosPanel() {
   const navigate = useNavigate();
   const { user, pedidos, usuarios, loading, error } = useSessionData();
 
-  // Generar/recuperar boleta y navegar al detalle
+  const tipo = (user?.tipoUsuario ?? user?.tipo ?? "")
+    .toString()
+    .trim()
+    .toUpperCase();
+
+  const isAdmin = tipo === "ADMIN";
+  const canSeeBoletas = tipo === "ADMIN" || tipo === "VENDEDOR";
+
   const handleVerBoleta = (pedido) => {
     if (!pedido) return;
-    const boletasExistentes = Array.isArray(obtener("boletas", [])) ? obtener("boletas", []) : [];
-    const boletaExistente = boletasExistentes.find(b => b.pedidoId === pedido.id);
+
+    if (!canSeeBoletas) {
+      alert("No tienes permiso para ver boletas.");
+      return;
+    }
+
+    const boletasExistentes = Array.isArray(obtener("boletas", []))
+      ? obtener("boletas", [])
+      : [];
+    const boletaExistente = boletasExistentes.find(
+      (b) => b.pedidoId === pedido.id
+    );
+
     if (boletaExistente) {
       navigate(`/admin/boleta/${encodeURIComponent(boletaExistente.numero)}`);
       return;
     }
 
     const comprador = pedido?.comprador || pedido?.usuario || pedido?.cliente || {};
-    const nombreCompleto = `${comprador.nombres || comprador.nombre || ""} ${comprador.apellidos || comprador.apellido || ""}`.trim() || "Cliente";
+    const nombreCompleto =
+      `${comprador.nombres || comprador.nombre || ""} ${
+        comprador.apellidos || comprador.apellido || ""
+      }`.trim() || "Cliente";
+
     const timestamp = Date.now();
     const numeroBoleta = `BOL-${String(timestamp).slice(-6)}`;
     const nuevaBoleta = {
       numero: numeroBoleta,
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: new Date().toISOString().split("T")[0],
       cliente: nombreCompleto,
       pedidoId: pedido.id,
       total: CLP(pedido.total || 0),
       totalNumerico: pedido.total || 0,
-      fechaCreacion: new Date().toISOString()
+      fechaCreacion: new Date().toISOString(),
     };
 
     const todas = [...boletasExistentes, nuevaBoleta];
@@ -367,7 +436,6 @@ export default function PedidosPanel() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [filtro, setFiltro] = useState("");
 
-  // Siempre llamamos hooks arriba (evitar cambios de orden)
   const pedidosFiltrados = useMemo(() => {
     const arr = Array.isArray(pedidos) ? pedidos : [];
     if (!filtro) return arr;
@@ -378,8 +446,6 @@ export default function PedidosPanel() {
     document.body.classList.toggle("menu-abierto", menuOpen);
     return () => document.body.classList.remove("menu-abierto");
   }, [menuOpen]);
-
-  const isAdmin = user?.tipoUsuario === "admin";
 
   return (
     <div className="principal">
@@ -396,23 +462,34 @@ export default function PedidosPanel() {
       />
 
       <section className="admin">
-        {/* Menú lateral (desktop) */}
         <aside className="menu-admin">
           <a href="/admin">Inicio</a>
           <a href="/admin/productos">Productos</a>
+
+          {/* Solo ADMIN ve Usuarios */}
           {isAdmin && <a href="/admin/usuarios">Usuarios</a>}
-          <a href="/admin/pedidos" className="activo">Pedidos</a>
+
+          <a href="/admin/pedidos" className="activo">
+            Pedidos
+          </a>
+
           <a href="/admin/solicitud">Solicitudes</a>
-          <a href="/admin/boleta">Boletas</a>
+
+          {/* ADMIN y VENDEDOR ven Boletas */}
+          {canSeeBoletas && <a href="/admin/boleta">Boletas</a>}
+
           <a href="/admin/reportes">Reportes</a>
         </aside>
 
-        {/* Panel principal */}
         <div className="panel">
           <h1>Pedidos</h1>
 
           <div className="filtros" style={{ marginBottom: 12 }}>
-            <select id="filtroPedidos" value={filtro} onChange={(e) => setFiltro(e.target.value)}>
+            <select
+              id="filtroPedidos"
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+            >
               <option value="">Todos</option>
               <option value="pendiente">Pendientes</option>
               <option value="despachado">Despachados</option>
@@ -423,27 +500,37 @@ export default function PedidosPanel() {
           {loading ? (
             <p className="info">🔄 Cargando pedidos desde el backend...</p>
           ) : error ? (
-            <div className="info" style={{ color: '#dc2626' }}>
+            <div className="info" style={{ color: "#dc2626" }}>
               <p>❌ Error cargando pedidos: {error}</p>
-              <p><small>Revisa que el backend Spring Boot esté ejecutándose en puerto 8080</small></p>
+              <p>
+                <small>
+                  Revisa que el backend Spring Boot esté ejecutándose en puerto
+                  8080
+                </small>
+              </p>
             </div>
           ) : !user ? (
             <p className="info">Cargando usuario…</p>
           ) : (
             <div id="listaPedidos" className="tarjetas">
               {pedidosFiltrados.length === 0 ? (
-                <p className="info">📦 No hay pedidos para mostrar con los filtros actuales.</p>
+                <p className="info">
+                  📦 No hay pedidos para mostrar.
+                </p>
               ) : (
                 pedidosFiltrados.map((p) => {
                   const raw = p.id || p.codigo || p.timestamp;
-                  const pid = encodeURIComponent(String(raw).replace(/^PED-?/i, ""));
+                  const pid = encodeURIComponent(
+                    String(raw).replace(/^PED-?/i, "")
+                  );
                   return (
-            <PedidoCard
+                    <PedidoCard
                       key={raw}
                       pedido={p}
                       usuarios={usuarios}
-              onVerDetalle={() => navigate(`/admin/pedidos/${pid}`)}
-              onVerBoleta={(pedido) => handleVerBoleta(pedido)}
+                      canSeeBoletas={canSeeBoletas}
+                      onVerDetalle={() => navigate(`/admin/pedidos/${pid}`)}
+                      onVerBoleta={(pedido) => handleVerBoleta(pedido)}
                     />
                   );
                 })
@@ -457,8 +544,11 @@ export default function PedidosPanel() {
         <p>© 2025 Level-Up Gamer — Chile</p>
       </footer>
 
-      {/* Panel de cuenta + cortina */}
-      <AccountPanel user={user} open={accountOpen} onClose={() => setAccountOpen(false)} />
+      <AccountPanel
+        user={user}
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+      />
     </div>
   );
 }

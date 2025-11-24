@@ -30,7 +30,7 @@ public class UsuarioService {
 
         // Encriptar password
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-        
+
         // Establecer valores por defecto
         usuario.setActivo(true);
         usuario.setFechaRegistro(LocalDateTime.now());
@@ -63,7 +63,7 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Actualizar campos permitidos
+        // 🔥 Actualizar campos permitidos
         if (usuarioActualizado.getNombres() != null) {
             usuario.setNombres(usuarioActualizado.getNombres());
         }
@@ -79,6 +79,15 @@ public class UsuarioService {
         if (usuarioActualizado.getComuna() != null) {
             usuario.setComuna(usuarioActualizado.getComuna());
         }
+        if (usuarioActualizado.getCorreo() != null) {
+            usuario.setCorreo(usuarioActualizado.getCorreo());
+        }
+        if (usuarioActualizado.getTipoUsuario() != null) {
+            usuario.setTipoUsuario(usuarioActualizado.getTipoUsuario());
+        }
+
+        // ⚠️ Password NO se actualiza aquí (según tu modelo)
+        // Solo cambiarPassword() debe modificarla
 
         return usuarioRepository.save(usuario);
     }
@@ -86,7 +95,7 @@ public class UsuarioService {
     public void desactivarUsuario(String run) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        
+
         usuario.setActivo(false);
         usuarioRepository.save(usuario);
     }
@@ -94,7 +103,7 @@ public class UsuarioService {
     public void activarUsuario(String run) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        
+
         usuario.setActivo(true);
         usuarioRepository.save(usuario);
     }
@@ -102,7 +111,7 @@ public class UsuarioService {
     public Usuario agregarPuntos(String run, Integer puntos) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        
+
         usuario.setPuntosLevelUp(usuario.getPuntosLevelUp() + puntos);
         return usuarioRepository.save(usuario);
     }
@@ -110,11 +119,11 @@ public class UsuarioService {
     public Usuario usarPuntos(String run, Integer puntos) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        
+
         if (usuario.getPuntosLevelUp() < puntos) {
             throw new RuntimeException("No tienes suficientes puntos LevelUp");
         }
-        
+
         usuario.setPuntosLevelUp(usuario.getPuntosLevelUp() - puntos);
         return usuarioRepository.save(usuario);
     }

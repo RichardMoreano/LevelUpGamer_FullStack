@@ -1,8 +1,13 @@
 
 import { productosBase, regiones, categorias } from "./datos.js";
 import {
-  obtener, guardar, usuarioActual,
-  obtenerPedidos, guardarPedidos
+  obtener,
+  guardar,
+  usuarioActualSync as usuarioActual,
+  obtenerPedidosSync as obtenerPedidos,
+  guardarPedidos,
+  login as apiLogin,
+  register as apiRegister,
 } from "../utils/storage.js";
 
 // /* =============== UTILIDADES =============== */
@@ -82,7 +87,7 @@ sanearLocalStorage();
 /* =============== REGISTRO: regiones/comunas + submit =============== */
 function inicializarRegistro(){
   const form = document.getElementById("formRegistro");
-  if (!form) return; 
+  if (!form) return;
 
   // Regiones/comunas
   const selRegion = document.getElementById("region");
@@ -102,7 +107,7 @@ function inicializarRegistro(){
     }
   }
 
-  form.addEventListener("submit", (e)=>{
+  form.addEventListener("submit", async (e)=>{
     e.preventDefault();
 
     const run             = document.getElementById("run").value.trim();

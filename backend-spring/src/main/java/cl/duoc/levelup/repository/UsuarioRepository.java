@@ -25,6 +25,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, String> {
     
     @Query("SELECT u FROM Usuario u WHERE u.puntosLevelUp >= :minPuntos")
     List<Usuario> findByPuntosMinimos(@Param("minPuntos") Integer minPuntos);
-    
+
+    boolean existsByRun(String run);
     boolean existsByCorreo(String correo);
+
+    void deleteByRun(String run);
 }

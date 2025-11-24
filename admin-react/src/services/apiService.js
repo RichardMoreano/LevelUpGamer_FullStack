@@ -530,23 +530,82 @@ export const pedidosAPI = {
 
 export const usuariosAPI = {
   getAll: () => makeRequest('/usuarios'),
-  getById: (run) => makeRequest(`/usuarios/${run}`),
+  
+  getById: (run) => makeRequest(`/usuarios/${encodeURIComponent(run)}`),
+  
   create: (usuario) => makeRequest('/usuarios', {
     method: 'POST',
     body: JSON.stringify(usuario)
   }),
-  update: (run, usuario) => makeRequest(`/usuarios/${run}`, {
+  
+  update: (run, usuario) => makeRequest(`/usuarios/${encodeURIComponent(run)}`, {
     method: 'PUT',
     body: JSON.stringify(usuario)
   }),
-  activate: (run) => makeRequest(`/usuarios/${run}/activar`, { method: 'PUT' }),
-  deactivate: (run) => makeRequest(`/usuarios/${run}/desactivar`, { method: 'PUT' }),
-  getByType: (tipo) => makeRequest(`/usuarios/tipo/${tipo}`),
-  addPoints: (run, puntos) => makeRequest(`/usuarios/${run}/puntos`, {
+
+  // 🔥 NUEVO: eliminar usuario
+  delete: (run) => makeRequest(`/usuarios/${encodeURIComponent(run)}`, {
+    method: 'DELETE'
+  }),
+
+  activate: (run) => makeRequest(`/usuarios/${encodeURIComponent(run)}/activar`, { 
+    method: 'PUT' 
+  }),
+
+  deactivate: (run) => makeRequest(`/usuarios/${encodeURIComponent(run)}/desactivar`, { 
+    method: 'PUT' 
+  }),
+
+  getByType: (tipo) => makeRequest(`/usuarios/tipo/${encodeURIComponent(tipo)}`),
+
+  addPoints: (run, puntos) => makeRequest(`/usuarios/${encodeURIComponent(run)}/puntos`, {
     method: 'POST', 
     body: JSON.stringify({ puntos })
   })
 };
+
+export const solicitudesAPI = {
+  // Admin: obtener todas las solicitudes
+  getAll: () => makeRequest('/solicitudes'),
+
+  // Admin: obtener una solicitud por ID
+  getById: (id) => makeRequest(`/solicitudes/${id}`),
+
+  // Público: crear solicitud desde el formulario de contacto
+  createPublic: (payload) => makeRequest('/solicitudes', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }),
+
+  // Admin: actualizar estado ("pendiente", "completado", etc.)
+  updateEstado: (id, estado) => makeRequest(`/solicitudes/${id}/estado`, {
+    method: 'PUT',
+    body: JSON.stringify({ estado })
+  }),
+
+  // Admin: eliminar solicitud
+  delete: (id) => makeRequest(`/solicitudes/${id}`, { method: 'DELETE' })
+};
+
+export const boletasAPI = {
+  // Lista todas las boletas (ADMIN / VENDEDOR)
+  getAll: () => makeRequest('/v1/boletas'),
+
+  // Obtiene una boleta por su número
+  getByNumero: (numero) => makeRequest(`/v1/boletas/${encodeURIComponent(numero)}`),
+
+  // (Opcional) solo buscar por id de pedido, si la necesitas en algún lado
+  getByPedido: (pedidoId) => makeRequest(`/v1/boletas/pedido/${pedidoId}`),
+
+  // 🔥 Usado por el botón "Ver boleta" en PedidosPanel:
+  // crea la boleta si no existe y devuelve la boleta resultante
+  generarParaPedido: (pedidoId) =>
+    makeRequest(`/v1/boletas/generar/${pedidoId}`, {
+      method: 'POST'
+    }),
+};
+
+
 
 // Exportar la configuración para debug
 export { API_CONFIG };

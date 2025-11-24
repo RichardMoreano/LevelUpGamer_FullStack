@@ -1,8 +1,7 @@
 // src/site/contacto.js
+import { solicitudesAPI } from "../services/apiService.js";
 
 // Valida que los elementos existan antes de usarlos.
-// Envuelto en una función para poder inicializar seguro en DOMContentLoaded
-// y también poder llamarla manualmente (tests).
 function initContacto() {
   const formulario = document.querySelector(".form-contacto");
   const nombre = document.getElementById("nombre");
@@ -11,7 +10,6 @@ function initContacto() {
   const botonEnviar = document.getElementById("btnEnviar");
 
   function validarFormulario() {
-    // Si algo no existe aún, no hacemos nada
     if (!nombre || !correo || !contenido || !botonEnviar) return;
     const ok =
       nombre.value.trim() !== "" &&
@@ -56,17 +54,15 @@ function initContacto() {
     return true;
   }
 
-  // Bind de inputs (solo si existen)
   if (nombre) nombre.addEventListener("input", validarFormulario);
   if (correo) correo.addEventListener("input", validarFormulario);
   if (contenido) contenido.addEventListener("input", validarFormulario);
 
-  // Submit del formulario (solo si existe)
   if (formulario) {
-    formulario.addEventListener("submit", function (e) {
-      // Si faltan elementos, bloquea y no sigue
+    formulario.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
       if (!nombre || !correo || !contenido) {
-        e.preventDefault();
         return;
       }
 
@@ -75,64 +71,38 @@ function initContacto() {
         !validarNombre(nombre.value) ||
         !validarContenidoSeguro(contenido.value)
       ) {
-        e.preventDefault();
         return;
       }
 
-      // Guarda solicitud en localStorage (clave 'solicitudes', campo 'descripcion')
-      const ahora = new Date();
-      const seqActual = Number(localStorage.getItem("solicitudes_seq") || "0"); // 0 al inicio
-      const seqNuevo = seqActual + 1;
-      const id = `SOL-${seqNuevo}`;
-      const mensaje = {
-        id,
-        titulo: id, // visible como SOL-...
-        nombre: nombre.value,
-        correo: correo.value,
-        descripcion: contenido.value,
-        fecha: ahora.toISOString(),
-        fechaLocal: ahora.toLocaleDateString(),
-        hora: ahora.toLocaleTimeString(),
-        estado: "pendiente",
-      };
+      try {
+        // 👇 Ahora se envía al backend, no a localStorage
+        await solicitudesAPI.createPublic({
+          nombre: nombre.value.trim(),
+          correo: correo.value.trim(),
+          descripcion: contenido.value.trim(),
+        });
 
-      const solicitudes = JSON.parse(localStorage.getItem("solicitudes") || "[]");
-      solicitudes.push(mensaje);
-      localStorage.setItem("solicitudes", JSON.stringify(solicitudes));
-      localStorage.setItem("solicitudes_seq", String(seqNuevo));
-
-      // Debug opcional
-      // console.log("Nombre:", nombre.value);
-      // console.log("Correo:", correo.value);
-      // console.log("Contenido:", contenido.value);
-
-      alert("¡Mensaje enviado correctamente!");
-      formulario.reset();
-      validarFormulario();
-      e.preventDefault(); 
+        alert("¡Mensaje enviado correctamente!");
+        formulario.reset();
+        validarFormulario();
+      } catch (error) {
+        console.error("❌ Error enviando solicitud de contacto:", error);
+        alert("Ocurrió un error al enviar el mensaje. Intenta más tarde.");
+      }
     });
   }
 
-  // Inicial valid
   validarFormulario();
 }
 
-// 1) Si el DOM ya está listo, inicializa ahora.
-// 2) Además, registra DOMContentLoaded por si el script se cargó en <head>.
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initContacto, { once: true });
-} else {
-  initContacto();
-}
-
+// Export para tests (si lo usas)
 export { initContacto };
 
-// 1) exportamos para tests:
 if (typeof window !== "undefined") {
   window.__initContacto = initContacto;
 }
 
-// 2) auto-init para la app real (queda igual):
+// Auto-init
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initContacto, { once: true });
 } else {
