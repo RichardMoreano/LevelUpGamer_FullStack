@@ -1598,6 +1598,12 @@ function inicializarMenuLateral() {
 }
 
 // =============== PANEL MI CUENTA ===============
+// Guarda el usuario actual en localStorage
+function guardarUsuarioActual(usuario) {
+  if (usuario) {
+    localStorage.setItem('usuario', JSON.stringify(usuario));
+  }
+}
 function asegurarCodigoReferido(usuario) {
   if (!usuario.codigoReferido) {
     usuario.codigoReferido = "REF" + Math.random().toString(36).substring(2,8).toUpperCase();
