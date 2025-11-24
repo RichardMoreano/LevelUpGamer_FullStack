@@ -12,7 +12,7 @@ public class SolicitudContactoRequest {
     @Size(max = 100)
     private String nombre;
 
-    @Schema(description = "Correo electrónico", example = "ana.torres@email.com")
+    @Schema(description = "Correo electrónico", example = "ana.torres@duoc.cl")
     @NotBlank
     @Email
     @Size(max = 120)

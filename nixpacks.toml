@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ['maven', 'openjdk17']
-
-[phases.build]
-cmds = ['cd backend-spring && mvn clean package -DskipTests']
-
-[start]
-cmd = 'cd backend-spring && java -Dserver.port=$PORT -jar target/levelup-gamer-0.0.1-SNAPSHOT.jar'

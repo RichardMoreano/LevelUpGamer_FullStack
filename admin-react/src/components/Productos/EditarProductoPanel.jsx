@@ -245,7 +245,7 @@ export default function EditarProductoPanel() {
         setCategoria(prod.categoria || "");
         setImagen(prod.imagen || "");
       } catch (error) {
-        console.error('Error cargando producto:', error);
+        // Si ocurre un error al cargar el producto, mostrar alerta y redirigir
         alert("Error cargando el producto.");
         navigate("/admin/productos", { replace: true });
       }
@@ -316,7 +316,7 @@ export default function EditarProductoPanel() {
         setMsg("");
       }, 3000);
     } catch (error) {
-      console.error('Error actualizando producto:', error);
+      // Si ocurre un error al actualizar, mostrar alerta
       alert("Error al actualizar el producto: " + (error.message || "Error desconocido"));
     }
   };

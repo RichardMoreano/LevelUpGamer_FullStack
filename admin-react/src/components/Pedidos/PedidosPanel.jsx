@@ -70,7 +70,7 @@ function useSessionData() {
         );
         setLoading(false);
       } catch (error) {
-        console.error("❌ Error cargando datos:", error);
+        // Si ocurre un error al cargar los datos, se guarda el mensaje en el estado
         setError(error.message);
 
         setPedidos(
@@ -389,7 +389,7 @@ export default function PedidosPanel() {
   const isAdmin = tipo === "ADMIN";
   const canSeeBoletas = tipo === "ADMIN" || tipo === "VENDEDOR";
 
-  // 🔥 FULL BACKEND: generar/obtener boleta desde Spring (no localStorage)
+  // Generar/obtener boleta desde el backend Spring Boot
   const handleVerBoleta = async (pedido) => {
     if (!pedido || !pedido.id) return;
 
@@ -408,7 +408,7 @@ export default function PedidosPanel() {
 
       navigate(`/admin/boleta/${encodeURIComponent(boleta.numero)}`);
     } catch (err) {
-      console.error("❌ Error generando/obteniendo boleta:", err);
+      // Si ocurre un error al generar/obtener la boleta, se muestra un mensaje al usuario
       alert("Ocurrió un error al generar la boleta en el backend.");
     }
   };

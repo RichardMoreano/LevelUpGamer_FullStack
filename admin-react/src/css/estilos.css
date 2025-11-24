@@ -1,5 +1,7 @@
+/* Importamos las fuentes que vamos a usar en la página para que los textos se vean bonitos */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Orbitron:wght@500;700&display=swap');
 
+/* Aquí definimos los colores principales para todo el sitio, así es más fácil cambiar el diseño después */
 :root{
   --fondo:#000000;
   --texto:#FFFFFF;

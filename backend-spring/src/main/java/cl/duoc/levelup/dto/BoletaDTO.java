@@ -13,10 +13,10 @@ public class BoletaDTO {
     @Schema(description = "Número de boleta", example = "BOL-20250001")
     private String numero;
 
-    @Schema(description = "Fecha de la boleta", example = "2025-11-24")
+    @Schema(description = "Fecha de la boleta", example = "2025-11-10")
     private LocalDate fecha;
 
-    @Schema(description = "Fecha y hora de creación", example = "2025-11-24T10:30:00")
+    @Schema(description = "Fecha y hora de creación", example = "2025-10-24T10:30:00")
     private LocalDateTime fechaCreacion;
 
     @Schema(description = "ID del pedido asociado", example = "123")

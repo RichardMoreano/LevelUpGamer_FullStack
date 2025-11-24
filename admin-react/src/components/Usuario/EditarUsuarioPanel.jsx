@@ -54,7 +54,7 @@ function SideMenu({ open, onClose, onOpenAccount }) {
       onClose();
       window.location.href = "/cliente/";
     } catch (error) {
-      console.error("Error durante logout:", error);
+      // Si ocurre un error durante logout, limpiamos el storage y redirigimos igual
       localStorage.clear();
       onClose();
       window.location.href = "/cliente/";
@@ -130,11 +130,12 @@ function AccountPanel({ user, open, onClose }) {
     } catch {}
   };
 
+  // Cierra sesión y redirige al usuario al home de cliente
   const handleLogout = async () => {
     try {
       await logout();
     } catch (error) {
-      console.error("Error durante logout:", error);
+      // Si ocurre un error durante logout, limpiamos el storage
       localStorage.clear();
     } finally {
       window.location.href = "/cliente/";
@@ -303,7 +304,6 @@ export default function EditarUsuarioPanel({ runParam }) {
 
         setCargado(true);
       } catch (err) {
-        console.error("❌ Error cargando usuario:", err);
         alert("No se pudo cargar el usuario.");
         window.location.href = "/admin/usuarios";
       }
@@ -322,7 +322,7 @@ export default function EditarUsuarioPanel({ runParam }) {
     setMsg("");
 
     try {
-      // 🧩 Armamos el payload con TODO lo obligatorio
+      // Armamos el payload con los datos editados
       const payload = {
         ...usuarioEdit, // trae run, nombres, apellidos, puntos, fechaRegistro, activo, etc.
         correo: form.correo.trim(),
@@ -342,7 +342,7 @@ export default function EditarUsuarioPanel({ runParam }) {
         window.location.href = "/admin/usuarios";
       }, 800);
     } catch (err) {
-      console.error("❌ Error actualizando usuario:", err);
+      // Si ocurre un error al actualizar usuario, mostramos mensaje de error
       setMsg(
         "No se pudo actualizar el usuario. Revisa la consola y las validaciones del backend."
       );

@@ -53,7 +53,6 @@ function SideMenu({ open, onClose, onOpenAccount }) {
       onClose();
       window.location.href = "/cliente/";
     } catch (error) {
-      console.error("Error durante logout:", error);
       localStorage.clear();
       onClose();
       window.location.href = "/cliente/";
@@ -132,7 +131,6 @@ function AccountPanel({ user, open, onClose }) {
     try {
       await logout();
     } catch (error) {
-      console.error("Error durante logout:", error);
       localStorage.clear();
     } finally {
       window.location.href = "/cliente/";
@@ -321,6 +319,7 @@ export default function HistorialUsuarioPanel({ runParam }) {
       runParam || (window?.location?.pathname?.split("/")?.pop() ?? "");
     setRun(runFromPath);
 
+    // Carga los datos del usuario y sus pedidos desde el backend
     const load = async () => {
       try {
         const uData = await usuariosAPI.getById(runFromPath);
@@ -332,17 +331,14 @@ export default function HistorialUsuarioPanel({ runParam }) {
         setUsuarioData(uData);
 
         const todosPedidos = await pedidosAPI.getAll();
-        console.log("📦 Todos los pedidos:", todosPedidos);
-        console.log("👤 Usuario del historial:", uData);
-
+        // Filtramos los pedidos que pertenecen al usuario
         const delUsuario = (Array.isArray(todosPedidos) ? todosPedidos : []).filter(
           (p) => perteneceAPersona(p, uData)
         );
-        console.log("✅ Pedidos filtrados para el usuario:", delUsuario);
 
         setPedidos(delUsuario);
       } catch (err) {
-        console.error("❌ Error cargando historial de usuario:", err);
+        // Si ocurre un error al cargar historial, dejamos los datos vacíos
         setUsuarioData(null);
         setPedidos([]);
       }

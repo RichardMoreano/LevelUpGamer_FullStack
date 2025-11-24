@@ -1,4 +1,43 @@
 import React, { useEffect, useMemo, useState } from "react";
+// Header reutilizado desde ProductosPanel
+function Header({ onOpenAccount, onToggleMenu, isMenuOpen }) {
+  return (
+    <header className="encabezado">
+      <a className="logo" href="/admin">
+        <img src="/img/LOGO.png" alt="Logo" className="logoBase" />
+      </a>
+
+      {/* Botón menú móvil */}
+      <button
+        id="btnMenu"
+        type="button"
+        className={`btn-menu ${isMenuOpen ? "is-open" : ""}`}
+        aria-label="Abrir menú"
+        aria-expanded={isMenuOpen}
+        aria-controls="menuLateral"
+        onClick={onToggleMenu}
+      >
+        <span className="icono-menu" aria-hidden="true">☰</span>
+        <span className="icono-cerrar" aria-hidden="true">✕</span>
+      </button>
+
+      {/* NAV escritorio */}
+      <nav className="navegacion">
+        <a href="/cliente/index.html">Inicio</a>
+        <a href="/cliente/productos.html">Productos</a>
+        <button
+          id="btnPerfilDesk"
+          type="button"
+          className="perfil-desk"
+          aria-label="Mi cuenta"
+          onClick={onOpenAccount}
+        >
+          <img src="/img/imgPerfil.png" alt="" loading="lazy" />
+        </button>
+      </nav>
+    </header>
+  );
+}
 import { useAuth } from "../../context/AuthContext";
 import { obtenerProductos, obtenerPedidos, usuariosAPI } from "../../services/apiService";
 
@@ -44,46 +83,40 @@ function useSessionData() {
 
     const loadData = async () => {
       try {
-        console.log('🔄 Cargando datos del dashboard...');
+  // Cargando datos del dashboard desde el backend
         
         // Cargar productos
         const productosData = await obtenerProductos();
-        console.log('📦 Productos cargados:', productosData?.length || 0);
+  // Productos cargados correctamente
         setProductos(Array.isArray(productosData) ? productosData : []);
 
         // Cargar pedidos
         const pedidosData = await obtenerPedidos();
-        console.log('📋 Pedidos cargados:', pedidosData?.length || 0);
+  // Pedidos cargados correctamente
         setPedidos(Array.isArray(pedidosData) ? pedidosData : []);
 
         // Intentar cargar usuarios (el backend valida permisos)
-        console.log('🔍 Información del usuario actual:', {
-          tipo: user.tipo,
-          tipoUsuario: user.tipoUsuario,
-          correo: user.correo || user.email
-        });
+        // Información del usuario actual obtenida
         
         try {
-          console.log('🔑 Intentando cargar usuarios...');
+          // Intentando cargar usuarios desde el backend
           const usuariosData = await usuariosAPI.getAll();
-          console.log('👥 Usuarios cargados exitosamente:', usuariosData?.length || 0);
-          console.log('👤 Muestra de usuarios:', usuariosData?.slice(0, 2));
+          // Usuarios cargados exitosamente
+          // Muestra de usuarios obtenida
           setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
         } catch (error) {
-          console.error('❌ Error cargando usuarios:', error);
-          console.error('Error status:', error.status);
-          console.error('Error message:', error.message);
+          // Si ocurre un error al cargar usuarios, se guarda el mensaje en el estado
           
           // Si es error de permisos, es normal para usuarios no-admin
           if (error.status === 403 || error.status === 401) {
-            console.log('⚠️ Usuario sin permisos para ver usuarios (normal si no es admin)');
+            // Usuario sin permisos para ver usuarios (normal si no es admin)
           }
           setUsuarios([]);
         }
 
-        console.log('✅ Datos del dashboard cargados correctamente');
+  // Datos del dashboard cargados correctamente
       } catch (error) {
-        console.error('❌ Error cargando datos del dashboard:', error);
+  // Si ocurre un error al cargar el dashboard, se guarda el mensaje en el estado
       } finally {
         setLoading(false);
       }
@@ -93,15 +126,11 @@ function useSessionData() {
   }, [isAuthenticated, user]);
 
   const kpis = useMemo(() => {
-    // Productos
+    // KPIs del dashboard
     const totalProductos = productos.length;
     const inventario = productos.reduce((acc, p) => acc + (Number(p?.stock) || 0), 0);
-
-    // Compras: estados exitosos = pendiente o despachado (según tu consigna)
     const estadosExito = new Set(["pendiente", "despachado", "completado", "entregado"]);
     const comprasTotales = pedidos.filter((p) => estadosExito.has((p?.estado || "").toLowerCase())).length;
-
-    // Probabilidad de aumento mensual (compras mes actual vs mes anterior)
     const ahora = new Date();
     const refMesAnterior = mesAnterior(ahora);
     const comprasMesActual = pedidos.filter((p) => {
@@ -114,17 +143,12 @@ function useSessionData() {
     }).length;
     const variacion = comprasMesActual - comprasMesAnterior;
     const probAumento = Math.max(0, Math.round((variacion / Math.max(1, comprasMesAnterior)) * 100));
-
-    // Usuarios
     const totalUsuarios = usuarios.length;
     const nuevosUsuariosMes = usuarios.filter((u) => {
       const d = normalizarFechaUsuario(u);
       return esMismoMes(d, ahora);
     }).length;
-
-    // Pedidos pendientes (se mantiene)
     const pendientes = pedidos.filter((p) => (p?.estado || "").toLowerCase() === "pendiente").length;
-
     return {
       productos: totalProductos,
       inventario,
@@ -137,9 +161,6 @@ function useSessionData() {
   }, [productos, usuarios, pedidos]);
 
   return { user, productos, usuarios, pedidos, kpis, loading };
-}
-
-function Header({ onOpenAccount, onToggleMenu, isMenuOpen }) {
   return (
     <header className="encabezado">
       <a className="logo" href="/admin">
@@ -188,7 +209,7 @@ function SideMenu({ open, onClose, onOpenAccount }) {
       onClose();
       window.location.href = "/cliente/";
     } catch (error) {
-      console.error('Error durante logout:', error);
+  // Si ocurre un error durante logout, se limpia el localStorage y se redirige
       // Fallback - limpiar localStorage manualmente
       localStorage.clear();
       onClose();
@@ -267,7 +288,7 @@ function AccountPanel({ user, open, onClose }) {
       await logout();
       window.location.href = "/cliente/";
     } catch (error) {
-      console.error('Error durante logout:', error);
+  // Si ocurre un error durante logout, se limpia el localStorage y se redirige
       // Fallback - limpiar localStorage manualmente
       localStorage.clear();
       window.location.href = "/cliente/";

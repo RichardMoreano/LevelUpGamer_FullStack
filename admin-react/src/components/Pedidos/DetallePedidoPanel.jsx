@@ -53,24 +53,21 @@ function useSessionData() {
         setUser(u);
 
         // Cargar pedidos y productos desde API backend
-        console.log("🔄 Cargando pedidos y productos desde API backend...");
+    // Cargar pedidos y productos desde el backend
         const [pedidosData, productosData] = await Promise.all([
           pedidosAPI.getAll(),
           obtenerProductos(),
         ]);
 
-        console.log("✅ Datos cargados:", {
-          pedidos: pedidosData.length,
-          productos: productosData.length,
-        });
+        // Datos cargados correctamente
         setPedidos(Array.isArray(pedidosData) ? pedidosData : []);
         setProductos(Array.isArray(productosData) ? productosData : []);
 
         setLoading(false);
       } catch (error) {
-        console.error("❌ Error cargando datos:", error);
+  // Si ocurre un error al cargar los datos, se guarda el mensaje en el estado
         setError(error.message);
-        // Fallback a localStorage si hay error
+  // Si hay error, se usan datos locales como respaldo
         setPedidos(
           Array.isArray(obtener("pedidos", [])) ? obtener("pedidos", []) : []
         );
@@ -319,13 +316,13 @@ export default function DetallePedidoPanel() {
       try {
         setLoadingPedido(true);
         const plain = decodeURIComponent(paramId);
-        console.log("🔍 Cargando pedido específico ID:", plain);
+  // Cargando pedido específico por ID
 
         const pedidoData = await pedidosAPI.getById(plain);
-        console.log("✅ Pedido cargado:", pedidoData);
+  // Pedido cargado correctamente
         setPedido(pedidoData);
       } catch (error) {
-        console.error("❌ Error cargando pedido:", error);
+  // Si ocurre un error al cargar el pedido, se muestra un mensaje
         setPedido(null);
       } finally {
         setLoadingPedido(false);
@@ -357,11 +354,9 @@ export default function DetallePedidoPanel() {
   const region = pedido?.region || "—";
 
   // Items enriquecidos con nombre de producto (ahora debe venir del backend)
-  console.log("🔍 DEBUG Pedido completo:", pedido);
-  console.log("🔍 DEBUG items:", pedido?.items);
+  // Procesar datos del pedido y sus items
 
   const items = (pedido?.items || []).map((it) => {
-    console.log("🔍 DEBUG Item individual:", it);
     const prod = Array.isArray(productos)
       ? productos.find(
           (x) =>
@@ -369,7 +364,6 @@ export default function DetallePedidoPanel() {
             (it.producto?.codigo || it.codigoProducto || it.codigo)
         )
       : null;
-    console.log("🔍 DEBUG Producto encontrado:", prod);
 
     return {
       ...it,
@@ -381,7 +375,6 @@ export default function DetallePedidoPanel() {
     };
   });
 
-  console.log("🔍 DEBUG Items procesados:", items);
 
   const marcarDespachado = async () => {
     if (!pedido) return;
@@ -407,7 +400,7 @@ export default function DetallePedidoPanel() {
 
       alert("Pedido marcado como despachado.");
     } catch (error) {
-      console.error("❌ Error actualizando estado:", error);
+      // Si ocurre un error al actualizar el estado, se muestra un mensaje al usuario
       alert("Error al actualizar el estado del pedido");
     }
   };

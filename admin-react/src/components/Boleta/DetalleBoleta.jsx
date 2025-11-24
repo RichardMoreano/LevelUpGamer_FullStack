@@ -263,7 +263,6 @@ const DetalleBoleta = () => {
 
         setLoading(false);
       } catch (err) {
-        console.error("❌ Error cargando boleta:", err);
         setError(err.message || "Error al cargar boleta");
         setLoading(false);
       }

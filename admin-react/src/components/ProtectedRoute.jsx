@@ -34,10 +34,6 @@ export default function ProtectedRoute({ roles = [], children }) {
   const userRole = user.tipo?.toLowerCase();
   const allowedRoles = roles.map(role => role.toLowerCase());
   
-  console.log('🔍 ProtectedRoute: Verificando permisos...');
-  console.log('Usuario:', user.nombre, user.apellidos);
-  console.log('Tipo de usuario:', userRole);
-  console.log('Roles permitidos:', allowedRoles);
   
   if (roles.length && !allowedRoles.includes(userRole)) {
     return (

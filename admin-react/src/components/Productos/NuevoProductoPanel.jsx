@@ -16,36 +16,25 @@ function useSessionData() {
   const [productos, setProductos] = useState([]);
 
   useEffect(() => {
-    console.log('🔍 NuevoProductoPanel: Verificando usuario:', user);
-    console.log('🔍 Tipo de usuario:', user?.tipoUsuario);
-    console.log('🔍 Tipo de usuario (tipo):', user?.tipo);
-    
+    // Verifica usuario y permisos antes de cargar productos
     if (!user) {
-      console.log('❌ No hay usuario');
-      return; // No mostrar alerta aún, esperar a que cargue
+      return; // Esperar a que cargue el usuario
     }
-    
     if (user.tipoUsuario !== "admin" && user.tipo !== "ADMIN") {
-      console.log('❌ Usuario no es admin:', user.tipoUsuario, user.tipo);
       alert("Acceso no permitido.");
       window.location.href = "/index.html";
       return;
     }
-    
-    console.log('✅ Usuario autorizado, cargando productos...');
-    
     // Cargar productos desde la API
     const cargarProductos = async () => {
       try {
         const productosData = await obtenerProductos();
         setProductos(productosData);
-        console.log('✅ Productos cargados:', productosData.length);
       } catch (error) {
-        console.error('Error cargando productos:', error);
+        // Si ocurre un error, dejar productos vacío
         setProductos([]);
       }
     };
-    
     cargarProductos();
   }, [user]);
 
@@ -240,18 +229,17 @@ export default function NuevoProductoPanel() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
 
-  // form state
-  const [codigo, setCodigo] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [detalles, setDetalles] = useState("");
-  const [precio, setPrecio] = useState("");
-  const [stock, setStock] = useState("");
-  const [stockCritico, setStockCritico] = useState("");
-  const [categoria, setCategoria] = useState(categorias[0] || "");
-  const [imagen, setImagen] = useState("");
-
-  // errores
+  // Estado para los campos del formulario
+  const [codigo, setCodigo] = useState(""); // Código del producto
+  const [nombre, setNombre] = useState(""); // Nombre del producto
+  const [descripcion, setDescripcion] = useState(""); // Descripción del producto
+  const [detalles, setDetalles] = useState(""); // Detalles adicionales
+  const [precio, setPrecio] = useState(""); // Precio
+  const [stock, setStock] = useState(""); // Stock
+  const [stockCritico, setStockCritico] = useState(""); // Stock crítico opcional
+  const [categoria, setCategoria] = useState(""); // Categoría seleccionada
+  const [imagen, setImagen] = useState(""); // URL de la imagen
+  // Estado para errores y mensajes
   const [errCodigo, setErrCodigo] = useState("");
   const [errNombre, setErrNombre] = useState("");
   const [errPrecio, setErrPrecio] = useState("");
@@ -260,42 +248,29 @@ export default function NuevoProductoPanel() {
   const [msgOk, setMsgOk] = useState("");
 
   // Cargar datos cuando el usuario esté disponible
+  // Cargar productos y categorías cuando el usuario esté disponible
   useEffect(() => {
-    console.log('🔍 NuevoProductoPanel: useEffect principal - Usuario:', user);
-    
     if (!user) {
-      console.log('🔍 Usuario no disponible aún');
       return;
     }
-    
-    console.log('🔍 Tipo de usuario:', user.tipoUsuario, user.tipo);
-    
     if (user.tipoUsuario !== "admin" && user.tipo !== "ADMIN") {
-      console.log('❌ Usuario no es admin');
       alert("Acceso no permitido.");
       window.location.href = "/index.html";
       return;
     }
-    
-    console.log('✅ Usuario autorizado, cargando productos...');
-    
+    // Cargar productos y categorías desde la API
     const cargarProductos = async () => {
       try {
         const productosData = await obtenerProductos();
         setProductos(productosData);
-        
-        // Extraer categorías
+        // Extraer categorías únicas
         const categoriasUnicas = [...new Set(productosData.map(p => p.categoria).filter(Boolean))];
         setCategorias(categoriasUnicas.sort());
-        
-        console.log('✅ Productos y categorías cargados:', productosData.length, categoriasUnicas.length);
       } catch (error) {
-        console.error('Error cargando productos:', error);
         setProductos([]);
         setCategorias([]);
       }
     };
-    
     cargarProductos();
   }, [user]);
 
@@ -311,14 +286,14 @@ export default function NuevoProductoPanel() {
   }, [categorias]); // eslint-disable-line
 
   if (!user) {
-    console.log('🔍 NuevoProductoPanel: Usuario no cargado aún');
+    // Si el usuario no está cargado, no renderizar nada
     return null;
   }
-  
-  console.log('🔍 NuevoProductoPanel - Usuario en componente principal:', user);
+  // Verifica si el usuario es admin
   const isAdmin = user.tipoUsuario === "admin" || user.tipo === "ADMIN";
 
   // validar + guardar
+  // Maneja el envío del formulario para crear un nuevo producto
   const onSubmit = async (e) => {
     e.preventDefault();
 
@@ -342,6 +317,7 @@ export default function NuevoProductoPanel() {
     if (isNaN(st) || st < 0 || !Number.isInteger(st)) { setErrStock("Stock entero >= 0."); ok = false; }
     if (!cat) { setErrCategoria("Selecciona una categoría."); ok = false; }
 
+    // Verifica si ya existe un producto con el mismo código
     if (ok) {
       const existe = (Array.isArray(productos) ? productos : []).some(
         (p) => (p.codigo || "").toUpperCase() === c.toUpperCase()
@@ -367,26 +343,19 @@ export default function NuevoProductoPanel() {
     };
 
     // Guardar en el backend
-    const guardarProducto = async () => {
-      try {
-        await productosAPI.create(nuevo);
-        setMsgOk("Producto guardado correctamente.");
-        
-        // Actualizar la lista local
-        const productosActualizados = [...productos, nuevo];
-        setProductos(productosActualizados);
-        
-        setTimeout(() => {
-          setMsgOk("");
-          window.location.href = "/admin/productos";
-        }, 1000);
-      } catch (error) {
-        console.error('Error guardando producto:', error);
-        alert("Error al guardar el producto: " + (error.message || "Error desconocido"));
-      }
-    };
-
-    guardarProducto();
+    try {
+      await productosAPI.create(nuevo);
+      setMsgOk("Producto guardado correctamente.");
+      // Actualizar la lista local
+      const productosActualizados = [...productos, nuevo];
+      setProductos(productosActualizados);
+      setTimeout(() => {
+        setMsgOk("");
+        window.location.href = "/admin/productos";
+      }, 1000);
+    } catch (error) {
+      alert("Error al guardar el producto: " + (error.message || "Error desconocido"));
+    }
   };
 
   return (

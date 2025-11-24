@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { usuariosAPI } from "../../services/apiService";
 
+// Esta función calcula el nivel del usuario según sus puntos
 const calcularNivel = (p) => (p >= 500 ? "Oro" : p >= 200 ? "Plata" : "Bronce");
 
 // ========= Hook de sesión + carga desde backend =========
@@ -20,12 +21,12 @@ function useSessionData() {
 
     const load = async () => {
       try {
-        console.log("🔄 Cargando usuarios desde backend...");
+        // Cargar usuarios desde el backend
         const data = await usuariosAPI.getAll();
-        console.log("👥 Usuarios cargados:", data?.length || 0);
+        // Guardamos la lista de usuarios obtenida
         setUsuarios(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("❌ Error cargando usuarios:", err);
+        // Si ocurre un error al cargar usuarios, dejamos la lista vacía
         setUsuarios([]);
       } finally {
         setLoading(false);
@@ -89,7 +90,7 @@ function SideMenu({ open, onClose, onOpenAccount }) {
       onClose();
       window.location.href = "/cliente/";
     } catch (error) {
-      console.error("Error durante logout:", error);
+      // Si ocurre un error durante logout, limpiamos el storage y redirigimos igual
       localStorage.clear();
       onClose();
       window.location.href = "/cliente/";
@@ -170,7 +171,7 @@ function AccountPanel({ user, open, onClose }) {
       await logout();
       window.location.href = "/cliente/";
     } catch (error) {
-      console.error("Error durante logout:", error);
+      // Si ocurre un error durante logout, limpiamos el storage y redirigimos igual
       localStorage.clear();
       window.location.href = "/cliente/";
     }
@@ -313,7 +314,7 @@ export default function UsuariosPanel() {
       setUsuarios((prev) => prev.filter((u) => u.run !== deleteRun));
       deleteDialogRef.current?.close();
     } catch (err) {
-      console.error("❌ Error eliminando usuario:", err);
+      // Si ocurre un error al eliminar usuario, mostramos alerta
       alert("No se pudo eliminar el usuario. Revisa la consola.");
     }
   };

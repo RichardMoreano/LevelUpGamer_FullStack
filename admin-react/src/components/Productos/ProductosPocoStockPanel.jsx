@@ -207,7 +207,7 @@ export default function ProductosPocoStockPanel() {
         const productosData = await obtenerProductos();
         setProductos(productosData);
       } catch (error) {
-        console.error('Error cargando productos:', error);
+        // Si ocurre un error al cargar los productos, se deja la lista vacía
         setProductos([]);
       }
     };

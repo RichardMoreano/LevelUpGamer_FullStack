@@ -1,10 +1,10 @@
-// src/components/boleta/Boleta.jsx
+// Componente Boleta: muestra las boletas emitidas y su información relacionada
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { usuarioActual } from "../../utils/storage";
 import { boletasAPI, pedidosAPI } from "../../services/apiService";
 
-// Header igual que otros paneles
+// Header del panel de boletas
 function Header({ onOpenAccount, onToggleMenu, isMenuOpen }) {
   return (
     <header className="encabezado">
@@ -44,7 +44,7 @@ function Header({ onOpenAccount, onToggleMenu, isMenuOpen }) {
   );
 }
 
-// Helper moneda
+// Función para formatear moneda chilena
 const CLP = (n) =>
   typeof n === "number"
     ? n.toLocaleString("es-CL", {
@@ -61,11 +61,11 @@ const Boleta = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Mapa de pedidos por id para poder mostrar el nombre del cliente
+  // Mapa de pedidos por id para mostrar el nombre del cliente
   const [pedidosMap, setPedidosMap] = useState({});
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false); // reservado para futuro panel de cuenta
+  const [accountOpen, setAccountOpen] = useState(false); // Estado para panel de cuenta (futuro)
 
   // Cargar usuario y boletas desde el backend
   useEffect(() => {
@@ -84,7 +84,8 @@ const Boleta = () => {
         setBoletas(lista);
         setLoading(false);
       } catch (err) {
-        console.error("❌ Error cargando sesión/boletas en Boleta.jsx:", err);
+  // Si ocurre un error al cargar la sesión o boletas, lo mostramos en consola para depuración
+  // console.error("Error cargando sesión/boletas en Boleta.jsx:", err);
         setError(err.message || "Error cargando boletas");
         setLoading(false);
       }
@@ -99,7 +100,7 @@ const Boleta = () => {
       try {
         if (!Array.isArray(boletas) || boletas.length === 0) return;
 
-        // Obtener IDs de pedido únicos que estén presentes en las boletas
+  // Obtener IDs de pedido únicos presentes en las boletas
         const ids = Array.from(
           new Set(
             boletas
@@ -116,7 +117,7 @@ const Boleta = () => {
               .getById(id)
               .then((p) => p)
               .catch((err) => {
-                console.warn("⚠️ No se pudo cargar pedido", id, err);
+                // console.warn("No se pudo cargar pedido", id, err); // Solo para depuración
                 return null;
               })
           )
@@ -131,7 +132,7 @@ const Boleta = () => {
 
         setPedidosMap(nuevoMapa);
       } catch (err) {
-        console.error("⚠️ Error cargando pedidos relacionados a boletas:", err);
+  // console.error("Error cargando pedidos relacionados a boletas:", err); // Solo para depuración
       }
     };
 
@@ -160,7 +161,7 @@ const Boleta = () => {
     navigate(`/admin/boleta/${numero}`);
   };
 
-  // Mientras se carga usuario inicial, no renderizamos
+  // Mientras se carga usuario inicial, no renderizamos nada
   if (!user && loading) return null;
 
   const tipo = (user?.tipoUsuario ?? user?.tipo ?? "")
@@ -172,7 +173,7 @@ const Boleta = () => {
 
   return (
     <div className="principal">
-      {/* Barra superior */}
+      {/* Barra superior de navegación */}
       <Header
         isMenuOpen={menuOpen}
         onToggleMenu={() => setMenuOpen((v) => !v)}
@@ -199,12 +200,12 @@ const Boleta = () => {
           <h1>Boletas Emitidas</h1>
 
           {loading ? (
-            <p className="info">🔄 Cargando boletas desde el backend...</p>
+            <p className="info">Cargando boletas desde el backend...</p>
           ) : error ? (
             <div className="tarjeta">
               <div className="contenido">
                 <p className="info" style={{ color: "#dc2626" }}>
-                  ❌ Error: {error}
+                  Error: {error}
                 </p>
                 <p>
                   <small>
@@ -217,13 +218,13 @@ const Boleta = () => {
           ) : boletasCompletas.length > 0 ? (
             <div id="listaBoletas" className="tarjetas">
               {boletasCompletas.map((boleta, index) => {
-                // Pedido relacionado (desde el mapa cargado aparte)
+                // Obtenemos el pedido relacionado desde el mapa cargado aparte
                 const pedidoRelacionado =
                   pedidosMap[boleta.pedidoId] ||
                   pedidosMap[boleta.pedido?.id] ||
                   null;
 
-                // Intentar sacar el comprador desde el pedido si existe
+                // Intentar obtener el comprador desde el pedido si existe
                 const comprador =
                   pedidoRelacionado?.usuario ||
                   pedidoRelacionado?.cliente ||
@@ -235,8 +236,7 @@ const Boleta = () => {
                   comprador.apellidos || comprador.apellido || ""
                 }`.trim();
 
-                // 🔥 Nombre del cliente: si el backend no envía boleta.cliente,
-                // lo reconstruimos desde el pedidoRelacionado
+                // Si el backend no envía boleta.cliente, lo reconstruimos desde el pedidoRelacionado
                 const nombreCliente =
                   boleta.cliente && boleta.cliente.trim() !== ""
                     ? boleta.cliente

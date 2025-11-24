@@ -71,7 +71,6 @@ const LoginForm = () => {
         setErrors({ general: result.error || 'Error al iniciar sesión' });
       }
     } catch (error) {
-      console.error('Login error:', error);
       setErrors({ general: 'Error de conexión. Inténtalo de nuevo.' });
     } finally {
       setIsSubmitting(false);

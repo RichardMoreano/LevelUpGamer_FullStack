@@ -22,24 +22,19 @@ function useSessionData() {
       return;
     }
 
-    const loadData = async () => {
-      try {
-        console.log('🔄 Cargando productos para ProductosPanel...');
-        
-        // Cargar productos usando el endpoint público
-        const productosData = await obtenerProductos();
-        console.log('📦 Productos cargados:', productosData?.length || 0);
-        console.log('📦 Muestra de productos:', productosData?.slice(0, 2));
-        setProductos(Array.isArray(productosData) ? productosData : []);
-
-        console.log('✅ Productos cargados correctamente en ProductosPanel');
-      } catch (error) {
-        console.error('❌ Error cargando productos:', error);
-        setProductos([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Función que carga los productos desde la API
+      const loadData = async () => {
+        try {
+          // Cargar productos usando el endpoint público
+          const productosData = await obtenerProductos();
+          setProductos(Array.isArray(productosData) ? productosData : []);
+        } catch (error) {
+          // Si ocurre un error, dejar productos vacío
+          setProductos([]);
+        } finally {
+          setLoading(false);
+        }
+      };
 
     loadData();
   }, [isAuthenticated, user]);
@@ -92,17 +87,17 @@ function SideMenu({ open, onClose, isAdmin, onOpenAccount }) {
   const { logout } = useAuth();
 
   const handleLogout = async (e) => {
-    e.preventDefault();
-    try {
-      await logout();
-      onClose();
-      window.location.href = "/cliente/";
-    } catch (error) {
-      console.error('Error durante logout:', error);
-      localStorage.clear();
-      onClose();
-      window.location.href = "/cliente/";
-    }
+      e.preventDefault();
+      try {
+        await logout();
+        onClose();
+        window.location.href = "/cliente/";
+      } catch (error) {
+        // Si ocurre un error al cerrar sesión, limpiar localStorage y redirigir
+        localStorage.clear();
+        onClose();
+        window.location.href = "/cliente/";
+      }
   };
 
   return (
@@ -173,82 +168,83 @@ function AccountPanel({ user, open, onClose }) {
   };
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      window.location.href = "/cliente/";
-    } catch (error) {
-      console.error('Error durante logout:', error);
-      localStorage.clear();
-      window.location.href = "/cliente/";
-    }
-  };
+      try {
+        await logout();
+        window.location.href = "/cliente/";
+      } catch (error) {
+        // Si ocurre un error al cerrar sesión, limpiar localStorage y redirigir
+        localStorage.clear();
+        window.location.href = "/cliente/";
+      }
+    };
 
-  if (!open) return null;
+    if (!open) return null;
 
-  return (
-    <>
-      <aside
-        id="panelCuenta"
-        className="panel-cuenta panel-cuenta--abierto"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="panelCuentaTitulo"
-        onKeyDown={(e) => e.key === "Escape" && onClose()}
-      >
-        <div className="panel-cuenta__cab">
-          <h3 id="panelCuentaTitulo">Mi cuenta</h3>
-          <button
-            id="btnCerrarCuenta"
-            className="panel-cuenta__cerrar"
-            aria-label="Cerrar"
-            onClick={onClose}
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="panel-cuenta__contenido">
-          <div className="panel-cuenta__avatar">
-            <img src="/img/imgPerfil.png" alt="Foto de perfil" />
-          </div>
-
-          <p><strong>Nombre:</strong> {`${user?.nombre || user?.nombres || ""} ${user?.apellidos || ""}`.trim() || "Administrador"}</p>
-          <p><strong>Correo:</strong> {user?.email || user?.correo || "—"}</p>
-          <p><strong>RUN:</strong> {user?.run || "—"}</p>
-          <p><strong>Tipo:</strong> <span style={{textTransform: 'capitalize'}}>{user?.tipo?.toLowerCase() || "Admin"}</span></p>
-          <a className="btn secundario" href="/cliente/perfil.html">Editar Perfil</a>
-
-          <div className="panel-cuenta__bloque">
-            <label><strong>Código de referido</strong></label>
-            <div className="panel-cuenta__ref">
-              <input readOnly value={codigo} />
-              <button className="btn secundario" type="button" onClick={copyCode}>Copiar</button>
-            </div>
-            <small className="pista">Compartí este código para ganar puntos.</small>
-          </div>
-
-          <div className="panel-cuenta__bloque">
-            <p><strong>Puntos LevelUp:</strong> <span>{puntos}</span></p>
-            <p><strong>Nivel:</strong> <span>{nivel}</span></p>
-            <small className="pista">Bronce: 0–199 · Plata: 200–499 · Oro: 500+</small>
-          </div>
-
-          <div className="panel-cuenta__acciones">
-            <a className="btn secundario" href="/cliente/misCompras.html">Mis compras</a>
+    // Fragmento para el panel de cuenta
+    return (
+      <>
+        <aside
+          id="panelCuenta"
+          className="panel-cuenta panel-cuenta--abierto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="panelCuentaTitulo"
+          onKeyDown={(e) => e.key === "Escape" && onClose()}
+        >
+          <div className="panel-cuenta__cab">
+            <h3 id="panelCuentaTitulo">Mi cuenta</h3>
             <button
-              id="btnSalirCuenta"
-              className="btn"
-              onClick={handleLogout}
+              id="btnCerrarCuenta"
+              className="panel-cuenta__cerrar"
+              aria-label="Cerrar"
+              onClick={onClose}
             >
-              Salir
+              ✕
             </button>
           </div>
-        </div>
-      </aside>
 
-      <div id="cortinaCuenta" className="cortina" onClick={onClose} />
-    </>
-  );
+          <div className="panel-cuenta__contenido">
+            <div className="panel-cuenta__avatar">
+              <img src="/img/imgPerfil.png" alt="Foto de perfil" />
+            </div>
+
+            <p><strong>Nombre:</strong> {`${user?.nombre || user?.nombres || ""} ${user?.apellidos || ""}`.trim() || "Administrador"}</p>
+            <p><strong>Correo:</strong> {user?.email || user?.correo || "—"}</p>
+            <p><strong>RUN:</strong> {user?.run || "—"}</p>
+            <p><strong>Tipo:</strong> <span style={{textTransform: 'capitalize'}}>{user?.tipo?.toLowerCase() || "Admin"}</span></p>
+            <a className="btn secundario" href="/cliente/perfil.html">Editar Perfil</a>
+
+            <div className="panel-cuenta__bloque">
+              <label><strong>Código de referido</strong></label>
+              <div className="panel-cuenta__ref">
+                <input readOnly value={codigo} />
+                <button className="btn secundario" type="button" onClick={copyCode}>Copiar</button>
+              </div>
+              <small className="pista">Compartí este código para ganar puntos.</small>
+            </div>
+
+            <div className="panel-cuenta__bloque">
+              <p><strong>Puntos LevelUp:</strong> <span>{puntos}</span></p>
+              <p><strong>Nivel:</strong> <span>{nivel}</span></p>
+              <small className="pista">Bronce: 0–199 · Plata: 200–499 · Oro: 500+</small>
+            </div>
+
+            <div className="panel-cuenta__acciones">
+              <a className="btn secundario" href="/cliente/misCompras.html">Mis compras</a>
+              <button
+                id="btnSalirCuenta"
+                className="btn"
+                onClick={handleLogout}
+              >
+                Salir
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <div id="cortinaCuenta" className="cortina" onClick={onClose} />
+      </>
+    );
 }
 
 // === Página: Productos ===
@@ -424,32 +420,30 @@ export default function ProductosPanel() {
                     if (!deleteCode) return;
 
                     try {
-                      console.log(`🗑️ Eliminando producto: ${deleteCode}`);
-                      await productosAPI.delete(deleteCode);
-                      
-                      // Actualizar la lista local
-                      setProductosState(prev => prev.filter(p => p.codigo !== deleteCode));
-                      
-                      deleteDialogRef.current?.close();
-                      successDialogRef.current?.showModal();
-                    } catch (error) {
-                      console.error('Error eliminando producto:', error);
-                      alert('Error al eliminar el producto: ' + (error.message || 'Error desconocido'));
-                    }
+                    // Llama a la API para eliminar el producto
+                    await productosAPI.delete(deleteCode);
+                    // Actualiza la lista local quitando el producto eliminado
+                    setProductosState(prev => prev.filter(p => p.codigo !== deleteCode));
+                    deleteDialogRef.current?.close();
+                    successDialogRef.current?.showModal();
+                  } catch (error) {
+                    // Si ocurre un error al eliminar, mostrar alerta
+                    alert('Error al eliminar el producto: ' + (error.message || 'Error desconocido'));
+                  }
                   }}
                 >
                   Estoy seguro
                 </button>
-                <button
-                  className="btn secundario"
-                  value="cancel"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    deleteDialogRef.current?.close();
-                  }}
-                >
-                  Cancelar
-                </button>
+        <button
+          value="cancel"
+          className="btn secundario"
+          onClick={(e) => {
+            e.preventDefault();
+            deleteDialogRef.current?.close();
+          }}
+        >
+          Cancelar
+        </button>
               </div>
             </form>
           </dialog>

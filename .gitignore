@@ -30,6 +30,9 @@ backend-spring/mvnw.cmd
 *.ear
 *.class
 
+# H2 database (no versionar archivos de base de datos)
+backend-spring/data/*.mv.db
+
 # Logs
 *.log
 logs/

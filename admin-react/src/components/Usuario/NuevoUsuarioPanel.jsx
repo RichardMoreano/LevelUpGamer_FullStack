@@ -52,7 +52,7 @@ function SideMenu({ open, onClose, onOpenAccount }) {
       onClose();
       window.location.href = "/cliente/";
     } catch (error) {
-      console.error("Error durante logout:", error);
+      // Si ocurre un error durante logout, limpiamos el storage y redirigimos igual
       localStorage.clear();
       onClose();
       window.location.href = "/cliente/";
@@ -127,11 +127,12 @@ function AccountPanel({ user, open, onClose }) {
     } catch {}
   };
 
+  // Cierra sesión y redirige al usuario al home de cliente
   const handleLogout = async () => {
     try {
       await logout();
     } catch (error) {
-      console.error("Error durante logout:", error);
+      // Si ocurre un error durante logout, limpiamos el storage
       localStorage.clear();
     } finally {
       window.location.href = "/cliente/";
@@ -234,6 +235,7 @@ export default function NuevoUsuarioPanel() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [msg, setMsg] = useState("");
   const [form, setForm] = useState({
     run: "",
     nombres: "",
@@ -243,7 +245,6 @@ export default function NuevoUsuarioPanel() {
     direccion: "",
     password: "",
   });
-  const [msg, setMsg] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -293,9 +294,8 @@ export default function NuevoUsuarioPanel() {
         window.location.href = "/admin/usuarios";
       }, 600);
     } catch (err) {
-      console.error("❌ Error creando usuario:", err);
       setMsg(
-        "No se pudo crear el usuario. Revisa la consola o el backend (RUN/correo duplicado, etc.)."
+        "No se pudo crear el usuario. Revisa el backend (RUN/correo duplicado, etc.)."
       );
     }
   };

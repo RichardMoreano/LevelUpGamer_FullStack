@@ -12,7 +12,7 @@ public class RegistroUsuarioRequest {
     @Schema(description = "Apellidos del usuario", example = "Pérez Soto")
     private String apellidos;
 
-    @Schema(description = "Correo electrónico", example = "juan.perez@email.com")
+    @Schema(description = "Correo electrónico", example = "juan.perez@duoc.cl")
     private String correo;
 
     @Schema(description = "Contraseña", example = "password123")

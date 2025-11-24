@@ -221,7 +221,6 @@ export default function SolicitudesPanel() {
         const data = await solicitudesAPI.getAll();
         setSolicitudes(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("❌ Error cargando solicitudes:", err);
         setError(err.message || "Error cargando solicitudes");
 
         // Fallback: localStorage "solicitudes"

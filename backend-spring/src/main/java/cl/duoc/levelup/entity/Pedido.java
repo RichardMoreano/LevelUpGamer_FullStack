@@ -20,7 +20,7 @@ public class Pedido {
     private Long id;
     
     @Column(name = "fecha", nullable = false)
-    @Schema(description = "Fecha del pedido", example = "2025-11-24T10:30:00")
+    @Schema(description = "Fecha del pedido", example = "2025-10-24T10:30:00")
     private LocalDateTime fecha;
     
     @Enumerated(EnumType.STRING)

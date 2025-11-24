@@ -16,40 +16,64 @@ public class ProductoService {
     @Autowired
     private ProductoRepository productoRepository;
 
+    /**
+     * Devuelve todos los productos registrados en la base de datos.
+     */
     public List<Producto> obtenerTodos() {
         return productoRepository.findAll();
     }
 
+    /**
+     * Devuelve solo los productos que están activos (no eliminados).
+     */
     public List<Producto> obtenerActivos() {
         return productoRepository.findByActivoTrue();
     }
 
+    /**
+     * Busca productos por su categoría (ejemplo: consolas, accesorios).
+     */
     public List<Producto> obtenerPorCategoria(String categoria) {
         return productoRepository.findByCategoria(categoria);
     }
 
+    /**
+     * Devuelve productos que tienen poco stock (stock crítico).
+     */
     public List<Producto> obtenerConStockCritico() {
         return productoRepository.findProductosConStockCritico();
     }
 
-    public Optional<Producto> obtenerPorId(String codigo) {
+    /**
+     * Busca un producto por su código único.
+     */
+        public Optional<Producto> obtenerPorId(String codigo) {
         return productoRepository.findById(codigo);
     }
 
+    /**
+     * Busca productos que contengan el nombre indicado.
+     */
     public List<Producto> buscarPorNombre(String nombre) {
         return productoRepository.findByNombreContaining(nombre);
     }
 
+    /**
+     * Crea un nuevo producto y lo deja activo por defecto.
+     */
     public Producto crearProducto(Producto producto) {
         producto.setActivo(true);
         return productoRepository.save(producto);
     }
 
-    public Producto actualizarProducto(String codigo, Producto productoActualizado) {
+    /**
+     * Actualiza los datos de un producto, solo los campos que vienen con datos.
+     */
+        public Producto actualizarProducto(String codigo, Producto productoActualizado) {
         Producto producto = productoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
-        // Actualizar campos
+        // Solo actualiza los campos que no son nulos
         if (productoActualizado.getNombre() != null) {
             producto.setNombre(productoActualizado.getNombre());
         }
@@ -72,7 +96,10 @@ public class ProductoService {
         return productoRepository.save(producto);
     }
 
-    public void eliminarProducto(String codigo) {
+    /**
+     * Marca un producto como inactivo (no se elimina de la base de datos).
+     */
+        public void eliminarProducto(String codigo) {
         Producto producto = productoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         
@@ -80,7 +107,10 @@ public class ProductoService {
         productoRepository.save(producto);
     }
 
-    public void activarProducto(String codigo) {
+    /**
+     * Activa un producto que estaba inactivo.
+     */
+        public void activarProducto(String codigo) {
         Producto producto = productoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         
@@ -88,7 +118,10 @@ public class ProductoService {
         productoRepository.save(producto);
     }
 
-    public Producto actualizarStock(String codigo, Integer nuevoStock) {
+    /**
+     * Cambia el stock de un producto por el valor que se indica.
+     */
+        public Producto actualizarStock(String codigo, Integer nuevoStock) {
         Producto producto = productoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         
@@ -96,14 +129,20 @@ public class ProductoService {
         return productoRepository.save(producto);
     }
 
-    public boolean verificarDisponibilidad(String codigo, Integer cantidad) {
+    /**
+     * Verifica si hay suficiente stock y si el producto está activo.
+     */
+        public boolean verificarDisponibilidad(String codigo, Integer cantidad) {
         Producto producto = productoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         
         return producto.getStock() >= cantidad && producto.getActivo();
     }
 
-    public void reducirStock(String codigo, Integer cantidad) {
+    /**
+     * Resta una cantidad al stock del producto si hay suficiente.
+     */
+        public void reducirStock(String codigo, Integer cantidad) {
         Producto producto = productoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         
@@ -115,7 +154,10 @@ public class ProductoService {
         productoRepository.save(producto);
     }
 
-    public void restaurarStock(String codigo, Integer cantidad) {
+    /**
+     * Suma una cantidad al stock del producto (por ejemplo, si se cancela un pedido).
+     */
+        public void restaurarStock(String codigo, Integer cantidad) {
         Producto producto = productoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         
@@ -123,6 +165,9 @@ public class ProductoService {
         productoRepository.save(producto);
     }
 
+    /**
+     * Devuelve todas las categorías de productos que existen.
+     */
     public List<String> obtenerCategorias() {
         return productoRepository.findAllCategorias();
     }

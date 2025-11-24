@@ -288,7 +288,6 @@ export default function DetalleSolicitudPanel({ idParam }) {
         setSolicitud(data);
         setError(null);
       } catch (err) {
-        console.error("❌ Error cargando solicitud:", err);
         setError(err.message || "Error cargando solicitud");
         setSolicitud(null);
       } finally {
@@ -309,7 +308,6 @@ export default function DetalleSolicitudPanel({ idParam }) {
       setSolicitud(actualizada);
       alert("Solicitud marcada como atendida/completada.");
     } catch (err) {
-      console.error("❌ Error marcando atendida:", err);
       alert("No se pudo actualizar el estado de la solicitud.");
     }
   };
