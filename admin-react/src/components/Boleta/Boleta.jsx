@@ -1,8 +1,10 @@
+// src/components/boleta/Boleta.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { obtener, usuarioActual } from "../../utils/storage";
+import { usuarioActual } from "../../utils/storage";
+import { boletasAPI, pedidosAPI } from "../../services/apiService";
 
-// Componente Header local, igual que en otros paneles
+// Header igual que otros paneles
 function Header({ onOpenAccount, onToggleMenu, isMenuOpen }) {
   return (
     <header className="encabezado">
@@ -12,7 +14,7 @@ function Header({ onOpenAccount, onToggleMenu, isMenuOpen }) {
       <button
         id="btnMenu"
         type="button"
-        className="btn-menu"
+        className={`btn-menu ${isMenuOpen ? "is-open" : ""}`}
         aria-label="Abrir menú"
         aria-expanded={isMenuOpen}
         aria-controls="menuLateral"
@@ -42,7 +44,7 @@ function Header({ onOpenAccount, onToggleMenu, isMenuOpen }) {
   );
 }
 
-// Helper para formatear moneda
+// Helper moneda
 const CLP = (n) =>
   typeof n === "number"
     ? n.toLocaleString("es-CL", {
@@ -55,12 +57,17 @@ const CLP = (n) =>
 const Boleta = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [pedidos, setPedidos] = useState([]);
   const [boletas, setBoletas] = useState([]);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false); // por si después quieres usar AccountPanel
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Cargar datos de sesión (usuario desde backend) + boletas/pedidos desde localStorage
+  // Mapa de pedidos por id para poder mostrar el nombre del cliente
+  const [pedidosMap, setPedidosMap] = useState({});
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false); // reservado para futuro panel de cuenta
+
+  // Cargar usuario y boletas desde el backend
   useEffect(() => {
     const load = async () => {
       try {
@@ -72,21 +79,69 @@ const Boleta = () => {
         }
         setUser(u);
 
-        // Cargar pedidos y boletas existentes desde localStorage
-        const pedidosData = obtener("pedidos", []);
-        const boletasData = obtener("boletas", []);
-
-        setPedidos(Array.isArray(pedidosData) ? pedidosData : []);
-        setBoletas(Array.isArray(boletasData) ? boletasData : []);
+        const data = await boletasAPI.getAll();
+        const lista = Array.isArray(data) ? data : [];
+        setBoletas(lista);
+        setLoading(false);
       } catch (err) {
-        console.error("❌ Error cargando sesión en Boleta.jsx:", err);
-        alert("Error cargando datos de sesión. Vuelve a iniciar sesión.");
-        window.location.href = "/index.html";
+        console.error("❌ Error cargando sesión/boletas en Boleta.jsx:", err);
+        setError(err.message || "Error cargando boletas");
+        setLoading(false);
       }
     };
 
     load();
   }, []);
+
+  // Cargar pedidos relacionados a las boletas (para obtener el nombre del cliente)
+  useEffect(() => {
+    const loadPedidosRelacionados = async () => {
+      try {
+        if (!Array.isArray(boletas) || boletas.length === 0) return;
+
+        // Obtener IDs de pedido únicos que estén presentes en las boletas
+        const ids = Array.from(
+          new Set(
+            boletas
+              .map((b) => b.pedidoId || b.pedido?.id || null)
+              .filter(Boolean)
+          )
+        );
+
+        if (ids.length === 0) return;
+
+        const resultados = await Promise.all(
+          ids.map((id) =>
+            pedidosAPI
+              .getById(id)
+              .then((p) => p)
+              .catch((err) => {
+                console.warn("⚠️ No se pudo cargar pedido", id, err);
+                return null;
+              })
+          )
+        );
+
+        const nuevoMapa = {};
+        resultados.forEach((p) => {
+          if (p && p.id != null) {
+            nuevoMapa[p.id] = p;
+          }
+        });
+
+        setPedidosMap(nuevoMapa);
+      } catch (err) {
+        console.error("⚠️ Error cargando pedidos relacionados a boletas:", err);
+      }
+    };
+
+    loadPedidosRelacionados();
+  }, [boletas]);
+
+  useEffect(() => {
+    document.body.classList.toggle("menu-abierto", menuOpen);
+    return () => document.body.classList.remove("menu-abierto");
+  }, [menuOpen]);
 
   const boletasCompletas = useMemo(
     () => (Array.isArray(boletas) ? boletas : []),
@@ -94,9 +149,9 @@ const Boleta = () => {
   );
 
   const verDetallePedido = (boleta) => {
-    const pedidoId = encodeURIComponent(
-      String(boleta.pedidoId).replace(/^PED-?/i, "")
-    );
+    const pedidoIdRaw = boleta.pedidoId || boleta.pedido?.id || "";
+    if (!pedidoIdRaw) return;
+    const pedidoId = encodeURIComponent(String(pedidoIdRaw).replace(/^PED-?/i, ""));
     navigate(`/admin/pedidos/${pedidoId}`);
   };
 
@@ -105,14 +160,15 @@ const Boleta = () => {
     navigate(`/admin/boleta/${numero}`);
   };
 
-  if (!user) return null;
+  // Mientras se carga usuario inicial, no renderizamos
+  if (!user && loading) return null;
 
-  // 🔥 Detección robusta de admin (ADMIN/admin)
   const tipo = (user?.tipoUsuario ?? user?.tipo ?? "")
     .toString()
     .trim()
     .toUpperCase();
   const isAdmin = tipo === "ADMIN";
+  const canSeeBoletas = tipo === "ADMIN" || tipo === "VENDEDOR";
 
   return (
     <div className="principal">
@@ -130,9 +186,11 @@ const Boleta = () => {
           {isAdmin && <a href="/admin/usuarios">Usuarios</a>}
           <a href="/admin/pedidos">Pedidos</a>
           <a href="/admin/solicitud">Solicitudes</a>
-          <a href="/admin/boleta" className="activo">
-            Boletas
-          </a>
+          {canSeeBoletas && (
+            <a href="/admin/boleta" className="activo">
+              Boletas
+            </a>
+          )}
           <a href="/admin/reportes">Reportes</a>
         </aside>
 
@@ -140,61 +198,107 @@ const Boleta = () => {
         <div className="panel">
           <h1>Boletas Emitidas</h1>
 
-          <div className="filtros" style={{ marginBottom: 12 }}>
-            <p className="info"></p>
-          </div>
-
-          {boletasCompletas && boletasCompletas.length > 0 ? (
+          {loading ? (
+            <p className="info">🔄 Cargando boletas desde el backend...</p>
+          ) : error ? (
+            <div className="tarjeta">
+              <div className="contenido">
+                <p className="info" style={{ color: "#dc2626" }}>
+                  ❌ Error: {error}
+                </p>
+                <p>
+                  <small>
+                    Verifica que el backend Spring Boot esté corriendo y el
+                    endpoint de boletas esté disponible.
+                  </small>
+                </p>
+              </div>
+            </div>
+          ) : boletasCompletas.length > 0 ? (
             <div id="listaBoletas" className="tarjetas">
-              {boletasCompletas.map((boleta, index) => (
-                <article
-                  key={boleta.numero || index}
-                  className="tarjeta"
-                  style={{ marginTop: 12 }}
-                >
-                  <div className="contenido">
-                    <h3 style={{ marginTop: 0, marginBottom: 8 }}>
-                      {boleta.numero}
-                    </h3>
-                    <p
-                      className="info"
-                      style={{ margin: "6px 0 10px" }}
-                    >
-                      <strong>Fecha:</strong> {boleta.fecha}
-                    </p>
-                    <p className="info" style={{ margin: "6px 0" }}>
-                      <strong>Cliente:</strong> {boleta.cliente}
-                    </p>
-                    <p className="info" style={{ margin: "6px 0" }}>
-                      <strong>Pedido:</strong> {boleta.pedidoId}
-                    </p>
-                    <p style={{ margin: "8px 0 12px" }}>
-                      <strong>Total:</strong>{" "}
-                      <span className="precio">
-                        {boleta.totalNumerico
-                          ? CLP(boleta.totalNumerico)
-                          : boleta.total}
-                      </span>
-                    </p>
-                    <div className="acciones" style={{ gap: 8 }}>
-                      <button
-                        className="btn secundario"
-                        onClick={() => verDetallePedido(boleta)}
-                        style={{ cursor: "pointer" }}
+              {boletasCompletas.map((boleta, index) => {
+                // Pedido relacionado (desde el mapa cargado aparte)
+                const pedidoRelacionado =
+                  pedidosMap[boleta.pedidoId] ||
+                  pedidosMap[boleta.pedido?.id] ||
+                  null;
+
+                // Intentar sacar el comprador desde el pedido si existe
+                const comprador =
+                  pedidoRelacionado?.usuario ||
+                  pedidoRelacionado?.cliente ||
+                  boleta.pedido?.usuario ||
+                  boleta.pedido?.cliente ||
+                  {};
+
+                const nombreComprador = `${comprador.nombres || comprador.nombre || ""} ${
+                  comprador.apellidos || comprador.apellido || ""
+                }`.trim();
+
+                // 🔥 Nombre del cliente: si el backend no envía boleta.cliente,
+                // lo reconstruimos desde el pedidoRelacionado
+                const nombreCliente =
+                  boleta.cliente && boleta.cliente.trim() !== ""
+                    ? boleta.cliente
+                    : nombreComprador || "—";
+
+                const totalNum =
+                  typeof boleta.totalNumerico === "number"
+                    ? boleta.totalNumerico
+                    : boleta.total;
+
+                return (
+                  <article
+                    key={boleta.id || boleta.numero || index}
+                    className="tarjeta"
+                    style={{ marginTop: 12 }}
+                  >
+                    <div className="contenido">
+                      <h3 style={{ marginTop: 0, marginBottom: 8 }}>
+                        {boleta.numero}
+                      </h3>
+                      <p
+                        className="info"
+                        style={{ margin: "6px 0 10px" }}
                       >
-                        Ver Pedido Relacionado
-                      </button>
-                      <button
-                        className="btn primario"
-                        onClick={() => verBoleta(boleta)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        Ver boleta
-                      </button>
+                        <strong>Fecha:</strong>{" "}
+                        {boleta.fecha || boleta.fechaEmision || "—"}
+                      </p>
+                      <p className="info" style={{ margin: "6px 0" }}>
+                        <strong>Cliente:</strong> {nombreCliente}
+                      </p>
+                      <p className="info" style={{ margin: "6px 0" }}>
+                        <strong>Pedido:</strong>{" "}
+                        {boleta.pedidoId || boleta.pedido?.id || "—"}
+                      </p>
+                      <p style={{ margin: "8px 0 12px" }}>
+                        <strong>Total:</strong>{" "}
+                        <span className="precio">
+                          {typeof totalNum === "number"
+                            ? CLP(totalNum)
+                            : totalNum || "—"}
+                        </span>
+                      </p>
+                      <div className="acciones" style={{ gap: 8 }}>
+                        <button
+                          className="btn secundario"
+                          onClick={() => verDetallePedido(boleta)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          Ver Pedido Relacionado
+                        </button>
+                        <button
+                          className="btn primario"
+                          onClick={() => verBoleta(boleta)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          Ver boleta
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           ) : (
             <div className="tarjeta">

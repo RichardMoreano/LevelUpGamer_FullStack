@@ -8,25 +8,31 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import cl.duoc.levelup.dto.CambiarPasswordRequest;
 
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000", "https://richardmoreano.github.io"})
+@Tag(name = "Usuarios", description = "Gestión de usuarios y perfil")
 public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
 
+    @Operation(summary = "Obtener usuario actual", description = "Devuelve el usuario autenticado actualmente")
     @GetMapping("/me")
     public ResponseEntity<Usuario> getCurrentUser(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         Usuario usuario = usuarioService.obtenerUsuarioAutenticado(userPrincipal);
         return ResponseEntity.ok(usuario);
     }
 
+    @Operation(summary = "Actualizar usuario actual", description = "Actualiza los datos del usuario autenticado")
     @PutMapping("/me")
     public ResponseEntity<Usuario> updateCurrentUser(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -35,28 +41,27 @@ public class UsuarioController {
         return ResponseEntity.ok(usuario);
     }
 
+    @Operation(summary = "Cambiar contraseña", description = "Cambia la contraseña del usuario autenticado. Ejemplo de request: {\n  \"passwordActual\": \"123456\",\n  \"nuevaPassword\": \"nuevaClave123\"\n}. Ejemplo de respuesta: {\n  \"success\": true\n}")
     @PostMapping("/me/cambiar-password")
-    public ResponseEntity<Map<String, Object>> changePassword(
+    public ResponseEntity<cl.duoc.levelup.dto.ChangePasswordResponse> changePassword(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestBody Map<String, String> passwordData) {
-        
-        String passwordActual = passwordData.get("passwordActual");
-        String nuevaPassword = passwordData.get("nuevaPassword");
-        
+            @RequestBody CambiarPasswordRequest passwordRequest) {
+        String passwordActual = passwordRequest.getPasswordActual();
+        String nuevaPassword = passwordRequest.getNuevaPassword();
         boolean success = usuarioService.cambiarPassword(userPrincipal.getRun(), passwordActual, nuevaPassword);
-        
-        Map<String, Object> response = Map.of("success", success);
+        cl.duoc.levelup.dto.ChangePasswordResponse response = new cl.duoc.levelup.dto.ChangePasswordResponse(success);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Obtener puntos del usuario", description = "Devuelve los puntos LevelUp del usuario autenticado. Ejemplo de respuesta: {\n  \"puntos\": 1500\n}")
     @GetMapping("/puntos")
-    public ResponseEntity<Map<String, Integer>> getPuntos(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<cl.duoc.levelup.dto.PuntosResponse> getPuntos(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         Usuario usuario = usuarioService.obtenerUsuarioAutenticado(userPrincipal);
-        Map<String, Integer> response = Map.of("puntos", usuario.getPuntosLevelUp());
+        cl.duoc.levelup.dto.PuntosResponse response = new cl.duoc.levelup.dto.PuntosResponse(usuario.getPuntosLevelUp());
         return ResponseEntity.ok(response);
     }
 
-    // Endpoints para administradores
+    @Operation(summary = "Obtener todos los usuarios", description = "Devuelve la lista de todos los usuarios registrados. Solo puede ser usado por un usuario con rol ADMIN.")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Usuario>> getAllUsers() {
@@ -64,6 +69,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
+    @Operation(summary = "Obtener usuarios activos", description = "Devuelve la lista de usuarios activos (solo ADMIN)")
     @GetMapping("/activos")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Usuario>> getActiveUsers() {
@@ -71,6 +77,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
+    @Operation(summary = "Obtener usuarios por tipo", description = "Devuelve la lista de usuarios filtrados por tipo (solo ADMIN)")
     @GetMapping("/tipo/{tipo}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Usuario>> getUsersByType(@PathVariable Usuario.TipoUsuario tipo) {
@@ -78,6 +85,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
+    @Operation(summary = "Obtener usuario por RUN", description = "Devuelve el usuario correspondiente al RUN especificado (solo ADMIN)")
     @GetMapping("/{run}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Usuario> getUserByRun(@PathVariable String run) {
@@ -86,6 +94,10 @@ public class UsuarioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(
+        summary = "Actualizar usuario por RUN",
+        description = "Actualiza los datos de un usuario específico identificado por su RUN. Solo puede ser usado por un usuario con rol ADMIN. Recibe el RUN como parámetro en la URL y un objeto Usuario en el cuerpo de la petición con los datos actualizados. Retorna el usuario actualizado."
+    )
     @PutMapping("/{run}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Usuario> updateUser(@PathVariable String run, @Valid @RequestBody Usuario usuario) {
@@ -93,28 +105,23 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioActualizado);
     }
 
-    @PutMapping("/{run}/desactivar")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deactivateUser(@PathVariable String run) {
-        usuarioService.desactivarUsuario(run);
-        return ResponseEntity.ok().build();
-    }
 
-    @PutMapping("/{run}/activar")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> activateUser(@PathVariable String run) {
-        usuarioService.activarUsuario(run);
-        return ResponseEntity.ok().build();
-    }
-
+    @Operation(
+        summary = "Agregar puntos a usuario",
+        description = "Agrega puntos LevelUp al usuario identificado por su RUN. Solo puede ser usado por un usuario con rol ADMIN. Recibe el RUN como parámetro en la URL y la cantidad de puntos en el cuerpo de la petición. Retorna el usuario actualizado."
+    )
     @PostMapping("/{run}/puntos")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Usuario> addPoints(@PathVariable String run, @RequestBody Map<String, Integer> pointsData) {
-        Integer puntos = pointsData.get("puntos");
+    public ResponseEntity<Usuario> addPoints(@PathVariable String run, @RequestBody cl.duoc.levelup.dto.AgregarPuntosRequest pointsRequest) {
+        Integer puntos = pointsRequest.getPuntos();
         Usuario usuario = usuarioService.agregarPuntos(run, puntos);
         return ResponseEntity.ok(usuario);
     }
 
+    @Operation(
+        summary = "Obtener usuarios por dominio",
+        description = "Devuelve la lista de usuarios filtrados por dominio de correo electrónico. Solo puede ser usado por un usuario con rol ADMIN. Recibe el dominio como parámetro en la URL. Retorna la lista de usuarios."
+    )
     @GetMapping("/dominio/{dominio}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Usuario>> getUsersByDomain(@PathVariable String dominio) {
@@ -122,6 +129,10 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
+    @Operation(
+        summary = "Obtener usuarios con puntos mínimos",
+        description = "Devuelve la lista de usuarios que tienen al menos la cantidad mínima de puntos LevelUp especificada. Solo puede ser usado por un usuario con rol ADMIN. Recibe el valor mínimo como parámetro en la URL. Retorna la lista de usuarios."
+    )
     @GetMapping("/puntos-minimos/{minPuntos}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Usuario>> getUsersWithMinPoints(@PathVariable Integer minPuntos) {
@@ -129,11 +140,15 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
+        @Operation(
+            summary = "Eliminar usuario por RUN",
+            description = "Eliminar al usuario identificado por su RUN. Solo puede ser usado por un usuario con rol ADMIN. Recibe el RUN como parámetro en la URL. No retorna contenido."
+        )
         @DeleteMapping("/{run}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUser(@PathVariable String run) {
-        usuarioService.desactivarUsuario(run);
-        return ResponseEntity.noContent().build();
-    }
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<Void> deleteUser(@PathVariable String run) {
+            usuarioService.desactivarUsuario(run);
+            return ResponseEntity.noContent().build();
+        }
 
 }

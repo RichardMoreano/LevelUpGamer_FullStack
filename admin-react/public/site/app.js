@@ -108,13 +108,6 @@ function crearUsuariosPrueba() {
     }
   ];
   
-  console.log("⚠️ FUNCIÓN OBSOLETA: Los usuarios están en la base de datos del backend");
-  console.log("� Usuarios disponibles para login:");
-  console.log("  • admin@levelup.cl / admin123");
-  console.log("  • richard@duoc.cl / admin");  
-  console.log("  • vendedor@levelup.cl / vendedor123");
-  
-  // NO guardamos usuarios en localStorage - solo usamos la API
   return usuariosIniciales;
 }
 
@@ -132,11 +125,9 @@ function guardar(key, valor) {
 }
 
 function eliminarUsuarioFantasma() {
-  console.log('🧹🧹🧹 LIMPIEZA TOTAL DE USUARIOS FANTASMA 🧹🧹🧹');
   
   // Obtener TODAS las keys antes de empezar
   const todasLasKeys = [...Object.keys(localStorage), ...Object.keys(sessionStorage)];
-  console.log('🔍 Keys encontradas:', todasLasKeys);
   
   let eliminados = 0;
   
@@ -152,12 +143,10 @@ function eliminarUsuarioFantasma() {
     if (localStorage.getItem(key) !== null) {
       localStorage.removeItem(key);
       eliminados++;
-      console.log(`❌ localStorage eliminado: ${key}`);
     }
     if (sessionStorage.getItem(key) !== null) {
       sessionStorage.removeItem(key);
       eliminados++;
-      console.log(`❌ sessionStorage eliminado: ${key}`);
     }
   });
   
@@ -170,7 +159,6 @@ function eliminarUsuarioFantasma() {
       if (key.includes('user') || key.includes('auth') || key.includes('login') || key.includes('session')) {
         localStorage.removeItem(key);
         eliminados++;
-        console.log(`❌ Key con nombre sospechoso eliminada: ${key}`);
       }
     }
   });
@@ -181,18 +169,14 @@ function eliminarUsuarioFantasma() {
     if (!keysPermitidas.includes(key)) {
       sessionStorage.removeItem(key);
       eliminados++;
-      console.log(`❌ SessionStorage eliminado: ${key}`);
     }
   });
   
   // Estado final
   const finales = [...Object.keys(localStorage), ...Object.keys(sessionStorage)];
-  console.log('📋 Keys restantes:', finales);
   
   if (eliminados > 0) {
-    console.log(`🧹 ${eliminados} usuarios fantasma ELIMINADOS TOTALMENTE`);
   } else {
-    console.log('✅ No se encontraron usuarios fantasma esta vez');
   }
 }
 
@@ -203,12 +187,8 @@ function usuarioActual() {
   // Solo verificar si hay token JWT válido del backend
   const token = localStorage.getItem('jwt_token');
   
-  console.log('👤 Verificando sesión JWT:', { token: !!token });
   
   if (!token) {
-    console.log('❌ No hay sesión JWT activa - sin usuario logueado');
-    // Doble verificación - si no hay token, NO DEBE HABER USUARIO
-    console.log('🔍 Verificación final: NO hay usuario logueado');
     return null;
   }
 
@@ -218,7 +198,6 @@ function usuarioActual() {
     
     // Verificar que no esté expirado
     if (payload.exp * 1000 < Date.now()) {
-      console.log('❌ Token JWT expirado');
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
@@ -228,30 +207,19 @@ function usuarioActual() {
     
     // Obtener datos completos del usuario desde localStorage
     const usuarioGuardado = localStorage.getItem('usuario');
-    console.log('🔍 DEBUG: usuarioGuardado en localStorage:', usuarioGuardado);
     
     if (usuarioGuardado) {
       try {
         const datosUsuario = JSON.parse(usuarioGuardado);
-        console.log('✅ Sesión JWT válida con datos completos:', datosUsuario);
         
         // Verificar que los datos sean válidos
         if (datosUsuario && datosUsuario.nombres && datosUsuario.correo) {
           return datosUsuario;
         } else {
-          console.log('⚠️ Datos de usuario incompletos en localStorage');
         }
       } catch (e) {
-        console.log('⚠️ Error parsing usuario guardado:', e);
       }
     }
-    
-    // Fallback: usar datos del JWT si no hay usuario guardado - CORREGIDO
-    console.log('⚠️ FALLBACK: No hay datos válidos de usuario en localStorage');
-    console.log('🔍 Payload del JWT:', payload);
-    
-    // El JWT contiene el RUN en 'sub', no el correo, así que no usamos fallback
-    console.log('❌ No se puede usar JWT como fallback - faltan datos del usuario');
     
     // Limpiar todo y forzar re-login
     localStorage.removeItem('jwt_token');
@@ -261,7 +229,6 @@ function usuarioActual() {
     
     return null;
   } catch (error) {
-    console.error('❌ Error validando JWT:', error);
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
@@ -281,7 +248,7 @@ function loginUsuario(correo, password) {
       return;
     }
     
-    if (password.length < 4 || password.length > 10) {
+    if (password.length < 6 || password.length > 10) {
       reject(new Error('Contraseña debe tener entre 6 y 10 caracteres'));
       return;
     }
@@ -309,7 +276,6 @@ function loginUsuario(correo, password) {
 }
 
 function cerrarSesion() {
-  console.log('🔐 Cerrando sesión JWT...');
   
   // Limpiar TODAS las claves de autenticación
   localStorage.removeItem('jwt_token');
@@ -319,13 +285,11 @@ function cerrarSesion() {
   localStorage.removeItem('sesion');
   localStorage.removeItem('sesionActual');
   
-  console.log('✅ Sesión cerrada correctamente - localStorage limpiado');
   
   // Actualizar navegación inmediatamente
   actualizarNavegacion();
   
   // Forzar recarga completa para limpiar todo el estado en memoria
-  console.log('🔄 Recargando página para limpiar estado...');
   window.location.reload();
 }
 
@@ -337,9 +301,7 @@ function actualizarNavegacion() {
   const u = usuarioActual();
   
   // DEBUG: Ver el tipo de usuario
-  console.log("🔍 DEBUG actualizarNavegacion - Usuario:", u);
   if (u) {
-    console.log("🔍 DEBUG tipoUsuario:", u.tipoUsuario);
   }
   
   // Enlaces de navegación
@@ -381,24 +343,19 @@ function guardarCarrito(c) {
 }
 
 async function agregarAlCarrito(codigo, cantidad = 1) {
-  console.log('🛒 Agregando al carrito:', { codigo, cantidad });
   
   // Asegurar que tenemos productos del backend
   let productos = productosCache;
   if (!productos || productos.length === 0) {
-    console.log('🔄 Cargando productos para agregar al carrito...');
     productos = await obtenerProductos();
     productosCache = productos;
   }
   
   const prod = productos.find(p => p.codigo === codigo);
   if (!prod) {
-    console.log('❌ Producto no encontrado:', codigo);
     mostrarDialogoStock("Producto no encontrado", "Error");
     return;
   }
-
-  console.log('📦 Producto encontrado:', prod);
 
   const stock = Number(prod.stock) || 0;
   if (stock <= 0) {
@@ -421,13 +378,11 @@ async function agregarAlCarrito(codigo, cantidad = 1) {
   if (idx >= 0) carrito[idx].cantidad = enCarrito + aAgregar;
   else carrito.push({ codigo, cantidad: aAgregar });
 
-  console.log('🛒 Carrito actualizado:', carrito);
   guardarCarrito(carrito);
 
   if ((Number(cantidad) || 1) > aAgregar) {
     mostrarDialogoStock(`Solo quedaban ${restante} unidad(es) disponibles. Se ajustó la cantidad en el carrito.`, "Stock");
   } else {
-    console.log('✅ Producto agregado exitosamente al carrito');
   }
 }
 
@@ -436,7 +391,6 @@ function quitarDelCarrito(codigo) {
 }
 
 async function cambiarCantidad(codigo, nuevaCant) {
-  console.log('🔄 Cambiando cantidad:', { codigo, nuevaCant });
   
   // Asegurar que tenemos productos del backend
   let productos = productosCache;
@@ -473,10 +427,7 @@ async function renderCarrito() {
   const cont = document.getElementById("listaCarrito");
   if (!cont) return;
   
-  console.log('🛒 Renderizando carrito...');
-  
   const carrito = obtenerCarrito();
-  console.log('🛒 Items en carrito:', carrito);
   
   if (carrito.length === 0) {
     cont.innerHTML = '<p class="carrito-vacio">El carrito está vacío</p>';
@@ -488,19 +439,15 @@ async function renderCarrito() {
   // Asegurarnos de tener productos desde el backend
   let productos = productosCache;
   if (!productos || productos.length === 0) {
-    console.log('🔄 Cargando productos para carrito...');
     productos = await obtenerProductos();
     productosCache = productos;
   }
-  
-  console.log('📦 Productos disponibles:', productos.length);
   
   let total = 0, totalSinDesc = 0;
   
   const itemsHTML = carrito.map(it => {
     const p = productos.find(x => x.codigo === it.codigo);
     if (!p) {
-      console.log('⚠️ Producto no encontrado:', it.codigo);
       return `<div class="item-carrito">
         <div><strong>Producto no disponible</strong><br><small>${it.codigo}</small></div>
         <div>—</div>
@@ -516,8 +463,6 @@ async function renderCarrito() {
     
     const stockDisp = Number(p.stock) || 0;
     
-    console.log('🛒 Item:', { codigo: it.codigo, nombre: p.nombre, cantidad: it.cantidad, precio, stock: stockDisp });
-    
     return `<div class="item-carrito">
       <div><strong>${p.nombre}</strong><br><small>${p.codigo}</small></div>
       <div>${formatoPrecio(precio)}</div>
@@ -531,8 +476,6 @@ async function renderCarrito() {
   });
   
   cont.innerHTML = itemsHTML.join("");
-  
-  console.log('💰 Total calculado:', total, 'Total sin descuento:', totalSinDesc);
 
   const u = usuarioActual();
   if (document.getElementById("textoDescuento")) {
@@ -543,8 +486,6 @@ async function renderCarrito() {
   
   const totalEl = document.getElementById("totalCarrito");
   if (totalEl) totalEl.textContent = formatoPrecio(total);
-  
-  console.log('✅ Carrito renderizado correctamente');
 }
 
 // =============== FUNCIONES HELPER PARA CARRITO ===============
@@ -649,8 +590,6 @@ async function procesarPago() {
       puntosAUsar: 0 // Por ahora no usamos puntos
     };
     
-    console.log('🚀 Enviando pedido al backend:', pedidoRequest);
-    
     // Llamar al backend para crear el pedido
     const response = await fetch(`${API_BASE_URL}/v1/pedidos`, {
       method: 'POST',
@@ -663,7 +602,6 @@ async function procesarPago() {
     
     if (response.ok) {
       const pedidoCreado = await response.json();
-      console.log('✅ Pedido guardado en base de datos:', pedidoCreado);
       
       // Limpiar carrito después del pago exitoso
       guardarCarrito([]);
@@ -929,13 +867,10 @@ function validarFormulario(datos) {
 }
 
 function inicializarRegistro() {
-  console.log('🚀 Inicializando formulario de registro...');
   const form = document.getElementById("formRegistro");
   if (!form) {
-    console.log('❌ No se encontró el formulario de registro');
     return;
   }
-  console.log('✅ Formulario de registro encontrado');
 
   // Poblar regiones y configurar eventos
   poblarRegiones();
@@ -951,7 +886,6 @@ function inicializarRegistro() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    console.log('📝 Formulario enviado, capturando datos...');
     
     // Verificar cada elemento individualmente
     const runElement = document.getElementById("run");
@@ -965,20 +899,6 @@ function inicializarRegistro() {
     const regionElement = document.getElementById("region");
     const comunaElement = document.getElementById("comuna");
     const direccionElement = document.getElementById("direccion");
-    
-    console.log('🔍 Elementos encontrados:', {
-      run: runElement ? 'SÍ' : 'NO',
-      nombres: nombresElement ? 'SÍ' : 'NO',
-      apellidos: apellidosElement ? 'SÍ' : 'NO',
-      correo: correoElement ? 'SÍ' : 'NO',
-      fechaNacimiento: fechaNacimientoElement ? 'SÍ' : 'NO',
-      password: passwordElement ? 'SÍ' : 'NO',
-      password2: password2Element ? 'SÍ' : 'NO',
-      tipoUsuario: tipoElement ? 'SÍ' : 'NO',
-      region: regionElement ? 'SÍ' : 'NO',
-      comuna: comunaElement ? 'SÍ' : 'NO',
-      direccion: direccionElement ? 'SÍ' : 'NO'
-    });
     
     const datos = {
       run: runElement?.value.trim() || '',
@@ -994,16 +914,11 @@ function inicializarRegistro() {
       direccion: direccionElement?.value.trim() || ''
     };
     
-    console.log('📋 Datos capturados:', datos);
-    
     // VALIDAR ANTES DE ENVIAR
     if (!validarFormulario(datos)) {
-      console.log('❌ Formulario inválido, no se enviará');
       mostrarMensajeRegistro("Por favor corrige los errores en el formulario", "error");
       return;
     }
-    
-    console.log('✅ Formulario válido, enviando...');
     
     try {
       // Solo enviar datos necesarios para el backend (sin fechaNacimiento y password2)
@@ -1026,7 +941,6 @@ function inicializarRegistro() {
           fechaNacimiento: datos.fechaNacimiento
         };
         localStorage.setItem('datosUsuarioLocal', JSON.stringify(datosLocales));
-        console.log('📅 Fecha de nacimiento guardada localmente:', datos.fechaNacimiento);
       }
       
       await registrarUsuario(datosBackend);
@@ -1044,15 +958,12 @@ function inicializarRegistro() {
 
 // Poblar dropdown de regiones
 function poblarRegiones() {
-  console.log('🌎 Poblando regiones...');
   const selectRegion = document.getElementById("region");
   const selectComuna = document.getElementById("comuna");
   
   if (!selectRegion) {
-    console.log('❌ No se encontró el select de región');
     return;
   }
-  console.log('✅ Select de región encontrado');
 
   // Limpiar y agregar opción por defecto
   selectRegion.innerHTML = '<option value="">Selecciona una región</option>';
@@ -1098,11 +1009,9 @@ function configurarEventosRegistro() {
 
 // Mostrar mensaje de registro con estilo
 function mostrarMensajeRegistro(mensaje, tipo = "exito") {
-  console.log(`📢 Mostrando mensaje: "${mensaje}" (${tipo})`);
   const msgElement = document.getElementById("msgRegistro");
   
   if (!msgElement) {
-    console.error('❌ No se encontró elemento msgRegistro');
     return;
   }
 
@@ -1115,22 +1024,10 @@ function mostrarMensajeRegistro(mensaje, tipo = "exito") {
     msgElement.style.display = "none";
   }
   
-  console.log('✅ Mensaje mostrado correctamente');
-  console.log('🔍 Clase aplicada:', msgElement.className);
-  console.log('🔍 Elemento HTML:', msgElement.outerHTML);
-  
-  // Forzar aplicación de estilos
-  const computedStyles = window.getComputedStyle(msgElement);
-  console.log('🔍 Background computado:', computedStyles.backgroundColor);
-  console.log('🔍 Color computado:', computedStyles.color);
-  console.log('🔍 Display computado:', computedStyles.display);
-  console.log('🔍 Padding computado:', computedStyles.padding);
 
   // Si es éxito, redirigir al login después de 5 segundos
   if (tipo === "exito") {
-    console.log('⏰ Iniciando countdown para redirección a login...');
     setTimeout(() => {
-      console.log('🔄 Redirigiendo a login.html...');
       window.location.href = '/cliente/login.html';
     }, 5000);
   } else {
@@ -1148,12 +1045,9 @@ async function inicializarPerfil() {
 
   const usuario = usuarioActual();
   if (!usuario) { 
-    console.log("❌ No hay usuario logueado, redirigiendo a login");
     window.location.href = "login.html"; 
     return; 
   }
-
-  console.log("👤 Cargando datos del perfil:", usuario);
 
   // Referencias a los campos del formulario
   const iRun   = document.getElementById("p_run");
@@ -1207,7 +1101,6 @@ async function inicializarPerfil() {
   // Configurar el envío del formulario
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    console.log("💾 Guardando cambios del perfil...");
     
     // Limpiar mensajes de error
     ["errPNombres","errPApellidos","errPCorreo","errPFecha","errPRegion","errPComuna","errPDireccion","msgPerfil"]
@@ -1280,7 +1173,6 @@ async function inicializarPerfil() {
           fechaNacimiento: fechaNac
         };
         localStorage.setItem('datosUsuarioLocal', JSON.stringify(datosLocales));
-        console.log('📅 Fecha de nacimiento actualizada localmente:', fechaNac);
       }
       
       if (msg) {
@@ -1315,7 +1207,6 @@ async function inicializarPerfil() {
   // Abrir modal
   if (btnCambiar && dlg) {
     btnCambiar.addEventListener("click", () => {
-      console.log("🔑 Abriendo modal de cambio de contraseña");
       dlg.showModal();
     });
   }
@@ -1323,7 +1214,6 @@ async function inicializarPerfil() {
   // Cancelar modal
   if (btnCancelarPass && dlg) {
     btnCancelarPass.addEventListener("click", () => {
-      console.log("❌ Cancelando cambio de contraseña");
       dlg.close();
     });
   }
@@ -1332,7 +1222,6 @@ async function inicializarPerfil() {
   if (formPass && dlg) {
     formPass.addEventListener("submit", (e) => {
       e.preventDefault();
-      console.log("🔑 Procesando cambio de contraseña...");
 
       // Limpiar errores previos
       ["errPassActual", "errPassNueva", "errPassNueva2", "msgPass"].forEach(id => {
@@ -1401,7 +1290,6 @@ async function inicializarPerfil() {
 
             const data = await resp.json();
             if (data && data.success) {
-              console.log('✅ Contraseña cambiada en backend');
               if (msgEl) { 
                 msgEl.textContent = 'Contraseña actualizada ✔'; 
                 msgEl.style.display = 'block'; 
@@ -1412,7 +1300,6 @@ async function inicializarPerfil() {
               formPass.reset();
               setTimeout(() => { if (dlg) dlg.close(); if (msgEl) { msgEl.textContent = ''; msgEl.style.display = 'none'; } }, 1400);
             } else {
-              console.log('⚠️ Backend respondió success=false');
               if (msgEl) { 
                 msgEl.textContent = 'La contraseña actual es incorrecta'; 
                 msgEl.style.display = 'block'; 
@@ -1484,8 +1371,6 @@ async function inicializarPerfil() {
       }
     });
   }
-
-  console.log("✅ Perfil inicializado correctamente");
 }
 
 // =============== INICIALIZACIÓN ===============
@@ -1504,18 +1389,14 @@ async function inicializarPagina() {
   
   // Cache productos una sola vez si hay múltiples grids
   if (gridDestacados || gridProductos) {
-    console.log('🚀 Cargando productos una sola vez...');
     const startTime = Date.now();
     productosCache = await obtenerProductos();
     const loadTime = Date.now() - startTime;
-    console.log(`⚡ Productos cargados en ${loadTime}ms`);
     
     if (gridDestacados) {
-      console.log('📋 Renderizando destacados...');
       renderDestacados(productosCache);
     }
     if (gridProductos) {
-      console.log('🛍️ Renderizando productos...');
       renderProductos(productosCache);
     }
   }
@@ -1526,13 +1407,11 @@ async function inicializarPagina() {
   
   // Inicializar perfil si estamos en perfil.html
   if (window.location.pathname.includes('perfil.html')) {
-    console.log('👤 Inicializando perfil...');
     await inicializarPerfil();
   }
 
   // Inicializar mis compras si estamos en misCompras.html
   if (window.location.pathname.includes('misCompras.html')) {
-    console.log('🛒 Inicializando mis compras...');
     await inicializarMisCompras();
   }
   
@@ -1552,13 +1431,10 @@ async function inicializarPagina() {
 
 document.addEventListener("DOMContentLoaded", () => {
   // PRIMERO: Limpiar usuarios fantasma SIEMPRE al cargar cualquier página
-  console.log('🧹 LIMPIEZA AUTOMÁTICA DE USUARIOS FANTASMA EN TODA PÁGINA');
   eliminarUsuarioFantasma();
   
   // Cargar datos iniciales
   if (!localStorage.getItem("carrito")) guardar("carrito", []);
-  
-  console.log("🎯 Inicializando sin usuarios locales - solo backend API");
   
   // Inicializar navegación sin usuarios locales
   actualizarNavegacion();
@@ -1584,12 +1460,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnPerfilDesk && !btnPerfilDesk.dataset.bind) {
     btnPerfilDesk.addEventListener("click", (e) => {
       e.preventDefault();
-      console.log("🖱️ Click en botón perfil");
       const usuario = usuarioActual();
       if (usuario) {
         abrirPanelCuenta();
       } else {
-        console.log("❌ No hay usuario logueado");
         window.location.href = "login.html";
       }
     });
@@ -1615,8 +1489,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Inicializar menú móvil
   inicializarMenuLateral();
-  
-  console.log("Aplicación inicializada correctamente");
 });
 
 // =============== MENÚ LATERAL (MÓVIL) ===============
@@ -1717,7 +1589,6 @@ function inicializarMenuLateral() {
   if (linkSalirMov && !linkSalirMov.dataset.bind) {
     linkSalirMov.addEventListener("click", (e) => {
       e.preventDefault();
-      console.log("🚪 Cerrando sesión desde menú móvil...");
       
       // Usar la función cerrarSesion() que ya limpia todo correctamente
       cerrarSesion();
@@ -1739,10 +1610,6 @@ function calcularNivel(p) {
   return "Bronce";
 }
 
-function guardarUsuarioActual(u) {
-  // FUNCIÓN OBSOLETA - Los usuarios están en la base de datos
-  console.log('⚠️ FUNCIÓN OBSOLETA: guardarUsuarioActual ya no se usa');
-}
 
 function abrirPanelCuenta() {
   const u = usuarioActual();
@@ -1750,15 +1617,8 @@ function abrirPanelCuenta() {
   const cortina = document.getElementById("cortinaCuenta");
   
   if (!u || !panel || !cortina) {
-    console.log("❌ No se puede abrir panel:", { usuario: !!u, panel: !!panel, cortina: !!cortina });
     return;
   }
-
-  console.log("👤 DEBUG: Usuario completo recibido:", u);
-  console.log("👤 DEBUG: Nombres:", u.nombres);
-  console.log("👤 DEBUG: Apellidos:", u.apellidos);
-  console.log("👤 DEBUG: Correo:", u.correo);
-  console.log("👤 Abriendo panel para:", u.nombres, u.apellidos);
 
   asegurarCodigoReferido(u);
   guardarUsuarioActual(u);
@@ -1820,7 +1680,6 @@ function abrirPanelCuenta() {
   const btnSalir = document.getElementById("btnSalirCuenta");
   if (btnSalir && !btnSalir.dataset.bind) {
     btnSalir.addEventListener("click", () => {
-      console.log("🚪 Cerrando sesión desde panel...");
       cerrar(); // Cerrar el panel primero
       
       // Usar la función cerrarSesion() que ya limpia todo correctamente
@@ -1838,19 +1697,14 @@ function abrirPanelCuenta() {
 // =============== FUNCIONES API BACKEND ===============
 async function obtenerProductos() {
   try {
-    console.log('🛍️ Cargando productos desde API...');
     const response = await fetch(`${API_BASE_URL}/productos/publicos`);
     
     if (response.ok) {
       const productos = await response.json();
-      console.log('✅ Productos cargados desde BASE DE DATOS:', productos.length);
       return productos;
     } else {
-      console.error('❌ Error HTTP:', response.status, response.statusText);
       if (response.status === 401) {
-        console.error('🚫 BACKEND REQUIERE AUTENTICACIÓN - DEBES INICIAR SPRING BOOT CORRECTAMENTE');
       }
-      console.error('� SIN BACKEND NO HAY PRODUCTOS - INICIA EL SERVIDOR');
       return [];
     }
   } catch (error) {
@@ -1863,13 +1717,11 @@ async function obtenerProductos() {
 // Función para obtener un producto específico por código
 async function obtenerProductoPorCodigo(codigo) {
   try {
-    console.log(`🔍 Obteniendo producto ${codigo} desde BASE DE DATOS...`);
     
     // Primero intentar usar el cache si existe
     if (productosCache && productosCache.length > 0) {
       const producto = productosCache.find(p => p.codigo === codigo);
       if (producto) {
-        console.log('✅ Producto encontrado en CACHE:', producto.nombre);
         return producto;
       }
     }
@@ -1881,10 +1733,8 @@ async function obtenerProductoPorCodigo(codigo) {
       const productos = await response.json();
       const producto = productos.find(p => p.codigo === codigo);
       if (producto) {
-        console.log('✅ Producto obtenido desde BASE DE DATOS:', producto.nombre);
         return producto;
       } else {
-        console.error(`❌ Producto ${codigo} no encontrado en la base de datos`);
         return null;
       }
     } else {
@@ -1925,8 +1775,7 @@ async function renderDestacados(productosCache = null) {
         </div>
       </article>
     `).join('');
-    
-    console.log(`✅ Productos destacados cargados: ${destacados.length}`);
+
   } catch (error) {
     console.error('Error renderizando destacados:', error);
     grid.innerHTML = '<p>Error cargando productos destacados</p>';
@@ -1955,7 +1804,6 @@ async function renderProductos(productosCache = null) {
       </article>
     `).join('');
     
-    console.log(`✅ TODOS los productos cargados: ${productos.length}`);
   } catch (error) {
     console.error('Error renderizando productos:', error);
     grid.innerHTML = '<p>Error cargando productos. Inicia el backend Spring Boot.</p>';
@@ -2027,7 +1875,6 @@ async function renderDetalleProducto() {
       inputCantidad.disabled = producto.stock === 0;
     }
     
-    console.log(`✅ Detalle de producto cargado: ${producto.nombre}`);
   } catch (error) {
     console.error('Error cargando detalle del producto:', error);
     alert('Error cargando el producto');
@@ -2037,19 +1884,16 @@ async function renderDetalleProducto() {
 
 // Configurar event listeners globales usando delegación
 function setupEventListeners() {
-  console.log('🔧 Configurando event listeners globales...');
   
   // Event listener global para botones de agregar al carrito (delegación)
   document.addEventListener('click', function(e) {
     // Interceptar clics en enlaces Admin/Vendedor
     if (e.target.matches('#linkAdmin') || e.target.matches('#linkVendedor')) {
       e.preventDefault();
-      console.log('🔗 Navegando al panel de administración...');
       
       // Verificar que el usuario esté logueado y tenga permisos
       const usuario = usuarioActual();
       if (!usuario) {
-        console.log('❌ Usuario no logueado - redirigiendo a login');
         window.location.href = '/cliente/login.html';
         return;
       }
@@ -2060,12 +1904,9 @@ function setupEventListeners() {
       const esVendedor = tipo.includes('vendedor') || tipo.includes('seller');
       
       if (esAdmin || esVendedor) {
-        console.log('✅ Usuario autorizado - navegando al panel admin');
         // Abrir el dashboard de React 
-        console.log('🔄 Navegando al dashboard de React...');
         window.location.assign('/admin');
       } else {
-        console.log('❌ Usuario sin permisos de administración');
         alert('No tienes permisos para acceder al panel de administración');
       }
       return;
@@ -2076,7 +1917,6 @@ function setupEventListeners() {
       e.preventDefault();
       const codigo = e.target.dataset.agregar || e.target.dataset.codigo;
       if (codigo) {
-        console.log(`🛒 Agregando producto ${codigo} al carrito`);
         agregarAlCarrito(codigo);
       }
       return;
@@ -2091,7 +1931,6 @@ function setupEventListeners() {
         const password = form.querySelector('#passwordLogin')?.value;
         
         if (correo && password) {
-          console.log('🔐 Intentando login con:', correo);
           loginUsuarioAPI(correo, password);
         }
       }
@@ -2135,19 +1974,15 @@ function setupEventListeners() {
       
       // Solo enviar si las validaciones pasan
       if (esValido) {
-        console.log('🔐 Login form submit:', correo);
         loginUsuarioAPI(correo, password);
       }
     }
     // [REGISTRO REMOVIDO] - Se maneja en inicializarRegistro()
   });
-  
-  console.log('✅ Event listeners configurados correctamente');
 }
 
 // Función de login usando API
 async function loginUsuarioAPI(correo, password) {
-  console.log('🔐 Intentando login con API:', correo);
   
   // Limpiar mensajes previos
   limpiarErroresLogin();
@@ -2163,7 +1998,6 @@ async function loginUsuarioAPI(correo, password) {
     
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Login exitoso:', data);
       
       // Usar los datos del usuario que ya vienen en la respuesta
       const userData = data.usuario;
@@ -2181,16 +2015,12 @@ async function loginUsuarioAPI(correo, password) {
           if (extra.correo === userData.correo) {
             // Combinar datos del backend con datos locales
             userData.fechaNacimiento = extra.fechaNacimiento;
-            console.log('📅 Fecha de nacimiento recuperada desde localStorage:', userData.fechaNacimiento);
           }
         } catch (e) {
-          console.log('⚠️ Error recuperando datos locales extra:', e);
         }
       }
       
       localStorage.setItem('usuario', JSON.stringify(userData));
-      
-      console.log('✅ Usuario autenticado:', userData);
       
       // Mostrar mensaje de éxito
       mostrarMensajeLogin(data.message || 'Login exitoso');
@@ -2223,8 +2053,6 @@ async function loginUsuarioAPI(correo, password) {
 
 // Función de registro usando API - NUEVA VERSION
 async function registrarUsuario(datos) {
-  console.log('🚀 Enviando registro al servidor...');
-  console.log('📋 Datos a enviar:', JSON.stringify(datos, null, 2));
   
   try {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -2245,17 +2073,12 @@ async function registrarUsuario(datos) {
       })
     });
     
-    console.log('📡 Respuesta del servidor:', response.status, response.statusText);
-    
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ Usuario registrado exitosamente:', result);
-      console.log('🎉 Registro completado - respuesta del backend recibida');
       return result;
       
     } else {
       const errorText = await response.text();
-      console.error('❌ Error del servidor:', response.status, errorText);
       throw new Error(`Error ${response.status}: ${errorText}`);
     }
   } catch (error) {
@@ -2277,7 +2100,6 @@ async function registrarUsuario(datos) {
   // LISTENER para detectar cambios en localStorage y limpiar inmediatamente
   window.addEventListener('storage', function(e) {
     if (e.key && (e.key.includes('usuario') || e.key.includes('user') || e.key.includes('auth'))) {
-      console.log('🚨 DETECTADO intento de crear usuario fantasma:', e.key);
       eliminarUsuarioFantasma();
     }
   });
@@ -2346,7 +2168,6 @@ async function inicializarMisCompras() {
     }
 
     const pedidos = await response.json();
-    console.log('📦 Pedidos obtenidos:', pedidos);
 
     if (!pedidos || pedidos.length === 0) {
       listaCompras.innerHTML = `
@@ -2714,12 +2535,10 @@ async function renderPedidosCompletos(pedidosBackend){
 // Funciones auxiliares para los pedidos
 function cancelarPedido(pedidoId) {
   // TODO: Implementar cancelación de pedido
-  console.log('Cancelar pedido:', pedidoId);
   alert('Función de cancelación pendiente de implementar');
 }
 
 function verDetallePedido(pedidoId) {
   // TODO: Implementar vista de detalles
-  console.log('Ver detalle pedido:', pedidoId);
   alert('Vista de detalles pendiente de implementar');
 }

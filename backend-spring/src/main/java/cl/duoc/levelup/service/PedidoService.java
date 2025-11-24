@@ -1,6 +1,8 @@
 package cl.duoc.levelup.service;
 
 import cl.duoc.levelup.entity.*;
+import cl.duoc.levelup.dto.CrearPedidoRequest;
+import cl.duoc.levelup.dto.ItemPedidoRequest;
 import cl.duoc.levelup.repository.PedidoRepository;
 import cl.duoc.levelup.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +45,7 @@ public class PedidoService {
         // Procesar items del pedido
         BigDecimal subtotal = BigDecimal.ZERO;
         
-        for (ItemPedidoRequest itemRequest : request.getItems()) {
+    for (ItemPedidoRequest itemRequest : request.getItems()) {
             // Verificar disponibilidad
             if (!productoService.verificarDisponibilidad(itemRequest.getProductoCodigo(), itemRequest.getCantidad())) {
                 throw new RuntimeException("Producto " + itemRequest.getProductoCodigo() + " no disponible");
@@ -122,34 +124,5 @@ public class PedidoService {
         pedidoRepository.save(pedido);
     }
 
-    // DTOs
-    public static class CrearPedidoRequest {
-        private List<ItemPedidoRequest> items;
-        private String direccion;
-        private String region;
-        private String comuna;
-        private Integer puntosAUsar;
-
-        // Getters y setters
-        public List<ItemPedidoRequest> getItems() { return items; }
-        public void setItems(List<ItemPedidoRequest> items) { this.items = items; }
-        public String getDireccion() { return direccion; }
-        public void setDireccion(String direccion) { this.direccion = direccion; }
-        public String getRegion() { return region; }
-        public void setRegion(String region) { this.region = region; }
-        public String getComuna() { return comuna; }
-        public void setComuna(String comuna) { this.comuna = comuna; }
-        public Integer getPuntosAUsar() { return puntosAUsar; }
-        public void setPuntosAUsar(Integer puntosAUsar) { this.puntosAUsar = puntosAUsar; }
-    }
-
-    public static class ItemPedidoRequest {
-        private String productoCodigo;
-        private Integer cantidad;
-
-        public String getProductoCodigo() { return productoCodigo; }
-        public void setProductoCodigo(String productoCodigo) { this.productoCodigo = productoCodigo; }
-        public Integer getCantidad() { return cantidad; }
-        public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
-    }
+    // DTOs eliminados, ahora se usan los del paquete dto
 }

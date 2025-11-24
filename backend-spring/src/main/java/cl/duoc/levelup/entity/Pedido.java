@@ -3,6 +3,7 @@ package cl.duoc.levelup.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,38 +16,49 @@ public class Pedido {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "ID del pedido", example = "1001")
     private Long id;
     
     @Column(name = "fecha", nullable = false)
+    @Schema(description = "Fecha del pedido", example = "2025-11-24T10:30:00")
     private LocalDateTime fecha;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
+    @Schema(description = "Estado del pedido", example = "PENDIENTE")
     private EstadoPedido estado;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "run_cliente", referencedColumnName = "run", nullable = false)
+    @Schema(description = "Usuario que realizó el pedido")
     private Usuario usuario;
     
     @Column(name = "region", length = 100)
+    @Schema(description = "Región de entrega", example = "Metropolitana")
     private String region;
     
     @Column(name = "comuna", length = 100)
+    @Schema(description = "Comuna de entrega", example = "Santiago")
     private String comuna;
     
     @Column(name = "direccion", length = 200)
+    @Schema(description = "Dirección de entrega", example = "Av. Siempre Viva 123")
     private String direccion;
     
     @Column(name = "subtotal", precision = 12, scale = 2)
+    @Schema(description = "Subtotal del pedido", example = "25000.00")
     private BigDecimal subtotal;
     
     @Column(name = "descuento_duoc", precision = 12, scale = 2)
+    @Schema(description = "Descuento DUOC", example = "5000.00")
     private BigDecimal descuentoDuoc = BigDecimal.ZERO;
     
     @Column(name = "descuento_puntos", precision = 12, scale = 2)
+    @Schema(description = "Descuento por puntos", example = "2000.00")
     private BigDecimal descuentoPuntos = BigDecimal.ZERO;
     
     @Column(name = "total", precision = 12, scale = 2)
+    @Schema(description = "Total a pagar", example = "18000.00")
     private BigDecimal total;
     
     // Relaciones

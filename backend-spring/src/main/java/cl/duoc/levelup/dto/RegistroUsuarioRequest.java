@@ -1,14 +1,33 @@
 package cl.duoc.levelup.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class RegistroUsuarioRequest {
+    @Schema(description = "RUN del usuario", example = "12345678-9")
     private String run;
+
+    @Schema(description = "Nombres del usuario", example = "Juan Carlos")
     private String nombres;
+
+    @Schema(description = "Apellidos del usuario", example = "Pérez Soto")
     private String apellidos;
+
+    @Schema(description = "Correo electrónico", example = "juan.perez@email.com")
     private String correo;
+
+    @Schema(description = "Contraseña", example = "password123")
     private String password;
+
+    @Schema(description = "Tipo de usuario", example = "CLIENTE")
     private String tipoUsuario;
+
+    @Schema(description = "Región", example = "Metropolitana")
     private String region;
+
+    @Schema(description = "Comuna", example = "Santiago")
     private String comuna;
+
+    @Schema(description = "Dirección", example = "Av. Siempre Viva 123")
     private String direccion;
     
     // Constructor por defecto

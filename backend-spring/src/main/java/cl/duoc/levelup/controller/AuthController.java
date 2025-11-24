@@ -4,6 +4,7 @@ import cl.duoc.levelup.dto.AuthResponse;
 import cl.duoc.levelup.dto.LoginRequest;
 import cl.duoc.levelup.dto.RegisterRequest;
 import cl.duoc.levelup.dto.RegistroUsuarioRequest;
+import cl.duoc.levelup.dto.RegisterResponse;
 import cl.duoc.levelup.entity.Usuario;
 import cl.duoc.levelup.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,67 +31,44 @@ public class AuthController {
 
     @Operation(summary = "Iniciar sesión", description = "Autentica un usuario y devuelve un token JWT")
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<AuthResponse> login(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Credenciales de inicio de sesión", required = true) @Valid @RequestBody LoginRequest loginRequest) {
         try {
             AuthResponse response = authService.authenticateUser(loginRequest);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new AuthResponse("Credenciales inválidas: " + e.getMessage()));
+                    .body(new AuthResponse("Credenciales inválidas: " + e.getMessage()));
         }
     }
 
     @Operation(summary = "Registrar usuario", description = "Registra un nuevo usuario en el sistema")
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> register(@RequestBody String rawJson, HttpServletRequest request) {
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<RegisterResponse> register(@RequestBody RegistroUsuarioRequest registroRequest) {
         try {
-            System.out.println("🔍 JSON crudo recibido: " + rawJson);
-            
-            // Deserializar manualmente el JSON
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            RegistroUsuarioRequest registroRequest = objectMapper.readValue(rawJson, RegistroUsuarioRequest.class);
-            System.out.println("🔍 DEBUG - Datos de registro recibidos:");
-            System.out.println("RUN: " + registroRequest.getRun());
-            System.out.println("Nombres: " + registroRequest.getNombres());
-            System.out.println("Apellidos: " + registroRequest.getApellidos());
-            System.out.println("Correo: " + registroRequest.getCorreo());
-            System.out.println("Password: " + (registroRequest.getPassword() != null ? "***" : "null"));
-            System.out.println("Tipo: " + registroRequest.getTipoUsuario());
-            System.out.println("Región: " + registroRequest.getRegion());
-            System.out.println("Comuna: " + registroRequest.getComuna());
-            System.out.println("Dirección: " + registroRequest.getDireccion());
-            
             Usuario usuario = authService.registerUserFromRequest(registroRequest);
-            response.put("success", true);
-            response.put("message", "Usuario registrado exitosamente");
-            response.put("usuario", usuario);
+            RegisterResponse response = new RegisterResponse(true, "Usuario registrado exitosamente", usuario);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error al registrar usuario: " + e.getMessage());
+            RegisterResponse response = new RegisterResponse(false, "Error al registrar usuario: " + e.getMessage(), null);
             return ResponseEntity.badRequest().body(response);
         }
     }
 
-    @Operation(summary = "Cerrar sesión", description = "Cierra la sesión del usuario")
+    @Operation(summary = "Cerrar sesión", description = "Cierra la sesión del usuario. Ejemplo de respuesta: {\n  \"message\": \"Logout exitoso\"\n}")
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout() {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Logout exitoso");
+    public ResponseEntity<cl.duoc.levelup.dto.LogoutResponse> logout() {
+        cl.duoc.levelup.dto.LogoutResponse response = new cl.duoc.levelup.dto.LogoutResponse("Logout exitoso");
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Validar token", description = "Valida si el token JWT es válido")
+    @Operation(summary = "Validar token", description = "Valida si el token JWT es válido. Ejemplo de respuesta: {\n  \"valid\": true,\n  \"user\": \"usuario1\"\n}")
     @GetMapping("/validate")
-    public ResponseEntity<Map<String, Object>> validateToken(Authentication authentication) {
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<cl.duoc.levelup.dto.ValidateTokenResponse> validateToken(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated()) {
-            response.put("valid", true);
-            response.put("user", authentication.getName());
+            cl.duoc.levelup.dto.ValidateTokenResponse response = new cl.duoc.levelup.dto.ValidateTokenResponse(true, authentication.getName());
             return ResponseEntity.ok(response);
         }
-        response.put("valid", false);
+        cl.duoc.levelup.dto.ValidateTokenResponse response = new cl.duoc.levelup.dto.ValidateTokenResponse(false, null);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 

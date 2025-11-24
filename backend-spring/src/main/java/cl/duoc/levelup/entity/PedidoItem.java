@@ -2,6 +2,7 @@ package cl.duoc.levelup.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
@@ -11,22 +12,27 @@ public class PedidoItem {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "ID del item de pedido", example = "1")
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pedido_id", nullable = false)
     @JsonBackReference("pedido-items")  // Evita serialización circular
+    @Schema(description = "Pedido asociado")
     private Pedido pedido;
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "codigo_producto", referencedColumnName = "codigo", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @Schema(description = "Producto asociado")
     private Producto producto;
     
     @Column(name = "cantidad", nullable = false)
+    @Schema(description = "Cantidad solicitada", example = "2")
     private Integer cantidad;
     
     @Column(name = "precio", nullable = false, precision = 12, scale = 2)
+    @Schema(description = "Precio unitario", example = "19990.00")
     private BigDecimal precio;
     
     // Constructores

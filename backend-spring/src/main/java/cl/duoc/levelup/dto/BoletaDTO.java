@@ -3,24 +3,41 @@ package cl.duoc.levelup.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO para exponer boletas al frontend sin enviar entidades completas.
  */
 public class BoletaDTO {
 
+    @Schema(description = "Número de boleta", example = "BOL-20250001")
     private String numero;
+
+    @Schema(description = "Fecha de la boleta", example = "2025-11-24")
     private LocalDate fecha;
+
+    @Schema(description = "Fecha y hora de creación", example = "2025-11-24T10:30:00")
     private LocalDateTime fechaCreacion;
 
+    @Schema(description = "ID del pedido asociado", example = "123")
     private Long pedidoId;
 
+    @Schema(description = "Nombre del cliente", example = "Richard Moreano")
     private String clienteNombre;
+
+    @Schema(description = "Correo del cliente", example = "richard@duoc.cl")
     private String clienteCorreo;
 
+    @Schema(description = "Subtotal de la boleta", example = "10000.00")
     private BigDecimal subtotal;
+
+    @Schema(description = "Descuento por Duoc", example = "2000.00")
     private BigDecimal descuentoDuoc;
+
+    @Schema(description = "Descuento por puntos", example = "500.00")
     private BigDecimal descuentoPuntos;
+
+    @Schema(description = "Total a pagar", example = "7500.00")
     private BigDecimal total;
 
     public BoletaDTO() {

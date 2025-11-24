@@ -3,25 +3,30 @@ package cl.duoc.levelup.controller;
 import cl.duoc.levelup.entity.Pedido;
 import cl.duoc.levelup.security.UserPrincipal;
 import cl.duoc.levelup.service.PedidoService;
-import cl.duoc.levelup.service.PedidoService.CrearPedidoRequest;
+import cl.duoc.levelup.dto.CrearPedidoRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import cl.duoc.levelup.dto.ActualizarEstadoPedidoRequest;
 
 @RestController
 @RequestMapping("/api/v1/pedidos")
 @CrossOrigin(origins = "http://localhost:5173")
+@Tag(name = "Pedidos", description = "Gestión de pedidos")
 public class PedidoController {
 
     @Autowired
     private PedidoService pedidoService;
 
+    @Operation(summary = "Crear pedido", description = "Crea un nuevo pedido para el usuario autenticado")
     @PostMapping
     public ResponseEntity<Pedido> crearPedido(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -34,12 +39,14 @@ public class PedidoController {
         }
     }
 
+    @Operation(summary = "Obtener mis pedidos", description = "Devuelve la lista de pedidos del usuario autenticado")
     @GetMapping("/mis-pedidos")
     public ResponseEntity<List<Pedido>> getMisPedidos(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         List<Pedido> pedidos = pedidoService.obtenerPedidosUsuario(userPrincipal.getRun());
         return ResponseEntity.ok(pedidos);
     }
 
+    @Operation(summary = "Obtener pedido por ID", description = "Devuelve el pedido correspondiente al ID especificado")
     @GetMapping("/{id}")
     public ResponseEntity<Pedido> getPedidoById(@PathVariable Long id) {
         return pedidoService.obtenerPorId(id)
@@ -47,7 +54,7 @@ public class PedidoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Endpoints para administradores
+    @Operation(summary = "Obtener todos los pedidos", description = "Devuelve la lista de todos los pedidos (solo ADMIN y VENDEDOR)")
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('VENDEDOR')")
     public ResponseEntity<List<Pedido>> getAllPedidos() {
@@ -55,17 +62,18 @@ public class PedidoController {
         return ResponseEntity.ok(pedidos);
     }
 
+    @Operation(summary = "Actualizar estado de pedido", description = "Actualiza el estado de un pedido (solo ADMIN y VENDEDOR)")
     @PutMapping("/{id}/estado")
     @PreAuthorize("hasRole('ADMIN') or hasRole('VENDEDOR')")
     public ResponseEntity<Pedido> actualizarEstado(
-            @PathVariable Long id, 
-            @RequestBody Map<String, String> estadoData) {
-        
-        Pedido.EstadoPedido nuevoEstado = Pedido.EstadoPedido.valueOf(estadoData.get("estado"));
+            @PathVariable Long id,
+            @RequestBody ActualizarEstadoPedidoRequest estadoRequest) {
+        Pedido.EstadoPedido nuevoEstado = Pedido.EstadoPedido.valueOf(estadoRequest.getEstado());
         Pedido pedido = pedidoService.actualizarEstado(id, nuevoEstado);
         return ResponseEntity.ok(pedido);
     }
 
+    @Operation(summary = "Cancelar pedido", description = "Cancela el pedido correspondiente al ID especificado")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> cancelarPedido(@PathVariable Long id) {
         try {

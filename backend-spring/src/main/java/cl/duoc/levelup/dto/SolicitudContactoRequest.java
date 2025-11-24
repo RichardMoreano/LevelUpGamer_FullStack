@@ -3,18 +3,22 @@ package cl.duoc.levelup.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class SolicitudContactoRequest {
 
+    @Schema(description = "Nombre del contacto", example = "Ana Torres")
     @NotBlank
     @Size(max = 100)
     private String nombre;
 
+    @Schema(description = "Correo electrónico", example = "ana.torres@email.com")
     @NotBlank
     @Email
     @Size(max = 120)
     private String correo;
 
+    @Schema(description = "Descripción del mensaje", example = "Quiero consultar sobre el producto X")
     @NotBlank
     @Size(max = 1000)
     private String descripcion;

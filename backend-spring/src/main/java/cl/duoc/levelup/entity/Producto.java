@@ -1,6 +1,7 @@
 package cl.duoc.levelup.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -15,41 +16,51 @@ public class Producto {
     
     @Id
     @Column(name = "codigo", length = 10)
+    @Schema(description = "Código del producto", example = "PROD001")
     private String codigo;
     
     @NotBlank
     @Size(max = 100)
     @Column(name = "nombre", nullable = false, length = 100)
+    @Schema(description = "Nombre del producto", example = "Mouse Gamer")
     private String nombre;
     
     @NotBlank
     @Size(max = 60)
     @Column(name = "categoria", nullable = false, length = 60)
+    @Schema(description = "Categoría", example = "Periféricos")
     private String categoria;
     
     @DecimalMin(value = "0.0", inclusive = false)
     @Column(name = "precio", nullable = false, precision = 12, scale = 2)
+    @Schema(description = "Precio", example = "19990.00")
     private BigDecimal precio;
     
     @Min(0)
     @Column(name = "stock", nullable = false)
+    @Schema(description = "Stock disponible", example = "50")
     private Integer stock;
     
     @Column(name = "stock_critico")
+    @Schema(description = "Stock crítico", example = "5")
     private Integer stockCritico = 5;
     
     @Column(name = "imagen", length = 300)
+    @Schema(description = "URL de la imagen", example = "https://ejemplo.com/img/mouse.jpg")
     private String imagen;
     
     @Size(max = 500)
     @Column(name = "descripcion", length = 500)
+    @Schema(description = "Descripción", example = "Mouse gamer con luces RGB y 6 botones programables")
     private String descripcion;
     
     @Lob
     @Column(name = "detalles", columnDefinition = "TEXT")
+    @Schema(description = "Detalles adicionales", example = "Sensor óptico de alta precisión, cable trenzado")
     private String detalles;
     
     @Column(name = "activo")
+    @Schema(description = "Producto activo", example = "true")
     private Boolean activo = true;
     
     // Relaciones

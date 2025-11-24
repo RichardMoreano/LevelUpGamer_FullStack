@@ -7,22 +7,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/boletas")
 @CrossOrigin(origins = {
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://richardmoreano.github.io"
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://richardmoreano.github.io"
 })
+@Tag(name = "Boletas", description = "Gestión de boletas")
 public class BoletaController {
-
     @Autowired
     private BoletaService boletaService;
-
-    // 🔹 Solo ADMIN y VENDEDOR pueden ver boletas
+    @Operation(summary = "Obtener todas las boletas", description = "Devuelve la lista de todas las boletas (solo ADMIN y VENDEDOR)")
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
     public ResponseEntity<List<BoletaDTO>> getAll() {
@@ -30,6 +31,7 @@ public class BoletaController {
         return ResponseEntity.ok(boletaService.toDTOList(boletas));
     }
 
+    @Operation(summary = "Obtener boleta por número", description = "Devuelve la boleta correspondiente al número especificado (solo ADMIN y VENDEDOR)")
     @GetMapping("/{numero}")
     @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
     public ResponseEntity<BoletaDTO> getByNumero(@PathVariable String numero) {
@@ -38,6 +40,7 @@ public class BoletaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Obtener boleta por pedido", description = "Devuelve la boleta correspondiente al pedido especificado (solo ADMIN y VENDEDOR)")
     @GetMapping("/pedido/{pedidoId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
     public ResponseEntity<BoletaDTO> getByPedido(@PathVariable Long pedidoId) {
@@ -46,13 +49,10 @@ public class BoletaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Endpoint para el botón "Ver boleta":
-     * - Si YA existe boleta para el pedido, la devuelve.
-     * - Si NO existe, la crea y luego la devuelve.
-     */
+    @Operation(summary = "Generar boleta para pedido", description = "Genera y devuelve la boleta para el pedido especificado (solo ADMIN y VENDEDOR)")
     @PostMapping("/generar/{pedidoId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
+    
     public ResponseEntity<BoletaDTO> generarParaPedido(@PathVariable Long pedidoId) {
         Boleta boleta = boletaService.obtenerOCrearPorPedidoId(pedidoId);
         return ResponseEntity.ok(boletaService.toDTO(boleta));

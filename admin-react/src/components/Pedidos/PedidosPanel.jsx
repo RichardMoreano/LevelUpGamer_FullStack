@@ -1,8 +1,8 @@
 // src/components/pedido/PedidosPanel.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { obtener, usuarioActual, guardar } from "../../utils/storage";
-import { pedidosAPI } from "../../services/apiService";
+import { obtener, usuarioActual } from "../../utils/storage";
+import { pedidosAPI, boletasAPI } from "../../services/apiService";
 
 /* ================= Helpers ================= */
 const CLP = (n) =>
@@ -152,7 +152,7 @@ function SideMenu({ open, onClose, onOpenAccount }) {
 
         <nav id="menuLista" className="menu-lista" data-clonado="1">
           <a
-            href="#"
+            href="#" 
             onClick={(e) => {
               e.preventDefault();
               onClose();
@@ -389,47 +389,28 @@ export default function PedidosPanel() {
   const isAdmin = tipo === "ADMIN";
   const canSeeBoletas = tipo === "ADMIN" || tipo === "VENDEDOR";
 
-  const handleVerBoleta = (pedido) => {
-    if (!pedido) return;
+  // 🔥 FULL BACKEND: generar/obtener boleta desde Spring (no localStorage)
+  const handleVerBoleta = async (pedido) => {
+    if (!pedido || !pedido.id) return;
 
     if (!canSeeBoletas) {
       alert("No tienes permiso para ver boletas.");
       return;
     }
 
-    const boletasExistentes = Array.isArray(obtener("boletas", []))
-      ? obtener("boletas", [])
-      : [];
-    const boletaExistente = boletasExistentes.find(
-      (b) => b.pedidoId === pedido.id
-    );
+    try {
+      const boleta = await boletasAPI.generarParaPedido(pedido.id);
 
-    if (boletaExistente) {
-      navigate(`/admin/boleta/${encodeURIComponent(boletaExistente.numero)}`);
-      return;
+      if (!boleta || !boleta.numero) {
+        alert("No se pudo obtener la boleta desde el backend.");
+        return;
+      }
+
+      navigate(`/admin/boleta/${encodeURIComponent(boleta.numero)}`);
+    } catch (err) {
+      console.error("❌ Error generando/obteniendo boleta:", err);
+      alert("Ocurrió un error al generar la boleta en el backend.");
     }
-
-    const comprador = pedido?.comprador || pedido?.usuario || pedido?.cliente || {};
-    const nombreCompleto =
-      `${comprador.nombres || comprador.nombre || ""} ${
-        comprador.apellidos || comprador.apellido || ""
-      }`.trim() || "Cliente";
-
-    const timestamp = Date.now();
-    const numeroBoleta = `BOL-${String(timestamp).slice(-6)}`;
-    const nuevaBoleta = {
-      numero: numeroBoleta,
-      fecha: new Date().toISOString().split("T")[0],
-      cliente: nombreCompleto,
-      pedidoId: pedido.id,
-      total: CLP(pedido.total || 0),
-      totalNumerico: pedido.total || 0,
-      fechaCreacion: new Date().toISOString(),
-    };
-
-    const todas = [...boletasExistentes, nuevaBoleta];
-    guardar("boletas", todas);
-    navigate(`/admin/boleta/${encodeURIComponent(numeroBoleta)}`);
   };
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -514,9 +495,7 @@ export default function PedidosPanel() {
           ) : (
             <div id="listaPedidos" className="tarjetas">
               {pedidosFiltrados.length === 0 ? (
-                <p className="info">
-                  📦 No hay pedidos para mostrar.
-                </p>
+                <p className="info">📦 No hay pedidos para mostrar.</p>
               ) : (
                 pedidosFiltrados.map((p) => {
                   const raw = p.id || p.codigo || p.timestamp;

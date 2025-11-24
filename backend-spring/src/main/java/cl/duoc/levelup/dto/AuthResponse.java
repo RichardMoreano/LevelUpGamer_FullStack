@@ -1,13 +1,23 @@
 package cl.duoc.levelup.dto;
 
 import cl.duoc.levelup.entity.Usuario;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class AuthResponse {
-    
+
+    @Schema(description = "Token JWT de autenticación", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     private String token;
+
+    @Schema(description = "Tipo de token", example = "Bearer")
     private String type = "Bearer";
+
+    @Schema(description = "Token de refresco", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9REFRESH...")
     private String refreshToken;
+
+    @Schema(description = "Datos del usuario autenticado")
     private Usuario usuario;
+
+    @Schema(description = "Mensaje de respuesta", example = "Login exitoso")
     private String message;
     
     // Constructor por defecto
