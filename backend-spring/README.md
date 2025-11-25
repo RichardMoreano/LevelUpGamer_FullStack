@@ -1,4 +1,3 @@
-
 # Level-Up Gamer Backend
 
 Este es el backend para el sistema de e-commerce Level-Up Gamer. Está hecho con Spring Boot y usa MySQL como base de datos. Incluye autenticación con JWT, control de usuarios, productos, pedidos y boletas.
@@ -211,6 +210,10 @@ export const productService = {
 - Haz backups regulares de la base de datos
 - Revisa los logs de seguridad
 - Mantén las dependencias actualizadas
+
+## Repositorio y soporte
+- Repositorio: https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2.git
+- Issues: https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2/issues
 
 ---
 

@@ -78,7 +78,7 @@ public class AuthService {
         usuario.setCorreo(registerRequest.getEmail());
         usuario.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         usuario.setDireccion(registerRequest.getDireccion());
-    usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Por defecto, los nuevos usuarios son clientes
+        usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Por defecto, los nuevos usuarios son clientes
         usuario.setActivo(true);
 
         Usuario savedUsuario = usuarioRepository.save(usuario);

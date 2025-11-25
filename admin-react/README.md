@@ -1,4 +1,3 @@
-
 # Level-Up Gamer — Panel de Administración
 
 Este proyecto es el panel de administración para la tienda Level-Up Gamer. Permite gestionar productos, usuarios, pedidos, boletas y reportes desde una aplicación web hecha con React y Vite.
@@ -156,3 +155,7 @@ Requisitos y comportamientos a considerar
 - Ejecutar `npm install` en `admin-react/` para instalar dependencias
 - Usar `npm run dev` para entorno de desarrollo (Vite)
 - Usar `npm run test:karma` para correr los tests unitarios y de integración
+
+## Repositorio y soporte
+- Repositorio: https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2.git
+- Issues: https://github.com/v1ct0r-ops/proyecto_Semestral_full_stack_2/issues
