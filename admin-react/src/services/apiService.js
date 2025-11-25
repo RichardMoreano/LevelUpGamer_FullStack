@@ -1,9 +1,6 @@
-/**
- * API Service para Level-Up Gamer
- * Reemplaza todas las funciones de localStorage con llamadas al backend
- */
+// Servicio para manejar las llamadas a la API y la sesión del usuario
 
-// Configuración de la API
+// Configuración de la API: define la URL base y el tiempo máximo de espera
 const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_URL || 
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -12,16 +9,16 @@ const API_CONFIG = {
   TIMEOUT: 10000
 };
 
-// Cache local para mejorar performance
+// Cache local para guardar datos y evitar llamadas repetidas
 const cache = {
   productos: null,
   usuario: null,
   timestamp: 0
 };
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+const CACHE_DURATION = 5 * 60 * 1000; // Duración de la cache en milisegundos
 
-// Utilidades HTTP
+// Clase para manejar errores de la API
 class ApiError extends Error {
   constructor(message, status, data = null) {
     super(message);
@@ -35,8 +32,6 @@ async function makeRequest(endpoint, options = {}) {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`;
   const token = localStorage.getItem('jwt_token') || localStorage.getItem('authToken');
   
-  console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
-  console.log(`🔑 Token disponible:`, !!token);
   
   const config = {
     timeout: API_CONFIG.TIMEOUT,
@@ -85,13 +80,12 @@ async function makeRequest(endpoint, options = {}) {
     if (error instanceof ApiError) {
       throw error;
     }
-    // Fallback para cuando backend no está disponible
-    console.warn('API not available, using localStorage fallback:', error.message);
+  // Si el backend no responde, retorna null para evitar romper la app
     return null;
   }
 }
 
-// === AUTENTICACIÓN ===
+// Función para iniciar sesión
 export async function login(email, password) {
   try {
     const response = await makeRequest('/auth/login', {
@@ -100,14 +94,14 @@ export async function login(email, password) {
     });
 
     if (response && response.token) {
-      // Guardar tokens usando las llaves que espera el AuthContext
+  // Guardar el token en localStorage
       localStorage.setItem('jwt_token', response.token);
       localStorage.setItem('authToken', response.token);
       if (response.refreshToken) {
         localStorage.setItem('refreshToken', response.refreshToken);
       }
       
-      // Guardar usuario en formato que espera el cliente
+  // Guardar los datos del usuario en localStorage
       const userData = {
         correo: response.usuario.correo,
         email: response.usuario.correo,
@@ -127,7 +121,7 @@ export async function login(email, password) {
     }
     throw new ApiError('Login failed', 401);
   } catch (error) {
-    console.error('Login error:', error);
+  // Si ocurre un error en login, lo lanzamos para manejarlo en el componente
     throw error;
   }
 }
@@ -140,7 +134,7 @@ export async function register(userData) {
     });
     return response;
   } catch (error) {
-    // Fallback a localStorage
+  // Si el registro falla, intenta guardar el usuario en localStorage
     return registerLocalStorage(userData);
   }
 }
@@ -149,15 +143,15 @@ export function logout() {
   localStorage.removeItem('authToken');
   localStorage.removeItem('sesion');
   cache.usuario = null;
-  // No necesitamos llamar al backend para logout con JWT
+  // El logout solo borra los datos del usuario en localStorage
 }
 
-// === USUARIO ACTUAL ===
+// Función para obtener el usuario actual
 export async function usuarioActual() {
   const token = localStorage.getItem('jwt_token') || localStorage.getItem('authToken');
   if (!token) return null;
 
-  // Verificar cache primero
+  // Si hay datos en cache y no ha expirado, retorna el usuario guardado
   if (cache.usuario && (Date.now() - cache.timestamp) < CACHE_DURATION) {
     return cache.usuario;
   }

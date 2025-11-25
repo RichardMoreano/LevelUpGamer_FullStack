@@ -17,26 +17,22 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Cargar datos de autenticación al inicializar
+  // Al iniciar, cargar los datos de autenticación guardados
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Buscar tokens guardados
+  // Buscar tokens guardados en localStorage
         const storedToken = localStorage.getItem('jwt_token') || localStorage.getItem('authToken');
         const storedUser = localStorage.getItem('usuario') || localStorage.getItem('sesion');
 
-        console.log('🔍 AuthContext: Buscando tokens en localStorage...');
-        console.log('Token encontrado:', !!storedToken);
-        console.log('Usuario encontrado:', !!storedUser);
 
         if (storedToken && storedUser) {
           setToken(storedToken);
           
-          // Parsear datos del usuario
+          // Convertir los datos del usuario de texto a objeto
           const userData = JSON.parse(storedUser);
-          console.log('👤 Datos del usuario cargados:', userData);
           
-          // Normalizar formato del usuario para React
+          // Normalizar el formato del usuario para usarlo en React
           const normalizedUser = {
             email: userData.correo || userData.email,
             correo: userData.correo || userData.email,
@@ -51,16 +47,12 @@ export const AuthProvider = ({ children }) => {
           };
           
           setUser(normalizedUser);
-          console.log('✅ Usuario normalizado para React:', normalizedUser);
           
-          // Siempre autenticar si hay token y usuario
+          // Si hay token y usuario, marcar como autenticado
           setIsAuthenticated(true);
-          console.log('✅ Usuario autenticado correctamente');
-        } else {
-          console.log('❌ No se encontraron credenciales válidas en localStorage');
-        }
+  }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        // Si ocurre un error al inicializar, cerrar sesión
         logout();
       } finally {
         setIsLoading(false);
@@ -78,7 +70,7 @@ export const AuthProvider = ({ children }) => {
       if (response && response.token) {
         const { token: authToken, refreshToken, usuario } = response;
         
-        // Guardar en localStorage
+  // Guardar el token y los datos del usuario en localStorage
         localStorage.setItem('authToken', authToken);
         localStorage.setItem('refreshToken', refreshToken);
         
@@ -93,7 +85,7 @@ export const AuthProvider = ({ children }) => {
         
         localStorage.setItem('sesion', JSON.stringify(userData));
         
-        // Actualizar estado
+  // Actualizar el estado de autenticación
         setToken(authToken);
         setUser(userData);
         setIsAuthenticated(true);
@@ -103,9 +95,9 @@ export const AuthProvider = ({ children }) => {
       
       throw new Error('Invalid response format');
     } catch (error) {
-      console.error('Login error:', error);
+  // Si ocurre un error en login, intentar login de prueba si es desarrollo
       
-      // Fallback para desarrollo local
+  // Si el backend no responde, usar login de prueba
       if (error.response?.status === 500 || !error.response) {
         return await loginFallback(email, password);
       }
@@ -120,7 +112,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginFallback = async (email, password) => {
-    // Datos de prueba para desarrollo
+  // Usuarios de prueba para desarrollo
     const testUsers = [
       {
         email: 'admin@levelup.cl',
@@ -178,7 +170,7 @@ export const AuthProvider = ({ children }) => {
       
       throw new Error(response?.message || 'Error en registro');
     } catch (error) {
-      console.error('Register error:', error);
+  // Si ocurre un error al registrar, devolver el error
       return { 
         success: false, 
         error: error.message || 'Error al registrar usuario' 
@@ -190,12 +182,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Llamar al endpoint de logout si existe token
+  // Si hay token, llamar al endpoint de logout
       if (token) {
         await authAPI.logout();
       }
     } catch (error) {
-      console.warn('Error during logout API call:', error);
+  // Si ocurre un error al cerrar sesión, solo limpiar localStorage
     } finally {
       // Limpiar estado local
       localStorage.removeItem('authToken');

@@ -1,36 +1,35 @@
-// Configuración de API para Level-Up Gamer
-// Detecta automáticamente si está en producción o desarrollo
+// Configuración de la API: selecciona la URL según el entorno
 
 const isProd = import.meta.env.PROD;
 const isDev = import.meta.env.DEV;
 
-// URLs de API según el entorno
+// Configura la URL base y los headers para las peticiones
 export const API_CONFIG = {
-  // Backend Spring Boot
+  // URL del backend
   BASE_URL: isProd 
-    ? 'https://levelup-gamer-backend.up.railway.app/api/v1'  // URL de Railway actualizada
-    : 'http://localhost:8080/api/v1',
+  ? 'https://levelup-gamer-backend.up.railway.app/api/v1'
+  : 'http://localhost:8080/api/v1',
   
-  // Timeout para requests
+  // Tiempo máximo de espera para las peticiones
   TIMEOUT: 10000,
   
-  // Headers por defecto
+  // Headers por defecto para JSON
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
 };
 
-// Endpoints de la API
+// Endpoints para las rutas principales de la API
 export const API_ENDPOINTS = {
-  // Autenticación
+  // Rutas de autenticación
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
     LOGOUT: '/auth/logout'
   },
   
-  // Usuarios
+  // Rutas de usuario
   USERS: {
     ME: '/usuarios/me',
     UPDATE_PROFILE: '/usuarios/me',
@@ -43,7 +42,7 @@ export const API_ENDPOINTS = {
     ADD_POINTS: (run) => `/usuarios/${run}/puntos`
   },
   
-  // Productos
+  // Rutas de productos
   PRODUCTS: {
     LIST: '/productos',
     ACTIVE: '/productos/activos',
@@ -60,12 +59,12 @@ export const API_ENDPOINTS = {
   }
 };
 
-// Utilitario para construir URLs completas
+// Función para construir la URL completa de la API
 export const buildApiUrl = (endpoint) => {
   return `${API_CONFIG.BASE_URL}${endpoint}`;
 };
 
-// Utilitario para obtener headers con autenticación
+// Función para obtener los headers con el token si existe
 export const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
   return {
@@ -74,7 +73,7 @@ export const getAuthHeaders = () => {
   };
 };
 
-// Configuración para fetch requests
+// Función para crear la configuración de fetch
 export const createFetchConfig = (method = 'GET', body = null, includeAuth = true) => {
   const config = {
     method,

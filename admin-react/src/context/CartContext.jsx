@@ -1,19 +1,19 @@
 import React, { useState, useContext } from 'react'
 import { API_CONFIG, getAuthHeaders } from '../config/api'
 
-// Context para el carrito
+// Contexto para manejar el carrito de compras
 export const CartContext = React.createContext()
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(false)
 
-  // Agregar producto al carrito
+  // Agrega un producto al carrito, verifica disponibilidad antes
   const addToCart = async (producto, cantidad = 1) => {
     try {
       setLoading(true)
       
-      // Verificar disponibilidad en el backend
+  // Consulta al backend si hay stock suficiente
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/productos/${producto.codigo}/disponibilidad?cantidad=${cantidad}`,
         {
@@ -27,18 +27,18 @@ export const CartProvider = ({ children }) => {
         throw new Error('Producto no disponible en la cantidad solicitada')
       }
 
-      // Verificar si el producto ya está en el carrito
+  // Si el producto ya está en el carrito, suma la cantidad
       const existingItem = cartItems.find(item => item.producto.codigo === producto.codigo)
       
       if (existingItem) {
-        // Actualizar cantidad
+  // Actualiza la cantidad si ya existe
         setCartItems(cartItems.map(item =>
           item.producto.codigo === producto.codigo
             ? { ...item, cantidad: item.cantidad + cantidad }
             : item
         ))
       } else {
-        // Agregar nuevo item
+  // Si no existe, agrega el producto al carrito
         setCartItems([...cartItems, { 
           producto, 
           cantidad, 
@@ -48,19 +48,19 @@ export const CartProvider = ({ children }) => {
       
       return true
     } catch (error) {
-      console.error('Error adding to cart:', error)
+  // Si ocurre un error al agregar, lo lanza para mostrarlo en la interfaz
       throw error
     } finally {
       setLoading(false)
     }
   }
 
-  // Remover producto del carrito
+  // Elimina un producto del carrito
   const removeFromCart = (productoCodigo) => {
     setCartItems(cartItems.filter(item => item.producto.codigo !== productoCodigo))
   }
 
-  // Actualizar cantidad
+  // Cambia la cantidad de un producto en el carrito
   const updateQuantity = async (productoCodigo, nuevaCantidad) => {
     if (nuevaCantidad <= 0) {
       removeFromCart(productoCodigo)
@@ -71,7 +71,7 @@ export const CartProvider = ({ children }) => {
       const item = cartItems.find(item => item.producto.codigo === productoCodigo)
       if (!item) return
 
-      // Verificar disponibilidad
+  // Consulta al backend si hay stock suficiente para la nueva cantidad
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/productos/${productoCodigo}/disponibilidad?cantidad=${nuevaCantidad}`,
         {
