@@ -27,7 +27,7 @@ public class HealthResponse {
 
     public HealthResponse() {}
 
-    // Getters y setters
+    // Métodos para obtener y modificar atributos
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getService() { return service; }

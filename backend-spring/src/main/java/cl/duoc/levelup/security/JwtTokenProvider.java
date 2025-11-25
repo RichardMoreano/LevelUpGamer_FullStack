@@ -70,15 +70,15 @@ public class JwtTokenProvider {
                     .parseSignedClaims(authToken);
             return true;
         } catch (SecurityException ex) {
-            System.err.println("Invalid JWT signature");
+            // Firma JWT inválida
         } catch (MalformedJwtException ex) {
-            System.err.println("Invalid JWT token");
+            // Token JWT inválido
         } catch (ExpiredJwtException ex) {
-            System.err.println("Expired JWT token");
+            // Token JWT expirado
         } catch (UnsupportedJwtException ex) {
-            System.err.println("Unsupported JWT token");
+            // Token JWT no soportado
         } catch (IllegalArgumentException ex) {
-            System.err.println("JWT claims string is empty");
+            // Claims de JWT vacíos
         }
         return false;
     }

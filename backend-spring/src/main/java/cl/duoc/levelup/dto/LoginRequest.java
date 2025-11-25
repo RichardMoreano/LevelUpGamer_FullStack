@@ -17,7 +17,7 @@ public class LoginRequest {
     @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
     private String password;
     
-    // Constructors
+    // Constructores
     public LoginRequest() {}
     
     public LoginRequest(String email, String password) {
@@ -25,7 +25,7 @@ public class LoginRequest {
         this.password = password;
     }
     
-    // Getters and Setters
+    // Métodos para obtener y modificar atributos
     public String getEmail() {
         return email;
     }

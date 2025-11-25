@@ -5,9 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * DTO para exponer boletas al frontend sin enviar entidades completas.
- */
+// DTO para exponer boletas al frontend sin enviar entidades completas
 public class BoletaDTO {
 
     @Schema(description = "Número de boleta", example = "BOL-20250001")

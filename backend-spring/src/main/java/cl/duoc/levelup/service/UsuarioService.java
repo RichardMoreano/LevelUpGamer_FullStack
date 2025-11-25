@@ -22,21 +22,17 @@ public class UsuarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    /**
-     * Crea un nuevo usuario en la base de datos.
-     * Primero revisa que el correo no esté repetido, luego encripta la contraseña
-     * y pone valores iniciales como activo y puntos en cero.
-     */
+    // Crea un usuario nuevo, revisa correo y encripta la contraseña
     public Usuario crearUsuario(Usuario usuario) {
-        // Revisar si ya existe el correo
+    // Si el correo ya existe, lanza error
         if (usuarioRepository.existsByCorreo(usuario.getCorreo())) {
             throw new RuntimeException("Ya existe un usuario con este correo");
         }
 
-        // Guardar la contraseña encriptada
+    // Encripta la contraseña antes de guardar
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 
-        // Valores iniciales para el usuario
+    // Inicializa el usuario como activo y con puntos en cero
         usuario.setActivo(true);
         usuario.setFechaRegistro(LocalDateTime.now());
         usuario.setPuntosLevelUp(0);
@@ -44,50 +40,37 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    /**
-     * Busca un usuario por su RUN (identificador único).
-     */
+    // Busca usuario por RUN
     public Optional<Usuario> obtenerPorRun(String run) {
         return usuarioRepository.findByRun(run);
     }
 
-    /**
-     * Busca un usuario por su correo electrónico.
-     */
+    // Busca usuario por correo
     public Optional<Usuario> obtenerPorCorreo(String correo) {
         return usuarioRepository.findByCorreo(correo);
     }
 
-    /**
-     * Devuelve todos los usuarios registrados.
-     */
+    // Devuelve todos los usuarios
     public List<Usuario> obtenerTodos() {
         return usuarioRepository.findAll();
     }
 
-    /**
-     * Devuelve solo los usuarios que están activos.
-     */
+    // Devuelve solo los usuarios activos
     public List<Usuario> obtenerActivos() {
         return usuarioRepository.findByActivoTrue();
     }
 
-    /**
-     * Busca usuarios por su tipo (admin, vendedor, cliente, etc).
-     */
+    // Busca usuarios por tipo
     public List<Usuario> obtenerPorTipo(Usuario.TipoUsuario tipo) {
         return usuarioRepository.findByTipoUsuario(tipo);
     }
 
-    /**
-     * Actualiza los datos de un usuario, solo los campos permitidos.
-     * La contraseña no se cambia aquí, solo con el método especial.
-     */
+    // Actualiza los datos del usuario, menos la contraseña
     public Usuario actualizarUsuario(String run, Usuario usuarioActualizado) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Solo actualiza los campos que vienen con datos
+    // Solo actualiza los campos que no son nulos
         if (usuarioActualizado.getNombres() != null) {
             usuario.setNombres(usuarioActualizado.getNombres());
         }
@@ -110,14 +93,12 @@ public class UsuarioService {
             usuario.setTipoUsuario(usuarioActualizado.getTipoUsuario());
         }
 
-        // La contraseña solo se cambia con cambiarPassword()
+    // La contraseña se cambia solo con el método especial
 
         return usuarioRepository.save(usuario);
     }
 
-    /**
-     * Desactiva un usuario (por ejemplo, si se elimina o bloquea).
-     */
+    // Desactiva el usuario
     public void desactivarUsuario(String run) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -126,9 +107,7 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
     }
 
-    /**
-     * Activa un usuario que estaba desactivado.
-     */
+    // Activa el usuario
     public void activarUsuario(String run) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -137,9 +116,7 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
     }
 
-    /**
-     * Suma puntos LevelUp al usuario (por ejemplo, por compras).
-     */
+    // Suma puntos al usuario
     public Usuario agregarPuntos(String run, Integer puntos) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -148,9 +125,7 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    /**
-     * Resta puntos LevelUp al usuario si tiene suficientes.
-     */
+    // Resta puntos al usuario si tiene suficientes
     public Usuario usarPuntos(String run, Integer puntos) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -163,28 +138,22 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    /**
-     * Busca usuarios por el dominio de su correo (por ejemplo, @duoc.cl).
-     */
+    // Busca usuarios por dominio de correo
     public List<Usuario> obtenerPorDominio(String dominio) {
         return usuarioRepository.findByDominio(dominio);
     }
 
-    /**
-     * Devuelve usuarios que tienen al menos cierta cantidad de puntos.
-     */
+    // Devuelve usuarios con mínimo de puntos
     public List<Usuario> obtenerConPuntosMinimos(Integer minPuntos) {
         return usuarioRepository.findByPuntosMinimos(minPuntos);
     }
 
-    /**
-     * Cambia la contraseña del usuario si la actual es correcta.
-     */
+    // Cambia la contraseña si la actual es correcta
     public boolean cambiarPassword(String run, String passwordActual, String nuevaPassword) {
         Usuario usuario = usuarioRepository.findByRun(run)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Verifica que la contraseña actual coincida
+    // Verifica que la contraseña actual sea correcta
         if (!passwordEncoder.matches(passwordActual, usuario.getPassword())) {
             return false;
         }
@@ -194,9 +163,7 @@ public class UsuarioService {
         return true;
     }
 
-    /**
-     * Devuelve el usuario que está autenticado actualmente.
-     */
+    // Devuelve el usuario autenticado
     public Usuario obtenerUsuarioAutenticado(UserPrincipal userPrincipal) {
         return usuarioRepository.findByRun(userPrincipal.getRun())
                 .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));

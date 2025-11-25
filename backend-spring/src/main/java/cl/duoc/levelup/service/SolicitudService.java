@@ -23,12 +23,12 @@ public class SolicitudService {
         s.setCorreo(request.getCorreo());
         s.setDescripcion(request.getDescripcion());
         s.setFecha(LocalDateTime.now());
-        s.setEstado("pendiente"); // estado inicial
+    s.setEstado("pendiente"); // Estado inicial de la solicitud
         return solicitudRepository.save(s);
     }
 
     public List<Solicitud> obtenerTodas() {
-        // Si quieres, puedes ordenar acá con Sort
+    // Devuelve todas las solicitudes
         return solicitudRepository.findAll();
     }
 

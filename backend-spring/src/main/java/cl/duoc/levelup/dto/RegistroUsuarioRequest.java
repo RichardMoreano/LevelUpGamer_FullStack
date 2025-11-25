@@ -30,10 +30,10 @@ public class RegistroUsuarioRequest {
     @Schema(description = "Dirección", example = "Av. Siempre Viva 123")
     private String direccion;
     
-    // Constructor por defecto
+    // Constructor vacío
     public RegistroUsuarioRequest() {}
     
-    // Getters y Setters
+    // Métodos para obtener y modificar atributos
     public String getRun() { return run; }
     public void setRun(String run) { this.run = run; }
     

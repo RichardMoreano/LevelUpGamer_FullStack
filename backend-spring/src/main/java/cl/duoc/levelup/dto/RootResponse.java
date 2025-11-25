@@ -28,7 +28,7 @@ public class RootResponse {
 
     public RootResponse() {}
 
-    // Getters y setters
+    // Métodos para obtener y modificar atributos
     public String getApplication() { return application; }
     public void setApplication(String application) { this.application = application; }
     public String getVersion() { return version; }

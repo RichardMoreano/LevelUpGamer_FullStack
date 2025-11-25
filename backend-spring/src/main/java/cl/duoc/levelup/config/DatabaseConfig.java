@@ -15,22 +15,22 @@ public class DatabaseConfig {
     public DataSource dataSource() {
         String databaseUrl = System.getenv("DATABASE_URL");
         
-        if (databaseUrl == null || databaseUrl.isEmpty()) {
-            System.out.println("DATABASE_URL not found, using H2 PERSISTENT storage for local development");
-            return DataSourceBuilder.create()
-                    .url("jdbc:h2:file:./data/levelup_gamer_dev")
-                    .username("sa")
-                    .password("")
-                    .driverClassName("org.h2.Driver")
-                    .build();
-        }
+    if (databaseUrl == null || databaseUrl.isEmpty()) {
+        // Si no hay DATABASE_URL, usar H2 para desarrollo local
+        return DataSourceBuilder.create()
+            .url("jdbc:h2:file:./data/levelup_gamer_dev")
+            .username("sa")
+            .password("")
+            .driverClassName("org.h2.Driver")
+            .build();
+    }
 
-        System.out.println("Railway DATABASE_URL found: " + databaseUrl);
+    // Si hay DATABASE_URL, usar Railway/PostgreSQL
         
         try {
-            // Parse Railway PostgreSQL URL
+            // Parsear Railway PostgreSQL URL
             if (databaseUrl.startsWith("postgresql://")) {
-                // Extract components from postgresql://user:pass@host:port/db
+                // Extraer componentes de la URL
                 String withoutProtocol = databaseUrl.substring("postgresql://".length());
                 String[] userHostSplit = withoutProtocol.split("@");
                 String[] userPassSplit = userHostSplit[0].split(":");
@@ -41,11 +41,7 @@ public class DatabaseConfig {
                 
                 String jdbcUrl = "jdbc:postgresql://" + hostPortDb;
                 
-                System.out.println("Parsed components:");
-                System.out.println("- Username: " + username);
-                System.out.println("- Password: [HIDDEN]");
-                System.out.println("- JDBC URL: " + jdbcUrl);
-                
+                // Retorna el DataSource configurado
                 return DataSourceBuilder.create()
                         .url(jdbcUrl)
                         .username(username)
@@ -61,9 +57,7 @@ public class DatabaseConfig {
                     .build();
                     
         } catch (Exception e) {
-            System.err.println("Error parsing DATABASE_URL: " + e.getMessage());
-            System.err.println("DATABASE_URL was: " + databaseUrl);
-            e.printStackTrace();
+            // Si hay error al parsear, lanzar excepción
             throw new RuntimeException("Failed to configure database", e);
         }
     }

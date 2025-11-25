@@ -1,74 +1,51 @@
-# Level-Up Gamer Backend - Spring Boot API
 
-Backend completo desarrollado con **Spring Boot 3.2.0** para el sistema de e-commerce Level-Up Gamer, migrado desde LocalStorage a arquitectura full-stack con autenticación JWT y MySQL.
+# Level-Up Gamer Backend
 
-## 🏗️ Arquitectura Técnica
+Este es el backend para el sistema de e-commerce Level-Up Gamer. Está hecho con Spring Boot y usa MySQL como base de datos. Incluye autenticación con JWT, control de usuarios, productos, pedidos y boletas.
 
-### Stack Tecnológico
-- **Framework**: Spring Boot 3.2.0
-- **Seguridad**: Spring Security + JWT
-- **Base de Datos**: MySQL 8.0 + JPA/Hibernate
-- **Documentación**: Swagger/OpenAPI 3
-- **Build**: Maven
-- **Java**: 17+
+## Tecnologías principales
+- Spring Boot 3.2.0
+- Spring Security y JWT
+- MySQL 8.0
+- JPA/Hibernate
+- Swagger/OpenAPI
+- Maven
+- Java 17 o superior
 
-### Estructura del Proyecto
+## Estructura del proyecto
+
 ```
 backend-spring/
 ├── src/main/java/cl/duoc/levelup/
-│   ├── LevelUpGamerApplication.java          # Aplicación principal
+│   ├── LevelUpGamerApplication.java
 │   ├── config/
-│   │   ├── DataInitializer.java              # Datos iniciales
-│   │   └── SecurityConfig.java               # Configuración seguridad
 │   ├── controller/
-│   │   ├── AuthController.java               # Autenticación
-│   │   ├── ProductoController.java           # Productos
-│   │   └── UsuarioController.java            # Usuarios
 │   ├── entity/
-│   │   ├── Usuario.java                      # Entidad Usuario
-│   │   ├── Producto.java                     # Entidad Producto
-│   │   ├── Pedido.java                       # Entidad Pedido
-│   │   ├── PedidoItem.java                   # Items del pedido
-│   │   └── Boleta.java                       # Boletas
 │   ├── repository/
-│   │   ├── UsuarioRepository.java            # Repositorio usuarios
-│   │   ├── ProductoRepository.java           # Repositorio productos
-│   │   ├── PedidoRepository.java             # Repositorio pedidos
-│   │   └── BoletaRepository.java             # Repositorio boletas
 │   ├── security/
-│   │   ├── JwtTokenProvider.java             # Proveedor JWT
-│   │   ├── UserPrincipal.java                # Principal usuario
-│   │   ├── CustomUserDetailsService.java     # Servicio usuarios
-│   │   ├── JwtAuthenticationFilter.java      # Filtro JWT
-│   │   └── JwtAuthenticationEntryPoint.java  # Entry point
 │   └── service/
-│       ├── AuthService.java                  # Servicio autenticación
-│       ├── UsuarioService.java               # Servicio usuarios
-│       └── ProductoService.java              # Servicio productos
 ├── src/main/resources/
-│   └── application.yml                       # Configuración aplicación
-├── pom.xml                                   # Dependencias Maven
-├── database-setup.sql                       # Script base de datos
-├── start-backend.bat                        # Iniciador Windows
-└── start-backend.sh                         # Iniciador Linux/Mac
+│   ├── application.yml
+│   ├── application-dev.yml
+│   ├── application-prod.yml
+│   └── application.properties
+├── pom.xml
+├── database-setup.sql
+└── README.md
 ```
 
-## 🗄️ Configuración Base de Datos
+## Configuración de la base de datos
 
-### 1. Crear Base de Datos MySQL
+1. Crea la base de datos y el usuario en MySQL:
 
 ```sql
--- Conectarse a MySQL como root
-mysql -u root -p
-
--- Crear base de datos y usuario
 CREATE DATABASE levelup_gamer_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'levelup_user'@'localhost' IDENTIFIED BY 'levelup_password';
 GRANT ALL PRIVILEGES ON levelup_gamer_db.* TO 'levelup_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-### 2. Configuración en application.yml
+2. Configura el archivo `application.yml`:
 
 ```yaml
 spring:
@@ -78,197 +55,134 @@ spring:
     password: levelup_password
   jpa:
     hibernate:
-      ddl-auto: create-drop  # Cambiar a 'update' en producción
+      ddl-auto: update
 ```
 
-## 🚀 Ejecución del Backend
+## Cómo ejecutar el backend
 
-### Requisitos Previos
+Requisitos:
 - Java 17 o superior
-- Maven 3.6+
-- MySQL 8.0+ ejecutándose en puerto 3306
+- Maven
+- MySQL 8.0 en el puerto 3306
 
-### Inicio Rápido
+Para iniciar:
 
 **Windows:**
-```bash
+```
 ./start-backend.bat
 ```
 
 **Linux/Mac:**
-```bash
+```
 chmod +x start-backend.sh
 ./start-backend.sh
 ```
 
 **Manual:**
-```bash
-# Compilar
+```
 mvn clean compile
-
-# Ejecutar
 mvn spring-boot:run
-
-# O con jar
+# O bien
 mvn package
 java -jar target/levelup-gamer-backend-1.0.0.jar
 ```
 
-### Verificación del Sistema
-- **Backend API**: http://localhost:8080
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **Health Check**: http://localhost:8080/actuator/health
+Accede a la API en http://localhost:8080
+Swagger UI: http://localhost:8080/swagger-ui.html
+Health Check: http://localhost:8080/actuator/health
 
-## 🔐 Sistema de Autenticación JWT
+## Autenticación y roles
 
-### Roles de Usuario
-- **ADMIN**: Acceso completo al sistema
-- **VENDEDOR**: Gestión de productos y stock
-- **CLIENTE**: Compras y perfil personal
+El sistema usa JWT para autenticar usuarios. Los roles disponibles son:
+- ADMIN: acceso total
+- VENDEDOR: gestión de productos y stock
+- CLIENTE: compras y perfil
 
-### Usuarios Por Defecto
-| RUN | Correo | Password | Rol | Puntos LevelUp |
-|-----|--------|----------|-----|----------------|
-| 12345678-9 | admin@levelup.cl | admin123 | ADMIN | 0 |
-| 98765432-1 | vendedor@levelup.cl | vendedor123 | VENDEDOR | 0 |
-| 11111111-1 | maria.estudiante@duocuc.cl | duoc123 | CLIENTE | 150 |
-| 22222222-2 | pedro.cliente@gmail.com | cliente123 | CLIENTE | 50 |
+Usuarios de ejemplo:
 
-### Flujo de Autenticación
-1. **Login**: `POST /api/v1/auth/login`
-2. **Registro**: `POST /api/v1/auth/register`
-3. **Token JWT** válido por 24 horas
-4. **Header**: `Authorization: Bearer <token>`
+| RUN         | Correo                        | Password     | Rol      | Puntos |
+|-------------|-------------------------------|--------------|----------|--------|
+| 12345678-9  | admin@levelup.cl              | admin123     | ADMIN    | 0      |
+| 98765432-1  | vendedor@levelup.cl           | vendedor123  | VENDEDOR | 0      |
+| 11111111-1  | maria.estudiante@duocuc.cl    | duoc123      | CLIENTE  | 150    |
+| 22222222-2  | pedro.cliente@gmail.com       | cliente123   | CLIENTE  | 50     |
 
-## 📋 API Endpoints
+## Endpoints principales
 
 ### Autenticación
-```
-POST   /api/v1/auth/login          # Iniciar sesión
-POST   /api/v1/auth/register       # Registrar usuario
-POST   /api/v1/auth/logout         # Cerrar sesión
-```
+- POST /api/v1/auth/login
+- POST /api/v1/auth/register
+- POST /api/v1/auth/logout
 
 ### Usuarios
-```
-GET    /api/v1/usuarios/me                     # Perfil actual
-PUT    /api/v1/usuarios/me                     # Actualizar perfil
-POST   /api/v1/usuarios/me/cambiar-password    # Cambiar contraseña
-GET    /api/v1/usuarios/puntos                 # Consultar puntos LevelUp
-
-# Endpoints Admin
-GET    /api/v1/usuarios                        # Listar usuarios
-GET    /api/v1/usuarios/activos                # Usuarios activos
-GET    /api/v1/usuarios/{run}                  # Usuario por RUN
-PUT    /api/v1/usuarios/{run}                  # Actualizar usuario
-PUT    /api/v1/usuarios/{run}/activar          # Activar usuario
-PUT    /api/v1/usuarios/{run}/desactivar       # Desactivar usuario
-POST   /api/v1/usuarios/{run}/puntos           # Agregar puntos
-```
+- GET /api/v1/usuarios/me
+- PUT /api/v1/usuarios/me
+- POST /api/v1/usuarios/me/cambiar-password
+- GET /api/v1/usuarios/puntos
+- GET /api/v1/usuarios (admin)
+- GET /api/v1/usuarios/activos (admin)
+- GET /api/v1/usuarios/{run} (admin)
+- PUT /api/v1/usuarios/{run} (admin)
+- POST /api/v1/usuarios/{run}/puntos (admin)
 
 ### Productos
-```
-GET    /api/v1/productos                       # Listar productos
-GET    /api/v1/productos/activos               # Productos activos
-GET    /api/v1/productos/{codigo}              # Producto por código
-GET    /api/v1/productos/categoria/{categoria} # Por categoría
-GET    /api/v1/productos/buscar?nombre=X       # Buscar por nombre
-GET    /api/v1/productos/categorias            # Listar categorías
-GET    /api/v1/productos/stock-critico         # Stock crítico
+- GET /api/v1/productos
+- GET /api/v1/productos/activos
+- GET /api/v1/productos/{codigo}
+- GET /api/v1/productos/categoria/{categoria}
+- GET /api/v1/productos/buscar?nombre=X
+- GET /api/v1/productos/categorias
+- GET /api/v1/productos/stock-critico
+- POST /api/v1/productos (admin/vendedor)
+- PUT /api/v1/productos/{codigo} (admin/vendedor)
+- DELETE /api/v1/productos/{codigo} (admin/vendedor)
+- PUT /api/v1/productos/{codigo}/stock (admin/vendedor)
 
-# Endpoints Admin/Vendedor
-POST   /api/v1/productos                       # Crear producto
-PUT    /api/v1/productos/{codigo}              # Actualizar producto
-DELETE /api/v1/productos/{codigo}              # Eliminar producto
-PUT    /api/v1/productos/{codigo}/stock        # Actualizar stock
-```
+## Lógica de negocio
 
-## 🎯 Lógica de Negocio Implementada
+- Sistema de puntos: 1 punto equivale a $10 de descuento. Los puntos se acumulan con cada compra y se pueden usar en el checkout.
+- Descuento DUOC: 20% de descuento automático para correos que terminan en `@duocuc.cl`.
+- Control de stock: verificación automática, stock crítico configurable, reducción de stock al comprar y restauración si se cancela el pedido.
+- Seguridad: autenticación JWT, CORS para React, validación de datos y contraseñas encriptadas.
 
-### Sistema de Puntos LevelUp
-- **1 punto = $10 CLP** de descuento
-- Los puntos se acumulan con cada compra
-- Uso de puntos en el checkout
+## Configuración para desarrollo
 
-### Descuento DUOC
-- **20% de descuento** automático para correos `@duocuc.cl`
-- Validación por dominio de correo
-- Aplicación automática en el cálculo de totales
+Variables útiles:
 
-### Control de Stock
-- **Verificación automática** de disponibilidad
-- **Stock crítico** configurable por producto
-- **Reducción automática** tras confirmación de pedido
-- **Restauración** en caso de cancelación
-
-### Seguridad
-- **Autenticación JWT** con roles
-- **CORS configurado** para React (localhost:5173)
-- **Validación** de entrada en todos los endpoints
-- **Encriptación** de contraseñas con BCrypt
-
-## 🔧 Configuración para Desarrollo
-
-### Variables de Entorno
 ```yaml
-# JWT Configuration
 spring.security.jwt.secret-key: mySecretKeyForJWTTokensLevelUpGamer2024
-spring.security.jwt.expiration: 86400000  # 24 horas
-spring.security.jwt.refresh-expiration: 604800000  # 7 días
-
-# CORS Origins
+spring.security.jwt.expiration: 86400000
+spring.security.jwt.refresh-expiration: 604800000
 app.cors.allowed-origins: http://localhost:5173,http://localhost:3000
 ```
 
-### Profiles
-- **dev**: Desarrollo local (por defecto)
-- **prod**: Producción (configurar variables de entorno)
+Perfiles:
+- dev: desarrollo local
+- prod: producción
 
-## 📊 Datos de Prueba
+## Datos de prueba
 
-### Productos Inicializados
-- **10 productos** en diferentes categorías
-- **Consolas**: PS5, Xbox Series X, Nintendo Switch
-- **Juegos**: Por plataforma (PS5, Xbox, Nintendo)
-- **Accesorios**: Controls, headsets, memoria USB
-- **Stock variado** con algunos productos en nivel crítico
+El sistema inicializa 10 productos de ejemplo en distintas categorías y usuarios de prueba.
 
-### Categorías Disponibles
-- Consolas
-- Juegos PS5
-- Juegos Xbox
-- Juegos Nintendo
-- Accesorios
+## Testing rápido
 
-## 🚦 Testing
+Ejemplos:
 
-### Endpoints de Prueba
-```bash
-# Health check
+```
 curl http://localhost:8080/actuator/health
-
-# Login admin
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"correo":"admin@levelup.cl","password":"admin123"}'
-
-# Listar productos
+curl -X POST http://localhost:8080/api/v1/auth/login -H "Content-Type: application/json" -d '{"correo":"admin@levelup.cl","password":"admin123"}'
 curl http://localhost:8080/api/v1/productos/activos
 ```
 
-### Swagger UI
-Accede a http://localhost:8080/swagger-ui.html para probar todos los endpoints interactivamente.
+Swagger UI te permite probar todos los endpoints desde el navegador.
 
-## 🔄 Integración con Frontend React
+## Integración con el frontend
 
-### Configuración CORS
-El backend está configurado para aceptar requests desde:
-- `http://localhost:5173` (Vite dev server)
-- `http://localhost:3000` (Create React App)
+El backend acepta peticiones desde React (`http://localhost:5173` y `http://localhost:3000`).
 
-### Servicios API Recomendados
-```typescript
-// Ejemplo de servicio para el frontend React
+Ejemplo de servicio en React:
+
+```js
 const API_BASE = 'http://localhost:8080/api/v1';
 
 export const authService = {
@@ -282,23 +196,23 @@ export const productService = {
 };
 ```
 
-## 📝 Próximos Pasos
+## Próximos pasos
 
-1. **Completar Controllers**: Pedidos, Boletas, Reportes
-2. **Implementar WebSockets**: Notificaciones en tiempo real
-3. **Añadir Tests**: Unitarios e integración
-4. **Docker Setup**: Containerización completa
-5. **CI/CD Pipeline**: Deploy automatizado
+- Completar controllers de pedidos, boletas y reportes
+- Agregar WebSockets para notificaciones
+- Añadir tests unitarios y de integración
+- Configurar Docker
+- Automatizar despliegue (CI/CD)
 
-## ⚠️ Notas Importantes
+## Notas importantes
 
-- **Cambiar passwords por defecto** en producción
-- **Configurar HTTPS** para tokens JWT
-- **Backup regular** de base de datos
-- **Monitorear logs** de seguridad
-- **Actualizar dependencias** periódicamente
+- Cambia las contraseñas por defecto en producción
+- Usa HTTPS para los tokens JWT
+- Haz backups regulares de la base de datos
+- Revisa los logs de seguridad
+- Mantén las dependencias actualizadas
 
 ---
 
-**Desarrollado para el Proyecto Semestral Full-Stack Level-Up Gamer**
-*Spring Boot 3 + JPA + Security JWT + MySQL + Swagger*
+Desarrollado para el Proyecto Semestral Full-Stack Level-Up Gamer
+Spring Boot 3 + JPA + Security JWT + MySQL + Swagger

@@ -20,10 +20,10 @@ public class AuthResponse {
     @Schema(description = "Mensaje de respuesta", example = "Login exitoso")
     private String message;
     
-    // Constructor por defecto
+    // Constructor vacío
     public AuthResponse() {}
     
-    // Constructor con token y usuario
+    // Constructor para login exitoso
     public AuthResponse(String token, String refreshToken, Usuario usuario) {
         this.token = token;
         this.refreshToken = refreshToken;
@@ -31,12 +31,12 @@ public class AuthResponse {
         this.message = "Login exitoso";
     }
     
-    // Constructor con mensaje de error
+    // Constructor para error
     public AuthResponse(String message) {
         this.message = message;
     }
     
-    // Getters y Setters
+    // Métodos para obtener y modificar atributos
     public String getToken() {
         return token;
     }

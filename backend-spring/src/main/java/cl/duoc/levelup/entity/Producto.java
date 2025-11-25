@@ -63,9 +63,9 @@ public class Producto {
     @Schema(description = "Producto activo", example = "true")
     private Boolean activo = true;
     
-    // Relaciones
+    // Relación con PedidoItem
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore  // Evita serialización circular
+    @JsonIgnore  // Evita problemas de serialización
     private List<PedidoItem> pedidoItems;
     
     // Constructores
@@ -79,7 +79,7 @@ public class Producto {
         this.stock = stock;
     }
     
-    // Métodos de negocio
+    // Métodos de negocio para lógica de producto
     public boolean tieneStockSuficiente(int cantidadRequerida) {
         return stock >= cantidadRequerida;
     }
@@ -102,7 +102,7 @@ public class Producto {
         }
     }
     
-    // Getters y Setters
+    // Métodos para obtener y modificar atributos
     public String getCodigo() { return codigo; }
     public void setCodigo(String codigo) { this.codigo = codigo; }
     

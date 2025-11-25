@@ -17,7 +17,7 @@ public class PedidoItem {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pedido_id", nullable = false)
-    @JsonBackReference("pedido-items")  // Evita serialización circular
+    @JsonBackReference("pedido-items")  // Evita problemas de serialización
     @Schema(description = "Pedido asociado")
     private Pedido pedido;
     
@@ -45,12 +45,12 @@ public class PedidoItem {
         this.precio = precio;
     }
     
-    // Métodos de negocio
+    // Métodos para lógica de negocio
     public BigDecimal calcularSubtotal() {
         return precio.multiply(BigDecimal.valueOf(cantidad));
     }
     
-    // Getters y Setters
+    // Métodos para obtener y modificar atributos
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

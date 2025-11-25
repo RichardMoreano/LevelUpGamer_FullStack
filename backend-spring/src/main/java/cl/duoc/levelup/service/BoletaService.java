@@ -23,7 +23,7 @@ public class BoletaService {
     @Autowired
     private PedidoRepository pedidoRepository;
 
-    /* =================== CRUD BÁSICO =================== */
+    // Métodos básicos para boletas
 
     public List<Boleta> obtenerTodas() {
         return boletaRepository.findAll();
@@ -38,10 +38,7 @@ public class BoletaService {
                 .flatMap(boletaRepository::findByPedido);
     }
 
-    /**
-     * Obtiene la boleta asociada a un pedido.  
-     * Si no existe, la crea usando el constructor Boleta(Pedido).
-     */
+    // Obtiene la boleta de un pedido, si no existe la crea
     public Boleta obtenerOCrearPorPedidoId(Long pedidoId) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con id: " + pedidoId));
@@ -50,7 +47,7 @@ public class BoletaService {
                 .orElseGet(() -> boletaRepository.save(new Boleta(pedido)));
     }
 
-    /* =================== Mapeo a DTO =================== */
+    // Convierte boleta a DTO
 
     public BoletaDTO toDTO(Boleta boleta) {
         if (boleta == null) {

@@ -50,7 +50,7 @@ public class AuthService {
             
             String refreshToken = tokenProvider.generateRefreshToken(usuario.getCorreo());
             
-            // No enviar contraseña en la respuesta
+            // Nunca enviar la contraseña en la respuesta
             usuario.setPassword(null);
             
             return new AuthResponse(jwt, refreshToken, usuario);
@@ -60,17 +60,17 @@ public class AuthService {
     }
 
     public Usuario registerUser(RegisterRequest registerRequest) {
-        // Verificar si el usuario ya existe por email
+    // Si el email ya está registrado, lanza error
         if (usuarioRepository.findByCorreo(registerRequest.getEmail()).isPresent()) {
             throw new RuntimeException("El email ya está registrado");
         }
 
-        // Verificar si el usuario ya existe por RUN
+    // Si el RUN ya está registrado, lanza error
         if (usuarioRepository.findByRun(registerRequest.getRun()).isPresent()) {
             throw new RuntimeException("El RUN ya está registrado");
         }
 
-        // Crear nuevo usuario
+    // Crea el usuario nuevo
         Usuario usuario = new Usuario();
         usuario.setRun(registerRequest.getRun());
         usuario.setNombres(registerRequest.getNombre());
@@ -78,29 +78,29 @@ public class AuthService {
         usuario.setCorreo(registerRequest.getEmail());
         usuario.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         usuario.setDireccion(registerRequest.getDireccion());
-        usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Por defecto, los nuevos usuarios son clientes
+    usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Por defecto, los nuevos usuarios son clientes
         usuario.setActivo(true);
 
         Usuario savedUsuario = usuarioRepository.save(usuario);
         
-        // No retornar la contraseña
+    // Nunca retornar la contraseña
         savedUsuario.setPassword(null);
         
         return savedUsuario;
     }
 
     public Usuario registerUserFromEntity(Usuario usuarioRequest) {
-        // Verificar si el usuario ya existe por email
+    // Si el email ya está registrado, lanza error
         if (usuarioRepository.findByCorreo(usuarioRequest.getCorreo()).isPresent()) {
             throw new RuntimeException("El email ya está registrado");
         }
 
-        // Verificar si el usuario ya existe por RUN
+    // Si el RUN ya está registrado, lanza error
         if (usuarioRepository.findByRun(usuarioRequest.getRun()).isPresent()) {
             throw new RuntimeException("El RUN ya está registrado");
         }
 
-        // Crear nuevo usuario basado en la entidad recibida
+    // Crea el usuario usando los datos recibidos
         Usuario usuario = new Usuario();
         usuario.setRun(usuarioRequest.getRun());
         usuario.setNombres(usuarioRequest.getNombres());
@@ -111,31 +111,31 @@ public class AuthService {
         usuario.setRegion(usuarioRequest.getRegion());
         usuario.setComuna(usuarioRequest.getComuna());
         
-        // Usar tipo de usuario del request o CLIENTE por defecto
+    // Si no viene tipo de usuario, usar CLIENTE
         usuario.setTipoUsuario(usuarioRequest.getTipoUsuario() != null ? 
             usuarioRequest.getTipoUsuario() : Usuario.TipoUsuario.CLIENTE);
         usuario.setActivo(true);
 
         Usuario savedUsuario = usuarioRepository.save(usuario);
         
-        // No retornar la contraseña
+    // Nunca retornar la contraseña
         savedUsuario.setPassword(null);
         
         return savedUsuario;
     }
 
     public Usuario registerUserFromRequest(cl.duoc.levelup.dto.RegistroUsuarioRequest registroRequest) {
-        // Verificar si el usuario ya existe por email
+    // Si el email ya está registrado, lanza error
         if (usuarioRepository.findByCorreo(registroRequest.getCorreo()).isPresent()) {
             throw new RuntimeException("El email ya está registrado");
         }
 
-        // Verificar si el usuario ya existe por RUN
+    // Si el RUN ya está registrado, lanza error
         if (usuarioRepository.findByRun(registroRequest.getRun()).isPresent()) {
             throw new RuntimeException("El RUN ya está registrado");
         }
 
-        // Crear nuevo usuario basado en el request
+    // Crea el usuario usando los datos del request
         Usuario usuario = new Usuario();
         usuario.setRun(registroRequest.getRun());
         usuario.setNombres(registroRequest.getNombres());
@@ -146,22 +146,22 @@ public class AuthService {
         usuario.setRegion(registroRequest.getRegion());
         usuario.setComuna(registroRequest.getComuna());
         
-        // Convertir string a enum
+    // Convierte el tipo de usuario a enum, si no es válido usa CLIENTE
         if (registroRequest.getTipoUsuario() != null) {
             try {
                 usuario.setTipoUsuario(Usuario.TipoUsuario.valueOf(registroRequest.getTipoUsuario()));
             } catch (IllegalArgumentException e) {
-                usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Por defecto
+                usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Si el tipo no es válido, usa CLIENTE
             }
         } else {
-            usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Por defecto
+            usuario.setTipoUsuario(Usuario.TipoUsuario.CLIENTE); // Si no viene tipo, usa CLIENTE
         }
         
         usuario.setActivo(true);
 
         Usuario savedUsuario = usuarioRepository.save(usuario);
         
-        // No retornar la contraseña
+    // Nunca retornar la contraseña
         savedUsuario.setPassword(null);
         
         return savedUsuario;
@@ -171,7 +171,7 @@ public class AuthService {
         Usuario usuario = usuarioRepository.findByCorreo(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         
-        // No retornar la contraseña
+    // Nunca retornar la contraseña
         usuario.setPassword(null);
         
         return usuario;

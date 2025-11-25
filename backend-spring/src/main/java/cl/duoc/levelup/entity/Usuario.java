@@ -83,9 +83,9 @@ public class Usuario {
     @Schema(description = "Usuario activo", example = "true")
     private Boolean activo = true;
     
-    // Relaciones
+    // Relaciones con otras entidades
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore  // Evita serialización circular
+    @JsonIgnore  // Evita problemas de serialización
     private List<Pedido> pedidos;
     
     // Constructores
@@ -104,7 +104,7 @@ public class Usuario {
         this.password = password;
     }
     
-    // Métodos de negocio
+    // Métodos de negocio para lógica de usuario
     public boolean tieneDescuentoDuoc() {
         return correo != null && correo.toLowerCase().endsWith("@duoc.cl");
     }
@@ -116,8 +116,8 @@ public class Usuario {
     public double calcularDescuentoPuntos(double subtotal) {
         if (puntosLevelUp <= 0) return 0.0;
         
-        double puntosEnPesos = puntosLevelUp * 10.0; // 1 punto = $10 CLP
-        double maxDescuento = subtotal * 0.20; // Máximo 20% del subtotal
+    double puntosEnPesos = puntosLevelUp * 10.0; // Convierte puntos a pesos
+    double maxDescuento = subtotal * 0.20; // El descuento máximo es 20%
         
         return Math.min(puntosEnPesos, maxDescuento);
     }
@@ -134,7 +134,7 @@ public class Usuario {
         }
     }
     
-    // Getters y Setters
+    // Métodos para obtener y modificar atributos
     public String getRun() { return run; }
     public void setRun(String run) { this.run = run; }
     
@@ -174,7 +174,7 @@ public class Usuario {
     public List<Pedido> getPedidos() { return pedidos; }
     public void setPedidos(List<Pedido> pedidos) { this.pedidos = pedidos; }
     
-    // Enum para tipos de usuario
+    // Tipos de usuario
     public enum TipoUsuario {
         ADMIN, VENDEDOR, CLIENTE
     }

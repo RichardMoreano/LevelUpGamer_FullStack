@@ -54,7 +54,7 @@ public class HealthController {
         response.setStatus("UP");
         response.setService("Level-Up Gamer API");
         response.setTimestamp(System.currentTimeMillis());
-        // Check database connection
+    // Verifica la conexión a la base de datos
         try {
             Connection connection = dataSource.getConnection();
             connection.close();
@@ -63,7 +63,7 @@ public class HealthController {
             response.setDatabase("DOWN");
             response.setDatabaseError(e.getMessage());
         }
-        // Environment info
+    // Obtiene información del entorno
         response.setProfile(env.getActiveProfiles());
         response.setJavaVersion(System.getProperty("java.version"));
         return ResponseEntity.ok(response);

@@ -43,10 +43,10 @@ public class RegisterRequest {
     @Size(min = 5, max = 200, message = "La dirección debe tener entre 5 y 200 caracteres")
     private String direccion;
     
-    // Constructor por defecto
+    // Constructor vacío
     public RegisterRequest() {}
     
-    // Constructor con parámetros
+    // Constructor con todos los datos
     public RegisterRequest(String nombre, String apellido, String run, String email, 
                          String password, String telefono, String direccion) {
         this.nombre = nombre;
@@ -58,7 +58,7 @@ public class RegisterRequest {
         this.direccion = direccion;
     }
     
-    // Getters y Setters
+    // Métodos para obtener y modificar atributos
     public String getNombre() {
         return nombre;
     }

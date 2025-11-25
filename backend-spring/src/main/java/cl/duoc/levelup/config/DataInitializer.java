@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Component
-@Profile("!prod")  // Solo ejecutar en perfiles que NO sean prod
+@Profile("!prod")  // Solo se ejecuta en desarrollo, no en producción
 public class DataInitializer {
 
     @Autowired
@@ -33,12 +33,12 @@ public class DataInitializer {
     }
 
     private void initializeUsers() {
-        // Verificar si ya existen usuarios
+        // Si ya existen usuarios, no inicializar de nuevo
         if (usuarioRepository.count() > 0) {
             return;
         }
 
-        System.out.println("🔧 Inicializando usuarios por defecto...");
+        // Inicializando usuarios por defecto
 
         // Usuario Administrador
         Usuario admin = new Usuario();
@@ -110,7 +110,7 @@ public class DataInitializer {
         richard.setNombres("Richard");
         richard.setApellidos("Moreano");
         richard.setCorreo("richard@duoc.cl");
-        richard.setPassword(passwordEncoder.encode("admin123")); // Cambié a 7 caracteres
+        richard.setPassword(passwordEncoder.encode("admin123")); // Password para pruebas
         richard.setTipoUsuario(Usuario.TipoUsuario.ADMIN);
         richard.setRegion("Metropolitana");
         richard.setComuna("Santiago");
@@ -126,7 +126,7 @@ public class DataInitializer {
         ri.setNombres("Ricardo");
         ri.setApellidos("Testing");
         ri.setCorreo("ri@duoc.cl");
-        ri.setPassword(passwordEncoder.encode("123456")); // 6 caracteres mínimo
+        ri.setPassword(passwordEncoder.encode("123456")); // Password para pruebas
         ri.setTipoUsuario(Usuario.TipoUsuario.CLIENTE);
         ri.setRegion("Metropolitana");
         ri.setComuna("Santiago");
@@ -136,16 +136,16 @@ public class DataInitializer {
         ri.setPuntosLevelUp(100);
         usuarioRepository.save(ri);
 
-        System.out.println("Usuarios inicializados correctamente");
+    // Usuarios inicializados correctamente
     }
 
     private void initializeProducts() {
-        // Verificar si ya existen productos
+        // Si ya existen productos, no inicializar de nuevo
         if (productoRepository.count() > 0) {
             return;
         }
 
-        System.out.println("🎮 Inicializando productos por defecto...");
+        // Inicializando productos por defecto
 
         // Producto 1: Catan
         Producto catan = new Producto();
@@ -277,7 +277,6 @@ public class DataInitializer {
         poleraLevelUp.setActivo(true);
         productoRepository.save(poleraLevelUp);
 
-        System.out.println("Productos inicializados correctamente");
-        System.out.println("Total productos creados: " + productoRepository.count());
+    // Productos inicializados correctamente
     }
 }

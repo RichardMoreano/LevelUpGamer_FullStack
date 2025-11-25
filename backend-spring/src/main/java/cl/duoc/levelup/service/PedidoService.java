@@ -39,7 +39,7 @@ public class PedidoService {
         pedido.setComuna(request.getComuna());
         pedido.setEstado(Pedido.EstadoPedido.PENDIENTE);
         
-        // Inicializar lista de items
+    // Inicializa la lista de items del pedido
         pedido.setItems(new ArrayList<>());
         
         // Procesar items del pedido

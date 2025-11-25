@@ -29,7 +29,7 @@ public class SolicitudController {
     @Autowired
     private SolicitudService solicitudService;
 
-    // 👇 Endpoint público para el formulario de contacto
+    // Endpoint público para crear una solicitud de contacto desde el formulario
     @Operation(summary = "Crear solicitud de contacto", description = "Crea una nueva solicitud de contacto pública")
     @PostMapping
     public ResponseEntity<Solicitud> crearSolicitud(

@@ -20,18 +20,18 @@ public class Solicitud {
     @Column(nullable = false, length = 1000)
     private String descripcion;
 
-    // Fecha/hora en que se envió la solicitud
+    // Fecha y hora de la solicitud
     @Column(nullable = false)
     private LocalDateTime fecha;
 
-    // "pendiente", "completado", etc.
+    // Estado de la solicitud
     @Column(nullable = false, length = 20)
     private String estado;
 
     public Solicitud() {
     }
 
-    // ===== Getters y setters =====
+    // Métodos para obtener y modificar atributos
 
     public Long getId() {
         return id;
