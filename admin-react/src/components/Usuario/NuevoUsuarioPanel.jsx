@@ -5,6 +5,26 @@ import { usuariosAPI } from "../../services/apiService";
 
 const calcularNivel = (p) => (p >= 500 ? "Oro" : p >= 200 ? "Plata" : "Bronce");
 
+// Datos de regiones y comunas de Chile
+const REGIONES_COMUNAS = {
+  "Metropolitana": ["Santiago", "Maipú", "Puente Alto", "La Florida", "Providencia", "Las Condes", "Ñuñoa", "Peñalolén", "Quilicura", "Recoleta", "Renca", "San Miguel", "La Pintana", "El Bosque", "Cerro Navia", "Pudahuel", "Lo Prado", "Estación Central", "Quinta Normal", "Macul", "San Joaquín", "Pedro Aguirre Cerda", "La Granja", "Independencia", "Huechuraba", "Conchalí", "San Ramón", "La Reina", "Vitacura", "Lo Barnechea", "Cerrillos", "Padre Hurtado", "Talagante", "Peñaflor", "Melipilla", "Buin", "Paine", "San Bernardo", "Colina", "Lampa", "Til Til"],
+  "Valparaíso": ["Valparaíso", "Viña del Mar", "Quilpué", "Villa Alemana", "Concón", "Casablanca", "Quillota", "La Calera", "San Antonio", "Cartagena", "El Tabo", "Algarrobo", "San Felipe", "Los Andes"],
+  "Biobío": ["Concepción", "Talcahuano", "Los Angeles", "Chillán", "Coronel", "San Pedro de la Paz", "Tomé", "Penco", "Lota", "Hualpén", "Chiguayante"],
+  "Araucanía": ["Temuco", "Padre Las Casas", "Villarrica", "Pucón", "Angol", "Victoria", "Lautaro", "Nueva Imperial"],
+  "Los Lagos": ["Puerto Montt", "Osorno", "Castro", "Ancud", "Puerto Varas", "Calbuco", "Maullín"],
+  "Maule": ["Talca", "Curicó", "Linares", "Constitución", "Cauquenes", "Parral", "Molina"],
+  "Ñuble": ["Chillán", "San Carlos", "Bulnes", "Quirihue", "Yungay"],
+  "O'Higgins": ["Rancagua", "San Fernando", "Rengo", "Machalí", "Santa Cruz", "Pichilemu"],
+  "Coquimbo": ["La Serena", "Coquimbo", "Ovalle", "Illapel", "Vicuña", "Andacollo"],
+  "Antofagasta": ["Antofagasta", "Calama", "Tocopilla", "Mejillones", "Taltal"],
+  "Atacama": ["Copiapó", "Vallenar", "Chañaral", "Caldera", "Huasco"],
+  "Tarapacá": ["Iquique", "Alto Hospicio", "Pozo Almonte", "Pica"],
+  "Arica y Parinacota": ["Arica", "Putre", "Camarones"],
+  "Los Ríos": ["Valdivia", "La Unión", "Río Bueno", "Panguipulli"],
+  "Aysén": ["Coyhaique", "Puerto Aysén", "Chile Chico"],
+  "Magallanes": ["Punta Arenas", "Puerto Natales", "Porvenir"]
+};
+
 function Header({ onOpenAccount, onToggleMenu, isMenuOpen }) {
   return (
     <header className="encabezado">
@@ -236,6 +256,7 @@ export default function NuevoUsuarioPanel() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [msg, setMsg] = useState("");
+  const [comunasDisponibles, setComunasDisponibles] = useState([]);
   const [form, setForm] = useState({
     run: "",
     nombres: "",
@@ -272,8 +293,17 @@ export default function NuevoUsuarioPanel() {
 
   if (!user) return null;
 
-  const onChange = (e) =>
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Si cambia la región, actualizar comunas disponibles y resetear comuna
+    if (name === "region") {
+      setComunasDisponibles(REGIONES_COMUNAS[value] || []);
+      setForm((f) => ({ ...f, region: value, comuna: "" }));
+    } else {
+      setForm((f) => ({ ...f, [name]: value }));
+    }
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -401,26 +431,41 @@ export default function NuevoUsuarioPanel() {
 
             <div className="fila">
               <label htmlFor="region">Región</label>
-              <input
+              <select
                 id="region"
                 name="region"
-                maxLength={100}
                 required
                 value={form.region}
                 onChange={onChange}
-              />
+              >
+                <option value="">Seleccione región</option>
+                {Object.keys(REGIONES_COMUNAS).map((region) => (
+                  <option key={region} value={region}>
+                    {region}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="fila">
               <label htmlFor="comuna">Comuna</label>
-              <input
+              <select
                 id="comuna"
                 name="comuna"
-                maxLength={100}
                 required
                 value={form.comuna}
                 onChange={onChange}
-              />
+                disabled={!form.region}
+              >
+                <option value="">
+                  {form.region ? "Seleccione comuna" : "Primero seleccione región"}
+                </option>
+                {comunasDisponibles.map((comuna) => (
+                  <option key={comuna} value={comuna}>
+                    {comuna}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="fila">
