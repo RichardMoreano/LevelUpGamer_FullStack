@@ -20,7 +20,8 @@ const simplePlugin = () => ({
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), githubPagesPlugin(), simplePlugin()],
-  base: process.env.NODE_ENV === 'production' ? '/LevelUpGamer_FullStack/' : '/',
+  // Base URL: usa /LevelUpGamer_FullStack/ solo en GitHub Pages, / en Render
+  base: process.env.RENDER ? '/' : (process.env.NODE_ENV === 'production' ? '/LevelUpGamer_FullStack/' : '/'),
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
