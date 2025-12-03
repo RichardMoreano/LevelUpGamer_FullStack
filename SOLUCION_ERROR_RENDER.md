@@ -10,21 +10,39 @@ Render no tiene Java ni Maven instalados por defecto. Por eso fallo con:
 
 Ya cree un `Dockerfile` que tiene todo lo necesario (Java + Maven).
 
-## Nuevos Pasos para Desplegar
+## IMPORTANTE: Debes Cambiar la Configuracion
 
-### Opcion 1: Dejar que Render detecte automaticamente (MAS FACIL)
+Render sigue usando `build.sh` y `start.sh`. Necesitas decirle que use Docker.
 
-1. Borra el Web Service que creaste antes (si lo creaste)
-2. Ve a Render Dashboard
-3. Haz clic en "New +" → "Web Service"
-4. Conecta el repositorio: RichardMoreano/LevelUpGamer_FullStack
-5. Render detectara el archivo `render.yaml` automaticamente
-6. Haz clic en "Apply" y luego "Create Web Service"
-7. Espera a que compile (15-20 minutos la primera vez)
+## Pasos para Arreglarlo
 
-### Opcion 2: Configuracion manual
+### SI YA CREASTE EL WEB SERVICE:
 
-Si la opcion 1 no funciona, usa estos valores:
+1. **Ve a tu Web Service en Render**
+2. **Haz clic en "Settings" (Configuracion)**
+3. **Busca la seccion "Build & Deploy"**
+4. **Cambia estos valores:**
+   
+   **Environment:** Docker
+   
+   **Dockerfile Path:** ./Dockerfile
+   
+   **Docker Context:** ./
+   
+   **Borra estos campos (dejalos vacios):**
+   - Build Command: (borrar todo)
+   - Start Command: (borrar todo)
+
+5. **Haz clic en "Save Changes"**
+6. **Ve a "Manual Deploy" y haz clic en "Deploy latest commit"**
+
+### SI NO HAS CREADO EL WEB SERVICE AUN:
+
+1. **Borra el Web Service anterior** (si existe)
+2. **Ve a Render Dashboard**
+3. **Haz clic en "New +" → "Web Service"**
+4. **Conecta el repositorio:** RichardMoreano/LevelUpGamer_FullStack
+5. **Configuracion manual (NO uses el render.yaml):**
 
 **Name:** levelup-gamer-backend
 
@@ -34,7 +52,7 @@ Si la opcion 1 no funciona, usa estos valores:
 
 **Root Directory:** (dejar vacio)
 
-**Runtime:** Docker
+**Environment:** Docker ← MUY IMPORTANTE
 
 **Dockerfile Path:** ./Dockerfile
 
@@ -42,8 +60,15 @@ Si la opcion 1 no funciona, usa estos valores:
 
 **Instance Type:** Free
 
-**Variables de entorno:**
-- SPRING_PROFILES_ACTIVE = prod
+6. **NO llenes Build Command ni Start Command** (deja esos campos vacios)
+
+7. **En "Environment Variables" agrega:**
+   - Key: SPRING_PROFILES_ACTIVE
+   - Value: prod
+
+8. **Haz clic en "Create Web Service"**
+
+9. **Espera 15-20 minutos** (Docker tarda mas la primera vez)
 
 ## Verificar que funciona
 
