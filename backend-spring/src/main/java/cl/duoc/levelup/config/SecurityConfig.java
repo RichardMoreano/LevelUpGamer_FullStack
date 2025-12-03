@@ -96,11 +96,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // Permite solicitudes desde localhost, tu dominio web y aplicaciones móviles
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:*", 
             "http://127.0.0.1:*",
             "http://192.168.*.*:*",
-            "https://richardmoreano.github.io"
+            "https://richardmoreano.github.io",
+            "*" // Permite cualquier origen (necesario para APKs móviles)
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));

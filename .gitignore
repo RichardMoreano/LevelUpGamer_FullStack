@@ -48,3 +48,5 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+# Android app - no subir al repo web
+LevelUpGamerPanelApp/
