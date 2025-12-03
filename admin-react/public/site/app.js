@@ -1489,6 +1489,24 @@ document.addEventListener("DOMContentLoaded", () => {
     btnPagar.dataset.bind = "1";
   }
   
+  // Configurar filtros de productos
+  const filtroCategoria = document.getElementById("filtroCategoria");
+  const buscador = document.getElementById("buscador");
+  
+  if (filtroCategoria && !filtroCategoria.dataset.bind) {
+    filtroCategoria.addEventListener("change", () => {
+      renderProductos(productosCache);
+    });
+    filtroCategoria.dataset.bind = "1";
+  }
+  
+  if (buscador && !buscador.dataset.bind) {
+    buscador.addEventListener("input", () => {
+      renderProductos(productosCache);
+    });
+    buscador.dataset.bind = "1";
+  }
+  
   // Inicializar menú móvil
   inicializarMenuLateral();
 });
@@ -1797,20 +1815,59 @@ async function renderProductos(productosCache = null) {
   try {
     const productos = productosCache || await obtenerProductos();
     
+    // Poblar select de categorías (solo una vez)
+    const selectCategoria = document.getElementById("filtroCategoria");
+    if (selectCategoria && !selectCategoria.dataset.populated) {
+      const categorias = [...new Set(productos.map(p => p.categoria))].filter(Boolean).sort();
+      categorias.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        selectCategoria.appendChild(option);
+      });
+      selectCategoria.dataset.populated = '1';
+    }
+    
+    // Aplicar filtros
+    const filtroCategoria = selectCategoria?.value || '';
+    const buscador = document.getElementById("buscador");
+    const terminoBusqueda = buscador?.value.toLowerCase().trim() || '';
+    
+    let productosFiltrados = productos;
+    
+    // Filtrar por categoría
+    if (filtroCategoria) {
+      productosFiltrados = productosFiltrados.filter(p => p.categoria === filtroCategoria);
+    }
+    
+    // Filtrar por búsqueda
+    if (terminoBusqueda) {
+      productosFiltrados = productosFiltrados.filter(p => 
+        p.nombre.toLowerCase().includes(terminoBusqueda) ||
+        (p.descripcion && p.descripcion.toLowerCase().includes(terminoBusqueda)) ||
+        (p.categoria && p.categoria.toLowerCase().includes(terminoBusqueda))
+      );
+    }
+    
     grid.setAttribute('data-bind', '1');
-    grid.innerHTML = productos.map(p => `
-      <article class="tarjeta tarjeta-producto">
-        <img src="${p.imagen}" alt="${p.nombre}" onerror="this.src='img/placeholder.jpg'">
-        <div class="contenido">
-          <h3>${p.nombre}</h3>
-          <p class="precio">$${p.precio.toLocaleString()}</p>
-          <div class="acciones">
-            <a class="btn secundario" href="producto.html?codigo=${p.codigo}">Ver</a>
-            <button class="btn primario" data-agregar="${p.codigo}">Añadir</button>
+    
+    if (productosFiltrados.length === 0) {
+      grid.innerHTML = '<div style="text-align: center; padding: 40px;"><p>No se encontraron productos que coincidan con tu búsqueda.</p></div>';
+    } else {
+      grid.innerHTML = productosFiltrados.map(p => `
+        <article class="tarjeta tarjeta-producto">
+          <img src="${p.imagen}" alt="${p.nombre}" onerror="this.src='img/placeholder.jpg'">
+          <div class="contenido">
+            <h3>${p.nombre}</h3>
+            <p class="precio">$${p.precio.toLocaleString()}</p>
+            <div class="acciones">
+              <a class="btn secundario" href="producto.html?codigo=${p.codigo}">Ver</a>
+              <button class="btn primario" data-agregar="${p.codigo}">Añadir</button>
+            </div>
           </div>
-        </div>
-      </article>
-    `).join('');
+        </article>
+      `).join('');
+    }
     
   } catch (error) {
     console.error('Error renderizando productos:', error);
