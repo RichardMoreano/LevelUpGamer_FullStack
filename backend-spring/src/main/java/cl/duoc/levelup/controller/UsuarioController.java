@@ -3,6 +3,7 @@ package cl.duoc.levelup.controller;
 import cl.duoc.levelup.entity.Usuario;
 import cl.duoc.levelup.security.UserPrincipal;
 import cl.duoc.levelup.service.UsuarioService;
+import cl.duoc.levelup.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +25,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+    
+    @Autowired
+    private AuthService authService;
 
     @Operation(summary = "Obtener usuario actual", description = "Devuelve el usuario autenticado actualmente")
     @GetMapping("/me")
@@ -139,6 +143,21 @@ public class UsuarioController {
         List<Usuario> usuarios = usuarioService.obtenerConPuntosMinimos(minPuntos);
         return ResponseEntity.ok(usuarios);
     }
+
+        @Operation(
+            summary = "Crear nuevo usuario",
+            description = "Crea un nuevo usuario en el sistema. Solo puede ser usado por un usuario con rol ADMIN. Recibe los datos del usuario en el cuerpo de la petición. Retorna el usuario creado."
+        )
+        @PostMapping
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<Usuario> createUser(@Valid @RequestBody cl.duoc.levelup.dto.RegistroUsuarioRequest registroRequest) {
+            try {
+                Usuario nuevoUsuario = authService.registerUserFromRequest(registroRequest);
+                return ResponseEntity.status(201).body(nuevoUsuario);
+            } catch (Exception e) {
+                throw new RuntimeException("Error al crear usuario: " + e.getMessage());
+            }
+        }
 
         @Operation(
             summary = "Eliminar usuario por RUN",

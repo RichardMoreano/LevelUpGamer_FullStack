@@ -527,7 +527,7 @@ export const usuariosAPI = {
   
   getById: (run) => makeRequest(`/usuarios/${encodeURIComponent(run)}`),
   
-  create: (usuario) => makeRequest('/auth/register', {
+  create: (usuario) => makeRequest('/usuarios', {
     method: 'POST',
     body: JSON.stringify(usuario)
   }),
