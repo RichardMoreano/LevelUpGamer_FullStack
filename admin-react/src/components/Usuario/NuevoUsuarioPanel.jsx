@@ -242,6 +242,8 @@ export default function NuevoUsuarioPanel() {
     apellidos: "",
     correo: "",
     tipoUsuario: "cliente",
+    region: "",
+    comuna: "",
     direccion: "",
     password: "",
   });
@@ -283,6 +285,8 @@ export default function NuevoUsuarioPanel() {
         nombres: form.nombres.trim(),
         apellidos: form.apellidos.trim(),
         correo: form.correo.trim(),
+        region: form.region.trim(),
+        comuna: form.comuna.trim(),
         direccion: form.direccion.trim(),
         tipoUsuario: form.tipoUsuario.toUpperCase(), // CLIENTE / VENDEDOR / ADMIN
         password: form.password || null,
@@ -393,6 +397,30 @@ export default function NuevoUsuarioPanel() {
                 <option value="vendedor">Vendedor</option>
                 <option value="admin">Administrador</option>
               </select>
+            </div>
+
+            <div className="fila">
+              <label htmlFor="region">Región</label>
+              <input
+                id="region"
+                name="region"
+                maxLength={100}
+                required
+                value={form.region}
+                onChange={onChange}
+              />
+            </div>
+
+            <div className="fila">
+              <label htmlFor="comuna">Comuna</label>
+              <input
+                id="comuna"
+                name="comuna"
+                maxLength={100}
+                required
+                value={form.comuna}
+                onChange={onChange}
+              />
             </div>
 
             <div className="fila">
