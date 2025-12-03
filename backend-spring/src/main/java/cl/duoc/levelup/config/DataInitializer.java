@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Component
-@Profile("!prod")  // Solo se ejecuta en desarrollo, no en producción
+// Se ejecuta en todos los ambientes para cargar datos iniciales si la BD está vacía
 public class DataInitializer {
 
     @Autowired
