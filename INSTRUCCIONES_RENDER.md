@@ -27,21 +27,23 @@ Llena los campos con esta informacion:
 
 **Root Directory:** (dejar vacio)
 
-**Runtime:** (se detecta automaticamente)
+**Runtime:** Docker
 
 **Build Command:**
 ```
-chmod +x build.sh && ./build.sh
+docker build -t levelup-backend .
 ```
 
 **Start Command:**
 ```
-chmod +x start.sh && ./start.sh
+docker run -p $PORT:8080 levelup-backend
 ```
 
 **Instance Type:** Free
 
 ## Paso 4: Variables de entorno
+
+Render detectara automaticamente las variables de `render.yaml`, pero si quieres agregar mas:
 
 En la seccion "Environment", agrega esta variable:
 
