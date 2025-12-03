@@ -63,7 +63,11 @@ export default defineConfig({
   // Configuración para SPA - todas las rutas van al index.html principal
   preview: {
     port: 5176,
-    host: true
+    host: true,
+    allowedHosts: [
+      'levelup-gamer-frontend.onrender.com',
+      '.onrender.com' // Permite cualquier subdominio de Render
+    ]
   },
   test: {
     globals: true,

@@ -7,8 +7,8 @@ const isDev = import.meta.env.DEV;
 export const API_CONFIG = {
   // URL del backend
   BASE_URL: isProd 
-  ? 'https://levelup-gamer-backend.up.railway.app/api/v1'
-  : 'http://localhost:8080/api/v1',
+  ? 'https://levelupgamer-fullstack-4.onrender.com/api'
+  : 'http://localhost:8080/api',
   
   // Tiempo máximo de espera para las peticiones
   TIMEOUT: 10000,
