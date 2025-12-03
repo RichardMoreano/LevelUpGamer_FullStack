@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { obtener, usuarioActual, guardar } from "../../utils/storage";
-import { pedidosAPI, obtenerProductos } from "../../services/apiService";
+import { pedidosAPI, obtenerProductos, boletasAPI } from "../../services/apiService";
 
 // ===== Helpers =====
 const CLP = (n) =>
@@ -406,96 +406,37 @@ export default function DetallePedidoPanel() {
   };
 
   // Generar (si no existe) y navegar a la boleta relacionada
-  const verOMantenerBoleta = () => {
+  const verOMantenerBoleta = async () => {
     if (!pedido) return;
 
-    const boletasExistentes = Array.isArray(obtener("boletas", []))
-      ? obtener("boletas", [])
-      : [];
-    // Buscar boleta existente para este pedido
-    const boletaExistente = boletasExistentes.find(
-      (b) => b.pedidoId === pedido.id
-    );
-    if (boletaExistente) {
-      const numero = encodeURIComponent(boletaExistente.numero);
-      navigate(`/admin/boleta/${numero}`);
-      return;
-    }
-
-    // Crear nueva boleta con la misma estructura que usa el panel de Boletas
-    const comprador = pedido?.comprador || pedido?.usuario || pedido?.cliente || {};
-    const nombreCompleto =
-      `${comprador.nombres || comprador.nombre || ""} ${
-        comprador.apellidos || comprador.apellido || ""
-      }`.trim() || "Cliente";
-    const timestamp = Date.now();
-    const numeroBoleta = `BOL-${String(timestamp).slice(-6)}`;
-    const nuevaBoleta = {
-      numero: numeroBoleta,
-      fecha: new Date().toISOString().split("T")[0],
-      cliente: nombreCompleto,
-      pedidoId: pedido.id,
-      // calcular total con descuentos (mismas reglas que cliente)
-      // subtotal
-      total: null,
-      totalNumerico: 0,
-      fechaCreacion: new Date().toISOString(),
-    };
-
-    // calcular subtotal a partir de items
-    const productos = Array.isArray(obtener("productos"))
-      ? obtener("productos")
-      : [];
-    const items = (pedido.items || []).map((it) => {
-      const p = productos.find((x) => x.codigo === it.codigo);
-      return { ...it, nombre: p ? p.nombre : it.codigo };
-    });
-    const subtotal = items.reduce(
-      (s, it) =>
-        s + Number(it.precio || 0) * Number(it.cantidad || 1),
-      0
-    );
-
-    const VALOR_PUNTO = 10;
-    const TOPE_DESC_POR_PUNTOS = 0.2;
-    // puntos comprador (buscar en usuarios por correo si existe)
-    let puntosComprador = 0;
     try {
-      const usuarios = Array.isArray(obtener("usuarios"))
-        ? obtener("usuarios")
-        : [];
-      const u = usuarios.find(
-        (x) =>
-          (x.correo || "").toLowerCase() ===
-          (comprador.correo || "").toLowerCase()
-      );
-      puntosComprador = u ? Number(u.puntosLevelUp || 0) : 0;
-    } catch {
-      puntosComprador = 0;
+      // Primero verificar si ya existe una boleta para este pedido
+      try {
+        const boletaExistente = await boletasAPI.getByPedido(pedido.id);
+        if (boletaExistente && boletaExistente.numero) {
+          const numero = encodeURIComponent(boletaExistente.numero);
+          navigate(`/admin/boleta/${numero}`);
+          return;
+        }
+      } catch (error) {
+        // Si no existe boleta (404), continuamos para crear una nueva
+        console.log("No existe boleta previa, generando nueva...");
+      }
+
+      // Generar nueva boleta a través de la API
+      const boletaGenerada = await boletasAPI.generar(pedido.id);
+      
+      if (boletaGenerada && boletaGenerada.numero) {
+        const numero = encodeURIComponent(boletaGenerada.numero);
+        navigate(`/admin/boleta/${numero}`);
+      } else {
+        console.error("Error: La boleta generada no tiene número");
+        alert("Error al generar la boleta. Por favor intente nuevamente.");
+      }
+    } catch (error) {
+      console.error("Error al generar boleta:", error);
+      alert("Error al generar la boleta: " + (error.message || "Error desconocido"));
     }
-
-    const aplicaDuoc = (comprador && (comprador.correo || "")
-      .toLowerCase()
-      .endsWith("@duoc.cl"));
-    const descuentoDuoc = aplicaDuoc ? Math.round(subtotal * 0.2) : 0;
-    const valorPuntosDisponibles = Math.max(0, puntosComprador * VALOR_PUNTO);
-    const maxPorPuntos = Math.round(subtotal * TOPE_DESC_POR_PUNTOS);
-    const descuentoPuntos = Math.min(
-      valorPuntosDisponibles,
-      maxPorPuntos
-    );
-
-    const totalNumerico = Math.max(
-      0,
-      subtotal - descuentoDuoc - descuentoPuntos
-    );
-    nuevaBoleta.totalNumerico = totalNumerico;
-    nuevaBoleta.total = CLP(totalNumerico);
-
-    const todas = [...boletasExistentes, nuevaBoleta];
-    guardar("boletas", todas);
-    // Navegar al detalle de la boleta recién creada
-    navigate(`/admin/boleta/${encodeURIComponent(numeroBoleta)}`);
   };
 
   const titulo = pedido
